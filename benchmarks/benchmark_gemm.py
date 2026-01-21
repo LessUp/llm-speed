@@ -55,7 +55,7 @@ def benchmark_gemm(
 ) -> List[Dict]:
     """Benchmark GEMM implementations."""
     try:
-        from python import gemm, tensor_core_gemm
+        from cuda_llm_ops import gemm, tensor_core_gemm
         has_custom = True
     except ImportError:
         print("Warning: Custom kernels not built. Only benchmarking cuBLAS.")

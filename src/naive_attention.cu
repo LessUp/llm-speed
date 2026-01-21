@@ -1,4 +1,5 @@
 #include "common.cuh"
+#include "warp_primitives.cuh"
 #include <cmath>
 #include <cfloat>
 
@@ -126,8 +127,10 @@ __global__ void naive_attention_simple_kernel(
     const T* v_ptr = V + offset;
     T* o_ptr = O + offset + row_idx * head_dim;
     
+    constexpr int BLOCK_THREADS = 256;
     extern __shared__ float shared_mem[];
     float* scores = shared_mem;
+    float* reduce_smem = shared_mem + seq_len;
     
     // Compute attention scores: Q[row] @ K^T
     for (int j = tid; j < seq_len; j += blockDim.x) {
@@ -139,19 +142,17 @@ __global__ void naive_attention_simple_kernel(
     }
     __syncthreads();
     
-    // Softmax - find max (reduction)
+    // Softmax - find max (block reduction)
     float local_max = -FLT_MAX;
     for (int j = tid; j < seq_len; j += blockDim.x) {
         local_max = fmaxf(local_max, scores[j]);
     }
     
-    // Warp reduction for max
-    for (int offset = 16; offset > 0; offset /= 2) {
-        local_max = fmaxf(local_max, __shfl_down_sync(0xffffffff, local_max, offset));
-    }
-    
     __shared__ float block_max;
-    if (tid == 0) block_max = local_max;
+    float reduced_max = block_reduce_max<float, BLOCK_THREADS>(local_max, reduce_smem);
+    if (tid == 0) {
+        block_max = reduced_max;
+    }
     __syncthreads();
     
     // Compute exp and sum
@@ -161,13 +162,11 @@ __global__ void naive_attention_simple_kernel(
         local_sum += scores[j];
     }
     
-    // Warp reduction for sum
-    for (int offset = 16; offset > 0; offset /= 2) {
-        local_sum += __shfl_down_sync(0xffffffff, local_sum, offset);
-    }
-    
     __shared__ float block_sum;
-    if (tid == 0) block_sum = local_sum;
+    float reduced_sum = block_reduce_sum<float, BLOCK_THREADS>(local_sum, reduce_smem);
+    if (tid == 0) {
+        block_sum = reduced_sum;
+    }
     __syncthreads();
     
     // Normalize
@@ -194,8 +193,10 @@ void naive_attention_fp32(
     float scale, cudaStream_t stream
 ) {
     dim3 grid(1, seq_len, batch_size * num_heads);
-    dim3 block(256);
-    size_t smem_size = seq_len * sizeof(float);
+    constexpr int BLOCK_THREADS = 256;
+    constexpr int REDUCE_SMEM = BLOCK_THREADS / 32;
+    dim3 block(BLOCK_THREADS);
+    size_t smem_size = (seq_len + REDUCE_SMEM) * sizeof(float);
     
     naive_attention_simple_kernel<float><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale
@@ -209,8 +210,10 @@ void naive_attention_fp16(
     float scale, cudaStream_t stream
 ) {
     dim3 grid(1, seq_len, batch_size * num_heads);
-    dim3 block(256);
-    size_t smem_size = seq_len * sizeof(float);
+    constexpr int BLOCK_THREADS = 256;
+    constexpr int REDUCE_SMEM = BLOCK_THREADS / 32;
+    dim3 block(BLOCK_THREADS);
+    size_t smem_size = (seq_len + REDUCE_SMEM) * sizeof(float);
     
     naive_attention_simple_kernel<half><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale

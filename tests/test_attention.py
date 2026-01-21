@@ -40,7 +40,7 @@ class TestNaiveAttention:
         match PyTorch reference implementation within tolerance (FP32: 1e-3).
         """
         try:
-            from python import naive_attention
+            from cuda_llm_ops import naive_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -73,7 +73,7 @@ class TestNaiveAttention:
         Validates: Requirements 1.1, 1.3, 1.4, 1.5
         """
         try:
-            from python import naive_attention
+            from cuda_llm_ops import naive_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -156,7 +156,7 @@ class TestFlashAttention:
         naive attention implementation within tolerance.
         """
         try:
-            from python import flash_attention, naive_attention
+            from cuda_llm_ops import flash_attention, naive_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -189,7 +189,7 @@ class TestFlashAttention:
         positions j <= i. Attention weights should form a lower triangular matrix.
         """
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -234,7 +234,7 @@ class TestTiledAttention:
         Tiled attention should produce same results as naive attention.
         """
         try:
-            from python import tiled_attention, naive_attention
+            from cuda_llm_ops import tiled_attention, naive_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -271,7 +271,7 @@ class TestBatchAndMultiHead:
         correctly process and produce output of shape [batch, heads, seq_len, head_dim].
         """
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -298,7 +298,7 @@ class TestEdgeCases:
     def test_minimum_dimensions(self, device):
         """Test with minimum valid dimensions."""
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -313,7 +313,7 @@ class TestEdgeCases:
     def test_large_sequence_length(self, device):
         """Test with large sequence length."""
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         

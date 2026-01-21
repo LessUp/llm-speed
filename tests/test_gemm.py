@@ -37,7 +37,7 @@ class TestFP16GEMM:
         should match PyTorch torch.matmul within FP16 tolerance (1e-2).
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -65,7 +65,7 @@ class TestFP16GEMM:
         Validates: Requirements 5.1
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -97,7 +97,7 @@ class TestTensorCoreGEMM:
         Validates: Requirements 4.2, 5.1
         """
         try:
-            from python import tensor_core_gemm
+            from cuda_llm_ops import tensor_core_gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -135,7 +135,7 @@ class TestMatrixLayoutEquivalence:
         - C_TT = A^T @ B^T
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -181,7 +181,7 @@ class TestDimensionAlignment:
         correctly handle via padding or fallback, producing correct output.
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -217,7 +217,7 @@ class TestArbitraryShapes:
         GEMM_Kernel should correctly compute and produce [M, N] output.
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -239,7 +239,7 @@ class TestGEMMEdgeCases:
     def test_square_matrices(self, device):
         """Test with square matrices."""
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -257,7 +257,7 @@ class TestGEMMEdgeCases:
     def test_tall_skinny_matrices(self, device):
         """Test with tall-skinny matrices."""
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -275,7 +275,7 @@ class TestGEMMEdgeCases:
     def test_alpha_beta_scaling(self, device):
         """Test alpha and beta scaling."""
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         

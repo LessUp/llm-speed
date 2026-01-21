@@ -34,7 +34,7 @@ class TestPythonInterface:
         - Preserve device and dtype attributes
         """
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -69,7 +69,7 @@ class TestPythonInterface:
         Validates: Requirements 8.2
         """
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -98,7 +98,7 @@ class TestErrorHandling:
         clear error message instead of undefined behavior.
         """
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -116,7 +116,7 @@ class TestErrorHandling:
     def test_wrong_tensor_dim_error(self, device):
         """Test error for wrong tensor dimensions."""
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -134,7 +134,7 @@ class TestErrorHandling:
     def test_cpu_tensor_error(self):
         """Test error for CPU tensors."""
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -152,7 +152,7 @@ class TestErrorHandling:
     def test_unsupported_dtype_error(self, device):
         """Test error for unsupported dtype."""
         try:
-            from python import flash_attention
+            from cuda_llm_ops import flash_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -170,7 +170,7 @@ class TestErrorHandling:
     def test_gemm_dimension_mismatch(self, device):
         """Test GEMM dimension mismatch error."""
         try:
-            from python import gemm
+            from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -200,7 +200,7 @@ class TestErrorHandling:
         For valid inputs, kernel should not crash or produce undefined behavior.
         """
         try:
-            from python import flash_attention, gemm
+            from cuda_llm_ops import flash_attention, gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
         
@@ -247,7 +247,7 @@ class TestPipelineConfiguration:
         with non-pipelined version.
         """
         try:
-            from python import flash_attention, naive_attention
+            from cuda_llm_ops import flash_attention, naive_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
         

@@ -60,12 +60,17 @@ void validate_attention_inputs(
 
 void validate_gemm_inputs(
     const torch::Tensor& a,
-    const torch::Tensor& b
+    const torch::Tensor& b,
+    bool trans_a,
+    bool trans_b
 ) {
     TORCH_CHECK(a.dim() == 2, "A must be 2D tensor [M, K]");
     TORCH_CHECK(b.dim() == 2, "B must be 2D tensor [K, N]");
-    
-    TORCH_CHECK(a.size(1) == b.size(0), "Inner dimensions must match: A[M,K] @ B[K,N]");
+
+    auto a_cols = trans_a ? a.size(0) : a.size(1);
+    auto b_rows = trans_b ? b.size(1) : b.size(0);
+    TORCH_CHECK(a_cols == b_rows,
+                "Inner dimensions must match: A[M,K] @ B[K,N] (considering transposes)");
     
     TORCH_CHECK(a.is_cuda(), "A must be on CUDA device");
     TORCH_CHECK(b.is_cuda(), "B must be on CUDA device");
@@ -216,7 +221,7 @@ torch::Tensor gemm(
     bool trans_a = false,
     bool trans_b = false
 ) {
-    validate_gemm_inputs(a, b);
+    validate_gemm_inputs(a, b, trans_a, trans_b);
     
     int M = trans_a ? a.size(1) : a.size(0);
     int K = trans_a ? a.size(0) : a.size(1);
@@ -260,7 +265,7 @@ torch::Tensor tensor_core_gemm(
 ) {
     TORCH_CHECK(a.scalar_type() == torch::kFloat16, "Tensor Core GEMM requires FP16 input");
     TORCH_CHECK(b.scalar_type() == torch::kFloat16, "Tensor Core GEMM requires FP16 input");
-    validate_gemm_inputs(a, b);
+    validate_gemm_inputs(a, b, false, false);
     
     int M = a.size(0);
     int K = a.size(1);

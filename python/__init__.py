@@ -4,7 +4,7 @@ High-performance attention and GEMM kernels for LLM inference.
 """
 
 try:
-    from .cuda_llm_ops import (
+    from cuda_llm_ops import (
         naive_attention,
         tiled_attention,
         flash_attention,

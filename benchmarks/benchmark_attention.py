@@ -61,7 +61,7 @@ def benchmark_attention(
 ) -> List[Dict]:
     """Benchmark attention implementations."""
     try:
-        from python import naive_attention, tiled_attention, flash_attention
+        from cuda_llm_ops import naive_attention, tiled_attention, flash_attention
         has_custom = True
     except ImportError:
         print("Warning: Custom kernels not built. Only benchmarking PyTorch.")
