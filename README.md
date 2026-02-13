@@ -1,5 +1,10 @@
 # CUDA LLM Kernel Optimization
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![CUDA](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)
+
 高性能 CUDA 算子库，用于 LLM 推理优化。包含 FlashAttention 实现和高性能 GEMM kernel。
 
 ## 特性
