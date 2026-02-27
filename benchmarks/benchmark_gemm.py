@@ -5,11 +5,12 @@ Compares custom implementations with cuBLAS reference.
 """
 
 import argparse
+import json
 import torch
-import time
 from typing import List, Dict, Tuple
 import sys
-sys.path.insert(0, '..')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def benchmark_kernel(
@@ -70,6 +71,9 @@ def benchmark_gemm(
         a = torch.randn(M, K, device='cuda', dtype=dtype)
         b = torch.randn(K, N, device='cuda', dtype=dtype)
         
+        # Track GPU memory
+        torch.cuda.reset_peak_memory_stats()
+        
         result = {
             'M': M, 'N': N, 'K': K,
             'dtype': str(dtype),
@@ -108,6 +112,9 @@ def benchmark_gemm(
                     print(f"  Tensor Core GEMM failed: {e}")
                     result['tensor_core_ms'] = float('inf')
                     result['tensor_core_relative'] = 0
+        
+        # Record peak GPU memory
+        result['peak_memory_mb'] = torch.cuda.max_memory_allocated() / (1024 * 1024)
         
         results.append(result)
     
@@ -189,6 +196,8 @@ def main():
                        help='Warmup iterations')
     parser.add_argument('--iterations', type=int, default=100,
                        help='Benchmark iterations')
+    parser.add_argument('--output', type=str, default=None,
+                       help='Output JSON file path for results')
     
     args = parser.parse_args()
     
@@ -218,6 +227,13 @@ def main():
     )
     
     print_results(results)
+    
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"\nResults saved to {output_path}")
 
 
 if __name__ == '__main__':

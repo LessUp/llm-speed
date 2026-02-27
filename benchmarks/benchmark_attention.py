@@ -5,11 +5,12 @@ Compares custom implementations with PyTorch/cuDNN reference.
 """
 
 import argparse
+import json
 import torch
-import time
 from typing import List, Dict, Tuple
 import sys
-sys.path.insert(0, '..')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def benchmark_kernel(
@@ -78,6 +79,10 @@ def benchmark_attention(
         k = torch.randn_like(q)
         v = torch.randn_like(q)
         
+        # Track GPU memory
+        torch.cuda.reset_peak_memory_stats()
+        mem_before = torch.cuda.memory_allocated()
+        
         result = {
             'seq_len': seq_len,
             'batch_size': batch_size,
@@ -126,6 +131,10 @@ def benchmark_attention(
             except Exception as e:
                 print(f"  Flash attention failed: {e}")
                 result['flash_ms'] = float('inf')
+        
+        # Record peak GPU memory
+        result['peak_memory_mb'] = torch.cuda.max_memory_allocated() / (1024 * 1024)
+        result['input_memory_mb'] = (mem_before + q.nelement() * q.element_size() * 3) / (1024 * 1024)
         
         results.append(result)
     
@@ -189,6 +198,8 @@ def main():
                        help='Warmup iterations')
     parser.add_argument('--iterations', type=int, default=100,
                        help='Benchmark iterations')
+    parser.add_argument('--output', type=str, default=None,
+                       help='Output JSON file path for results')
     
     args = parser.parse_args()
     
@@ -213,6 +224,13 @@ def main():
     )
     
     print_results(results)
+    
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"\nResults saved to {output_path}")
 
 
 if __name__ == '__main__':
