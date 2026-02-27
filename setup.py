@@ -4,6 +4,7 @@ Setup script for CUDA LLM Kernel Optimization package.
 
 import os
 import sys
+import platform
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
@@ -25,16 +26,26 @@ include_dirs = [
     'include',
 ]
 
-# Compiler flags
-extra_compile_args = {
-    'cxx': ['-O3', '-std=c++17'],
-    'nvcc': [
-        '-O3',
-        '--use_fast_math',
-        '-std=c++17',
-        '-Xcompiler', '-fPIC',
-    ]
-}
+# Compiler flags (platform-aware)
+if platform.system() == 'Windows':
+    extra_compile_args = {
+        'cxx': ['/O2', '/std:c++17'],
+        'nvcc': [
+            '-O3',
+            '--use_fast_math',
+            '-std=c++17',
+        ]
+    }
+else:
+    extra_compile_args = {
+        'cxx': ['-O3', '-std=c++17'],
+        'nvcc': [
+            '-O3',
+            '--use_fast_math',
+            '-std=c++17',
+            '-Xcompiler', '-fPIC',
+        ]
+    }
 
 # Add architecture flags
 for arch in CUDA_ARCHS.split(';'):

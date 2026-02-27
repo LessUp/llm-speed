@@ -28,14 +28,15 @@ include_directories(${CUDAToolkit_INCLUDE_DIRS})
 
 # CUDA flags
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fPIC")
+if(NOT WIN32)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fPIC")
+endif()
 
 # Source files
 file(GLOB_RECURSE CUDA_SOURCES "src/*.cu")
-file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
 
 # Main library
-add_library(cuda_kernels SHARED ${CUDA_SOURCES} ${CPP_SOURCES})
+add_library(cuda_kernels SHARED ${CUDA_SOURCES})
 target_link_libraries(cuda_kernels CUDA::cudart CUDA::cublas)
 
 # Python module
