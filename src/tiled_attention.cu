@@ -4,7 +4,7 @@
 #include <cfloat>
 
 // Tiled attention kernel using shared memory
-template<typename T, int BLOCK_M, int BLOCK_N, int BLOCK_K>
+template<typename T, int BLOCK_M, int BLOCK_N>
 __global__ void tiled_attention_kernel(
     const T* __restrict__ Q,
     const T* __restrict__ K,
@@ -27,28 +27,33 @@ __global__ void tiled_attention_kernel(
     int tid = threadIdx.x;
     int row_start = block_row * BLOCK_M;
     
-    // Shared memory with padding to avoid bank conflicts
-    __shared__ float smem_Q[BLOCK_M][BLOCK_K + 1];
-    __shared__ float smem_K[BLOCK_N][BLOCK_K + 1];
-    __shared__ float smem_V[BLOCK_N][BLOCK_K + 1];
-    __shared__ float smem_S[BLOCK_M][BLOCK_N + 1];  // Attention scores
-    __shared__ float smem_max[BLOCK_M];
-    __shared__ float smem_sum[BLOCK_M];
+    // Dynamic shared memory layout (sized by actual head_dim, with +1 padding for bank conflicts)
+    // Layout: smem_Q[BLOCK_M * (head_dim+1)] | smem_K[BLOCK_N * (head_dim+1)] |
+    //         smem_V[BLOCK_N * (head_dim+1)] | smem_S[BLOCK_M * (BLOCK_N+1)]
+    extern __shared__ float smem[];
+    int hd_stride = head_dim + 1;  // padded stride for bank conflict avoidance
+    float* smem_Q = smem;
+    float* smem_K = smem_Q + BLOCK_M * hd_stride;
+    float* smem_V = smem_K + BLOCK_N * hd_stride;
+    float* smem_S = smem_V + BLOCK_N * hd_stride;
+    int sn_stride = BLOCK_N + 1;  // padded stride for scores
     
-    // Output accumulator in registers
-    float output[BLOCK_M][BLOCK_K];
+    // Per-row state in registers (small arrays, BLOCK_M is typically 32)
     float row_max[BLOCK_M];
     float row_sum[BLOCK_M];
     
-    // Initialize
+    // Output accumulator in shared memory (after smem_S)
+    float* output = smem_S + BLOCK_M * sn_stride;
+    for (int i = tid; i < BLOCK_M * head_dim; i += blockDim.x) {
+        output[i] = 0.0f;
+    }
+    __syncthreads();
+    
+    // Initialize per-row state
     #pragma unroll
     for (int m = 0; m < BLOCK_M; m++) {
         row_max[m] = -FLT_MAX;
         row_sum[m] = 0.0f;
-        #pragma unroll
-        for (int k = 0; k < BLOCK_K; k++) {
-            output[m][k] = 0.0f;
-        }
     }
     
     // Pointer offsets
@@ -63,10 +68,10 @@ __global__ void tiled_attention_kernel(
         int m = i / head_dim;
         int k = i % head_dim;
         int global_row = row_start + m;
-        if (global_row < seq_len && k < head_dim) {
-            smem_Q[m][k] = static_cast<float>(q_ptr[global_row * head_dim + k]);
+        if (global_row < seq_len) {
+            smem_Q[m * hd_stride + k] = static_cast<float>(q_ptr[global_row * head_dim + k]);
         } else {
-            smem_Q[m][k] = 0.0f;
+            smem_Q[m * hd_stride + k] = 0.0f;
         }
     }
     __syncthreads();
@@ -82,10 +87,10 @@ __global__ void tiled_attention_kernel(
             int n = i / head_dim;
             int k = i % head_dim;
             int global_col = col_start + n;
-            if (global_col < seq_len && k < head_dim) {
-                smem_K[n][k] = static_cast<float>(k_ptr[global_col * head_dim + k]);
+            if (global_col < seq_len) {
+                smem_K[n * hd_stride + k] = static_cast<float>(k_ptr[global_col * head_dim + k]);
             } else {
-                smem_K[n][k] = 0.0f;
+                smem_K[n * hd_stride + k] = 0.0f;
             }
         }
         
@@ -94,10 +99,10 @@ __global__ void tiled_attention_kernel(
             int n = i / head_dim;
             int k = i % head_dim;
             int global_col = col_start + n;
-            if (global_col < seq_len && k < head_dim) {
-                smem_V[n][k] = static_cast<float>(v_ptr[global_col * head_dim + k]);
+            if (global_col < seq_len) {
+                smem_V[n * hd_stride + k] = static_cast<float>(v_ptr[global_col * head_dim + k]);
             } else {
-                smem_V[n][k] = 0.0f;
+                smem_V[n * hd_stride + k] = 0.0f;
             }
         }
         __syncthreads();
@@ -108,17 +113,11 @@ __global__ void tiled_attention_kernel(
             int n = i % BLOCK_N;
             
             float score = 0.0f;
-            #pragma unroll
-            for (int k = 0; k < BLOCK_K && k < head_dim; k++) {
-                score += smem_Q[m][k] * smem_K[n][k];
+            for (int k = 0; k < head_dim; k++) {
+                score += smem_Q[m * hd_stride + k] * smem_K[n * hd_stride + k];
             }
             
-            // Handle remaining dimensions if head_dim > BLOCK_K
-            for (int k = BLOCK_K; k < head_dim; k++) {
-                score += smem_Q[m][k] * smem_K[n][k];
-            }
-            
-            smem_S[m][n] = score * scale;
+            smem_S[m * sn_stride + n] = score * scale;
         }
         __syncthreads();
         
@@ -132,7 +131,7 @@ __global__ void tiled_attention_kernel(
             for (int n = 0; n < BLOCK_N; n++) {
                 int global_col = col_start + n;
                 if (global_col < seq_len) {
-                    block_max = fmaxf(block_max, smem_S[m][n]);
+                    block_max = fmaxf(block_max, smem_S[m * sn_stride + n]);
                 }
             }
             
@@ -145,10 +144,10 @@ __global__ void tiled_attention_kernel(
             for (int n = 0; n < BLOCK_N; n++) {
                 int global_col = col_start + n;
                 if (global_col < seq_len) {
-                    smem_S[m][n] = expf(smem_S[m][n] - new_max);
-                    block_sum += smem_S[m][n];
+                    smem_S[m * sn_stride + n] = expf(smem_S[m * sn_stride + n] - new_max);
+                    block_sum += smem_S[m * sn_stride + n];
                 } else {
-                    smem_S[m][n] = 0.0f;
+                    smem_S[m * sn_stride + n] = 0.0f;
                 }
             }
             
@@ -159,13 +158,13 @@ __global__ void tiled_attention_kernel(
             float rescale = old_scale * row_sum[m] / fmaxf(new_sum, 1e-6f);
             
             for (int k = 0; k < head_dim; k++) {
-                output[m][k] *= rescale;
+                output[m * head_dim + k] *= rescale;
                 
                 float new_val = 0.0f;
                 for (int n = 0; n < BLOCK_N; n++) {
-                    new_val += smem_S[m][n] * smem_V[n][k];
+                    new_val += smem_S[m * sn_stride + n] * smem_V[n * hd_stride + k];
                 }
-                output[m][k] += new_val / fmaxf(new_sum, 1e-6f);
+                output[m * head_dim + k] += new_val / fmaxf(new_sum, 1e-6f);
             }
             
             row_max[m] = new_max;
@@ -179,8 +178,8 @@ __global__ void tiled_attention_kernel(
         int m = i / head_dim;
         int k = i % head_dim;
         int global_row = row_start + m;
-        if (global_row < seq_len && k < head_dim) {
-            o_ptr[global_row * head_dim + k] = static_cast<T>(output[m][k]);
+        if (global_row < seq_len) {
+            o_ptr[global_row * head_dim + k] = static_cast<T>(output[m * head_dim + k]);
         }
     }
 }
@@ -193,12 +192,16 @@ void tiled_attention_fp32(
 ) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
-    constexpr int BLOCK_K = 64;
     
     dim3 grid(1, (seq_len + BLOCK_M - 1) / BLOCK_M, batch_size * num_heads);
     dim3 block(256);
     
-    tiled_attention_kernel<float, BLOCK_M, BLOCK_N, BLOCK_K><<<grid, block, 0, stream>>>(
+    int hd_stride = head_dim + 1;
+    int sn_stride = BLOCK_N + 1;
+    size_t smem_size = (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride
+                       + BLOCK_M * sn_stride + BLOCK_M * head_dim) * sizeof(float);
+    
+    tiled_attention_kernel<float, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale
     );
     CUDA_CHECK(cudaGetLastError());
@@ -211,12 +214,16 @@ void tiled_attention_fp16(
 ) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
-    constexpr int BLOCK_K = 64;
     
     dim3 grid(1, (seq_len + BLOCK_M - 1) / BLOCK_M, batch_size * num_heads);
     dim3 block(256);
     
-    tiled_attention_kernel<half, BLOCK_M, BLOCK_N, BLOCK_K><<<grid, block, 0, stream>>>(
+    int hd_stride = head_dim + 1;
+    int sn_stride = BLOCK_N + 1;
+    size_t smem_size = (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride
+                       + BLOCK_M * sn_stride + BLOCK_M * head_dim) * sizeof(float);
+    
+    tiled_attention_kernel<half, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale
     );
     CUDA_CHECK(cudaGetLastError());

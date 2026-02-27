@@ -67,9 +67,10 @@ __global__ void tensor_core_gemm_tiled_kernel(
     int M, int N, int K,
     float alpha, float beta
 ) {
-    // Shared memory for tiles
-    __shared__ half smem_A[BLOCK_M][BLOCK_K];
-    __shared__ half smem_B[BLOCK_K][BLOCK_N];
+    // Shared memory for tiles (with padding to avoid bank conflicts)
+    constexpr int PAD = 8;
+    __shared__ half smem_A[BLOCK_M][BLOCK_K + PAD];
+    __shared__ half smem_B[BLOCK_K][BLOCK_N + PAD];
     
     int block_row = blockIdx.y * BLOCK_M;
     int block_col = blockIdx.x * BLOCK_N;
@@ -124,10 +125,10 @@ __global__ void tensor_core_gemm_tiled_kernel(
         
         __syncthreads();
         
-        // Compute using WMMA
+        // Compute using WMMA (use padded stride for shared memory loads)
         for (int k = 0; k < BLOCK_K; k += WMMA_K) {
-            wmma::load_matrix_sync(a_frag, &smem_A[warp_row][k], BLOCK_K);
-            wmma::load_matrix_sync(b_frag, &smem_B[k][warp_col], BLOCK_N);
+            wmma::load_matrix_sync(a_frag, &smem_A[warp_row][k], BLOCK_K + PAD);
+            wmma::load_matrix_sync(b_frag, &smem_B[k][warp_col], BLOCK_N + PAD);
             wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
         }
         
@@ -219,13 +220,37 @@ void tensor_core_gemm_int8(
     int M, int N, int K,
     cudaStream_t stream
 ) {
-#if __CUDA_ARCH__ >= 720
+    // Runtime check: __CUDA_ARCH__ is only defined during device compilation,
+    // so we query the device capability at runtime instead.
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    cudaDeviceProp prop;
+    CUDA_CHECK(cudaGetDeviceProperties(&prop, device));
+    int sm_version = prop.major * 10 + prop.minor;
+    
+    if (sm_version < 72) {
+        throw std::runtime_error(
+            "INT8 Tensor Core requires Turing+ architecture (SM 7.2+), "
+            "but current device is SM " + std::to_string(prop.major) + "." + std::to_string(prop.minor));
+    }
+    
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 720
+    // This branch is only compiled for device code with SM >= 7.2
     dim3 grid((N + 31) / 32, (M + 7) / 8);
     dim3 block(32, 1);
     
     tensor_core_gemm_int8_kernel<<<grid, block, 0, stream>>>(A, B, C, M, N, K);
     CUDA_CHECK(cudaGetLastError());
 #else
-    throw std::runtime_error("INT8 Tensor Core requires Turing+ architecture (SM 7.2+)");
+    // For host-side compilation or when compiling for older architectures,
+    // the kernel launch is still valid as long as the binary includes SM >= 7.2 code.
+    // Use a workaround: declare the kernel as extern and launch it.
+    dim3 grid((N + 31) / 32, (M + 7) / 8);
+    dim3 block(32, 1);
+    
+    // The kernel is compiled for SM >= 7.2 via CMAKE_CUDA_ARCHITECTURES / gencode flags.
+    // The runtime check above ensures the device supports it.
+    tensor_core_gemm_int8_kernel<<<grid, block, 0, stream>>>(A, B, C, M, N, K);
+    CUDA_CHECK(cudaGetLastError());
 #endif
 }
