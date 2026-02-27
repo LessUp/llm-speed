@@ -5,7 +5,7 @@
 
 using namespace nvcuda;
 
-// High-performance GEMM with register tiling
+// High-performance GEMM with register tiling and double buffering
 // C = alpha * A @ B + beta * C
 template<
     typename T,
@@ -25,9 +25,9 @@ __global__ void hgemm_register_tiled_kernel(
     float alpha, float beta,
     bool trans_a, bool trans_b
 ) {
-    // Shared memory with padding
-    __shared__ float smem_A[BLOCK_M][BLOCK_K + 1];
-    __shared__ float smem_B[BLOCK_K][BLOCK_N + 1];
+    // Double-buffered shared memory with padding for bank conflict avoidance
+    __shared__ float smem_A[2][BLOCK_M][BLOCK_K + 1];
+    __shared__ float smem_B[2][BLOCK_K][BLOCK_N + 1];
     
     // Thread indices
     int tid = threadIdx.x + threadIdx.y * blockDim.x;
@@ -57,76 +57,89 @@ __global__ void hgemm_register_tiled_kernel(
     
     // Number of threads for loading
     int num_threads = blockDim.x * blockDim.y;
+    int num_k_tiles = (K + BLOCK_K - 1) / BLOCK_K;
     
-    // Main loop over K
-    for (int k_tile = 0; k_tile < K; k_tile += BLOCK_K) {
-        // Cooperative load A tile
-        for (int i = tid; i < BLOCK_M * BLOCK_K; i += num_threads) {
-            int row = i / BLOCK_K;
-            int col = i % BLOCK_K;
-            int global_row = block_row + row;
-            int global_col = k_tile + col;
-            
-            float val = 0.0f;
-            if (global_row < M && global_col < K) {
-                if (trans_a) {
-                    val = static_cast<float>(A[global_col * M + global_row]);
-                } else {
-                    val = static_cast<float>(A[global_row * K + global_col]);
-                }
-            }
-            smem_A[row][col] = val;
+    // Helper lambda-like macros for loading tiles into a specific buffer
+    #define LOAD_TILE_A(buf, k_tile_offset) \
+        for (int i = tid; i < BLOCK_M * BLOCK_K; i += num_threads) { \
+            int row = i / BLOCK_K; \
+            int col = i % BLOCK_K; \
+            int global_row = block_row + row; \
+            int global_col = (k_tile_offset) + col; \
+            float val = 0.0f; \
+            if (global_row < M && global_col < K) { \
+                if (trans_a) { \
+                    val = static_cast<float>(A[global_col * M + global_row]); \
+                } else { \
+                    val = static_cast<float>(A[global_row * K + global_col]); \
+                } \
+            } \
+            smem_A[buf][row][col] = val; \
+        }
+    
+    #define LOAD_TILE_B(buf, k_tile_offset) \
+        for (int i = tid; i < BLOCK_K * BLOCK_N; i += num_threads) { \
+            int row = i / BLOCK_N; \
+            int col = i % BLOCK_N; \
+            int global_row = (k_tile_offset) + row; \
+            int global_col = block_col + col; \
+            float val = 0.0f; \
+            if (global_row < K && global_col < N) { \
+                if (trans_b) { \
+                    val = static_cast<float>(B[global_col * K + global_row]); \
+                } else { \
+                    val = static_cast<float>(B[global_row * N + global_col]); \
+                } \
+            } \
+            smem_B[buf][row][col] = val; \
+        }
+    
+    #define COMPUTE_TILE(buf) \
+        _Pragma("unroll") \
+        for (int k = 0; k < BLOCK_K; k++) { \
+            _Pragma("unroll") \
+            for (int m = 0; m < THREAD_M; m++) { \
+                reg_A[m] = smem_A[buf][warp_row + thread_row + m][k]; \
+            } \
+            _Pragma("unroll") \
+            for (int n = 0; n < THREAD_N; n++) { \
+                reg_B[n] = smem_B[buf][k][warp_col + thread_col + n]; \
+            } \
+            _Pragma("unroll") \
+            for (int m = 0; m < THREAD_M; m++) { \
+                _Pragma("unroll") \
+                for (int n = 0; n < THREAD_N; n++) { \
+                    reg_C[m][n] += reg_A[m] * reg_B[n]; \
+                } \
+            } \
+        }
+    
+    // Prologue: load first tile into buffer 0
+    LOAD_TILE_A(0, 0);
+    LOAD_TILE_B(0, 0);
+    __syncthreads();
+    
+    // Main loop with double buffering
+    for (int tile = 0; tile < num_k_tiles; tile++) {
+        int cur_buf = tile % 2;
+        int next_buf = 1 - cur_buf;
+        int next_k_tile = (tile + 1) * BLOCK_K;
+        
+        // Prefetch next tile into alternate buffer (if available)
+        if (tile + 1 < num_k_tiles) {
+            LOAD_TILE_A(next_buf, next_k_tile);
+            LOAD_TILE_B(next_buf, next_k_tile);
         }
         
-        // Cooperative load B tile
-        for (int i = tid; i < BLOCK_K * BLOCK_N; i += num_threads) {
-            int row = i / BLOCK_N;
-            int col = i % BLOCK_N;
-            int global_row = k_tile + row;
-            int global_col = block_col + col;
-            
-            float val = 0.0f;
-            if (global_row < K && global_col < N) {
-                if (trans_b) {
-                    val = static_cast<float>(B[global_col * K + global_row]);
-                } else {
-                    val = static_cast<float>(B[global_row * N + global_col]);
-                }
-            }
-            smem_B[row][col] = val;
-        }
-        
-        __syncthreads();
-        
-        // Compute using register tiling
-        #pragma unroll
-        for (int k = 0; k < BLOCK_K; k++) {
-            // Load A fragment to registers
-            #pragma unroll
-            for (int m = 0; m < THREAD_M; m++) {
-                int smem_row = warp_row + thread_row + m;
-                reg_A[m] = smem_A[smem_row][k];
-            }
-            
-            // Load B fragment to registers
-            #pragma unroll
-            for (int n = 0; n < THREAD_N; n++) {
-                int smem_col = warp_col + thread_col + n;
-                reg_B[n] = smem_B[k][smem_col];
-            }
-            
-            // Outer product
-            #pragma unroll
-            for (int m = 0; m < THREAD_M; m++) {
-                #pragma unroll
-                for (int n = 0; n < THREAD_N; n++) {
-                    reg_C[m][n] += reg_A[m] * reg_B[n];
-                }
-            }
-        }
+        // Compute on current buffer
+        COMPUTE_TILE(cur_buf);
         
         __syncthreads();
     }
+    
+    #undef LOAD_TILE_A
+    #undef LOAD_TILE_B
+    #undef COMPUTE_TILE
     
     // Store results
     #pragma unroll
