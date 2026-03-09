@@ -178,7 +178,8 @@ void hgemm_impl(
     constexpr int THREAD_N = 8;
     
     dim3 grid((N + BLOCK_N - 1) / BLOCK_N, (M + BLOCK_M - 1) / BLOCK_M);
-    dim3 block(32, 4);  // 128 threads = 4 warps
+    // BLOCK_M/WARP_M * BLOCK_N/WARP_N = 4*2 = 8 warps needed
+    dim3 block(32, 8);  // 256 threads = 8 warps
     
     bool trans_a = (layout_a == MatrixLayout::ColMajor);
     bool trans_b = (layout_b == MatrixLayout::ColMajor);

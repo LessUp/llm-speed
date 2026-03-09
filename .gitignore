@@ -33,6 +33,12 @@ env/
 *.swo
 *~
 
+# Tuning logs & profiling
+tuning_logs/
+*.nsys-rep
+*.ncu-rep
+*.qdrep
+
 # OS
 .DS_Store
 Thumbs.db

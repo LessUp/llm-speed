@@ -84,40 +84,49 @@ __device__ __forceinline__ float online_softmax_weight(
 }
 
 // Update output accumulator with rescaling for online softmax
+// O_new = (l_old * exp(m_old - m_new) * O_old + exp_weights @ V_block) / l_new
+//
+// output:      [dim]           — running output accumulator (updated in-place)
+// v_block:     [block_n, dim]  — V values for current KV block
+// exp_weights: [block_n]       — exp(score - new_max) for each KV position
+// dim:         head dimension
+// block_n:     number of KV positions in current block
 __device__ __forceinline__ void online_softmax_update_output(
     float* output,
-    const float* new_values,
-    const float* attention_weights,
+    const float* v_block,
+    const float* exp_weights,
     int dim,
+    int block_n,
     float old_max,
     float new_max,
     float old_sum,
     float new_sum
 ) {
-    // Rescale old output
+    // Rescale factor for old output
     float rescale = expf(old_max - new_max) * old_sum / new_sum;
+    float inv_new_sum = 1.0f / new_sum;
     
-    for (int i = 0; i < dim; i++) {
-        output[i] = output[i] * rescale;
-    }
-    
-    // Add new contribution
-    float weight_scale = 1.0f / new_sum;
-    for (int i = 0; i < dim; i++) {
-        float weighted_sum = 0.0f;
-        // This would be attention_weights @ new_values in practice
-        output[i] += attention_weights[i] * weight_scale;
+    for (int d = 0; d < dim; d++) {
+        // Rescale old accumulator
+        float val = output[d] * rescale;
+        
+        // Add new contribution: exp_weights @ V_block[:, d]
+        float new_val = 0.0f;
+        for (int j = 0; j < block_n; j++) {
+            new_val += exp_weights[j] * v_block[j * dim + d];
+        }
+        output[d] = val + new_val * inv_new_sum;
     }
 }
 
 // FlashAttention-style online softmax update for output
 // O_new = (l_old * exp(m_old - m_new) * O_old + exp(S - m_new) @ V) / l_new
-template<int HEAD_DIM>
+template<int HEAD_DIM, int BLOCK_N>
 __device__ __forceinline__ void flash_attention_update_output(
     float* __restrict__ output,           // [HEAD_DIM]
     const float* __restrict__ scores,     // [BLOCK_N] - attention scores for current K block
     const float* __restrict__ v_block,    // [BLOCK_N, HEAD_DIM] - V values for current block
-    int block_n,                          // Actual size of current block
+    int block_n,                          // Actual size of current block (<= BLOCK_N)
     OnlineSoftmaxState& state             // Online softmax state
 ) {
     // Find max in current scores
@@ -131,7 +140,7 @@ __device__ __forceinline__ void flash_attention_update_output(
     float old_scale = expf(state.max_val - new_max);
     
     // Compute exp(scores - new_max) and their sum
-    float exp_scores[128];  // Assuming BLOCK_N <= 128
+    float exp_scores[BLOCK_N];
     float block_sum = 0.0f;
     for (int j = 0; j < block_n; j++) {
         exp_scores[j] = expf(scores[j] - new_max);

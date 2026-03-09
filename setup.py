@@ -1,12 +1,24 @@
 """
 Setup script for CUDA LLM Kernel Optimization package.
+Version is read from pyproject.toml (single source of truth).
 """
 
 import os
 import sys
 import platform
+import re
+from pathlib import Path
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
+
+
+def _read_version() -> str:
+    """Read version from pyproject.toml."""
+    text = Path(__file__).with_name("pyproject.toml").read_text()
+    match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+    if not match:
+        raise RuntimeError("Cannot find version in pyproject.toml")
+    return match.group(1)
 
 # CUDA architectures to compile for
 CUDA_ARCHS = os.environ.get('CUDA_ARCHS', '70;75;80;86;89;90')
@@ -55,7 +67,7 @@ for arch in CUDA_ARCHS.split(';'):
 
 setup(
     name='cuda_llm_ops',
-    version='0.1.0',
+    version=_read_version(),
     description='High-performance CUDA kernels for LLM inference',
     author='CUDA LLM Kernel Optimization',
     packages=find_packages(),

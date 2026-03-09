@@ -2,10 +2,12 @@
 Performance profiler for CUDA kernels.
 """
 
+from __future__ import annotations
+
 import torch
 import time
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 from enum import Enum
 
 
@@ -161,7 +163,7 @@ class CUDAProfiler:
         warmup: int = 10,
         iterations: int = 100,
         **kwargs
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compare custom kernel with reference implementation."""
         custom_time = self.measure_time(custom_func, *args, warmup=warmup, 
                                         iterations=iterations, **kwargs)
@@ -177,12 +179,12 @@ class CUDAProfiler:
 
 
 def benchmark_attention(
-    seq_lengths: List[int] = [512, 1024, 2048, 4096],
+    seq_lengths: list[int] = [512, 1024, 2048, 4096],
     batch_size: int = 1,
     num_heads: int = 32,
     head_dim: int = 128,
     dtype: torch.dtype = torch.float16
-) -> List[Dict]:
+) -> list[dict]:
     """Benchmark attention kernels across different sequence lengths."""
     from . import flash_attention
     
@@ -217,10 +219,10 @@ def benchmark_attention(
 
 
 def benchmark_gemm(
-    sizes: List[Tuple[int, int, int]] = [(1024, 1024, 1024), (2048, 2048, 2048), 
+    sizes: list[tuple[int, int, int]] = [(1024, 1024, 1024), (2048, 2048, 2048), 
                                           (4096, 4096, 4096)],
     dtype: torch.dtype = torch.float16
-) -> List[Dict]:
+) -> list[dict]:
     """Benchmark GEMM kernels across different matrix sizes."""
     from . import gemm
     
@@ -250,7 +252,7 @@ def benchmark_gemm(
     return results
 
 
-def print_benchmark_results(results: List[Dict], title: str = "Benchmark Results"):
+def print_benchmark_results(results: list[dict], title: str = "Benchmark Results"):
     """Pretty print benchmark results."""
     print(f"\n{'='*60}")
     print(f"{title:^60}")

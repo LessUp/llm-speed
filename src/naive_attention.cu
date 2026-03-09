@@ -100,6 +100,21 @@ void naive_attention_fp32(
     dim3 block(BLOCK_THREADS);
     size_t smem_size = (seq_len + REDUCE_SMEM) * sizeof(float);
     
+    // Validate shared memory requirement against device limit
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    int max_smem;
+    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
+        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    if (static_cast<int>(smem_size) > max_smem) {
+        throw std::runtime_error(
+            "naive_attention: seq_len=" + std::to_string(seq_len) +
+            " requires " + std::to_string(smem_size) +
+            " bytes shared memory, but device max is " +
+            std::to_string(max_smem) +
+            " bytes. Use tiled or flash attention for long sequences.");
+    }
+    
     naive_attention_simple_kernel<float><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale
     );
@@ -116,6 +131,21 @@ void naive_attention_fp16(
     constexpr int REDUCE_SMEM = BLOCK_THREADS / 32;
     dim3 block(BLOCK_THREADS);
     size_t smem_size = (seq_len + REDUCE_SMEM) * sizeof(float);
+    
+    // Validate shared memory requirement against device limit
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    int max_smem;
+    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
+        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    if (static_cast<int>(smem_size) > max_smem) {
+        throw std::runtime_error(
+            "naive_attention: seq_len=" + std::to_string(seq_len) +
+            " requires " + std::to_string(smem_size) +
+            " bytes shared memory, but device max is " +
+            std::to_string(max_smem) +
+            " bytes. Use tiled or flash attention for long sequences.");
+    }
     
     naive_attention_simple_kernel<half><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale

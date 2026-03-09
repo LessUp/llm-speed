@@ -44,4 +44,8 @@ __all__ = [
     'tensor_core_gemm_int8',
 ]
 
-__version__ = '0.1.0'
+try:
+    from importlib.metadata import version as _pkg_version
+    __version__ = _pkg_version("cuda_llm_ops")
+except Exception:
+    __version__ = "0.1.0"  # fallback for editable / unbundled installs

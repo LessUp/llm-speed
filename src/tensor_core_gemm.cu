@@ -234,23 +234,11 @@ void tensor_core_gemm_int8(
             "but current device is SM " + std::to_string(prop.major) + "." + std::to_string(prop.minor));
     }
     
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 720
-    // This branch is only compiled for device code with SM >= 7.2
-    dim3 grid((N + 31) / 32, (M + 7) / 8);
-    dim3 block(32, 1);
-    
-    tensor_core_gemm_int8_kernel<<<grid, block, 0, stream>>>(A, B, C, M, N, K);
-    CUDA_CHECK(cudaGetLastError());
-#else
-    // For host-side compilation or when compiling for older architectures,
-    // the kernel launch is still valid as long as the binary includes SM >= 7.2 code.
-    // Use a workaround: declare the kernel as extern and launch it.
-    dim3 grid((N + 31) / 32, (M + 7) / 8);
-    dim3 block(32, 1);
-    
     // The kernel is compiled for SM >= 7.2 via CMAKE_CUDA_ARCHITECTURES / gencode flags.
     // The runtime check above ensures the device supports it.
+    dim3 grid((N + 31) / 32, (M + 7) / 8);
+    dim3 block(32, 1);
+    
     tensor_core_gemm_int8_kernel<<<grid, block, 0, stream>>>(A, B, C, M, N, K);
     CUDA_CHECK(cudaGetLastError());
-#endif
 }

@@ -115,15 +115,15 @@ __global__ void flash_attention_forward_kernel(
         int cur_buf = kv_block % 2;
         int next_buf = 1 - cur_buf;
         
-        // Early exit for causal
-        if (is_causal && col_start > row_start + BLOCK_M) break;
+        // Early exit for causal: max query pos is row_start + BLOCK_M - 1
+        if (is_causal && col_start >= row_start + BLOCK_M) break;
         
         // Prefetch next KV tile into alternate buffer (if available)
         int next_kv_block = kv_block + 1;
         bool has_next = (next_kv_block < num_kv_blocks);
         if (is_causal && has_next) {
             int next_col_start = next_kv_block * BLOCK_N;
-            if (next_col_start > row_start + BLOCK_M) has_next = false;
+            if (next_col_start >= row_start + BLOCK_M) has_next = false;
         }
         if (has_next) {
             int next_col_start = next_kv_block * BLOCK_N;
