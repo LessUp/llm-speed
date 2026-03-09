@@ -1,11 +1,67 @@
 title: LLM-Speed
-description: CUDA LLM Kernel Optimization — FlashAttention, FP16/INT8 GEMM with Tensor Core
+description: >-
+  CUDA LLM 内核优化 — FlashAttention、FP16/INT8 Tensor Core GEMM、
+  pybind11 Python 绑定与 Hypothesis 属性测试
 remote_theme: pages-themes/cayman@v0.2.0
-
-url: "https://lessup.github.io"
-baseurl: "/llm-speed"
-lang: zh-CN
-
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
+repository: LessUp/llm-speed
+show_downloads: false
+
+# SEO & metadata
+url: https://lessup.github.io
+baseurl: /llm-speed
+lang: zh-CN
+author: LessUp
+
+# Markdown rendering
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+# Default layout for all pages
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "changelog"
+    values:
+      layout: default
+
+# Exclude irrelevant files from Jekyll build
+exclude:
+  - .git
+  - .github
+  - .kiro
+  - .vscode
+  - include
+  - src
+  - python
+  - tests
+  - benchmarks
+  - build
+  - cmake-build-*
+  - CMakeLists.txt
+  - CMakePresets.json
+  - pyproject.toml
+  - setup.py
+  - requirements.txt
+  - .clang-format
+  - .editorconfig
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - "*.cu"
+  - "*.cuh"
+  - "*.cpp"
+  - "*.h"
+  - "*.o"
+  - "*.so"
+  - __pycache__
+  - "*.egg-info"
