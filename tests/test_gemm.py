@@ -231,6 +231,94 @@ class TestArbitraryShapes:
         assert not torch.isinf(output).any(), "Output contains Inf"
 
 
+class TestINT8GEMM:
+    """Tests for INT8 Tensor Core GEMM implementation."""
+    
+    @pytest.mark.cuda
+    @pytest.mark.property
+    @settings(max_examples=50, deadline=None)
+    @given(
+        M=st.integers(min_value=1, max_value=16).map(lambda x: x * 8),
+        N=st.integers(min_value=1, max_value=16).map(lambda x: x * 32),
+        K=st.integers(min_value=1, max_value=32).map(lambda x: x * 16)
+    )
+    def test_int8_gemm_correctness(self, M, N, K, device):
+        """
+        Feature: cuda-llm-kernel-optimization
+        Property 6: INT8 GEMM 正确性
+        Validates: Requirements 4.3, 5.2
+        
+        For any valid INT8 matrices A[M,K] and B[K,N], quantized GEMM output
+        should match reference implementation (INT32 accumulation).
+        """
+        try:
+            from cuda_llm_ops import tensor_core_gemm_int8
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+        
+        a = torch.randint(-128, 127, (M, K), device=device, dtype=torch.int8)
+        b = torch.randint(-128, 127, (K, N), device=device, dtype=torch.int8)
+        
+        try:
+            output = tensor_core_gemm_int8(a, b)
+        except RuntimeError as e:
+            if "Turing+" in str(e) or "SM" in str(e):
+                pytest.skip("INT8 Tensor Core requires Turing+ architecture")
+            raise
+        
+        # Reference: INT32 accumulation
+        reference = torch.matmul(a.to(torch.int32), b.to(torch.int32))
+        
+        assert output.dtype == torch.int32, f"Expected INT32 output, got {output.dtype}"
+        assert output.shape == (M, N), f"Output shape mismatch: {output.shape} vs {(M, N)}"
+        assert torch.equal(output, reference), \
+            f"INT8 GEMM mismatch. Max diff: {(output - reference).abs().max().item()}"
+    
+    @pytest.mark.cuda
+    def test_int8_gemm_basic(self, device):
+        """Basic INT8 GEMM correctness test with known values."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm_int8
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+        
+        M, K, N = 8, 16, 32
+        a = torch.ones(M, K, device=device, dtype=torch.int8)
+        b = torch.ones(K, N, device=device, dtype=torch.int8)
+        
+        try:
+            output = tensor_core_gemm_int8(a, b)
+        except RuntimeError as e:
+            if "Turing+" in str(e) or "SM" in str(e):
+                pytest.skip("INT8 Tensor Core requires Turing+ architecture")
+            raise
+        
+        # All ones: each element should equal K
+        expected = torch.full((M, N), K, device=device, dtype=torch.int32)
+        assert torch.equal(output, expected), \
+            f"Expected all {K}, got max={output.max().item()}, min={output.min().item()}"
+    
+    @pytest.mark.cuda
+    def test_int8_gemm_error_handling(self, device):
+        """Test INT8 GEMM error handling for invalid inputs."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm_int8
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+        
+        # Wrong dtype
+        a = torch.randn(8, 16, device=device, dtype=torch.float32)
+        b = torch.randn(16, 32, device=device, dtype=torch.float32)
+        with pytest.raises(Exception):
+            tensor_core_gemm_int8(a, b)
+        
+        # Dimension mismatch
+        a = torch.randint(-128, 127, (8, 16), device=device, dtype=torch.int8)
+        b = torch.randint(-128, 127, (32, 32), device=device, dtype=torch.int8)
+        with pytest.raises(Exception):
+            tensor_core_gemm_int8(a, b)
+
+
 # Unit tests for edge cases
 class TestGEMMEdgeCases:
     """Unit tests for GEMM edge cases."""

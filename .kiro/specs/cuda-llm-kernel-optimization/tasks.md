@@ -41,8 +41,8 @@
     - **Validates: Requirements 1.2**
 
   - [x] 2.4 实现 Python 绑定 (Naive Attention)
-    - 创建 `python/naive_attention.py`
-    - 使用 pybind11 绑定 CUDA kernel
+    - 在 `python/bindings.cpp` 中添加 `naive_attention` 函数包装和输入验证
+    - 通过 pybind11 注册到 `cuda_llm_ops` 模块
     - _Requirements: 8.1, 8.4_
 
 - [x] 3. Checkpoint - Naive Attention 验证
@@ -88,8 +88,9 @@
     - **Validates: Requirements 3.5**
 
   - [x] 5.5 实现 Python 绑定 (FlashAttention)
-    - 创建 `python/flash_attention.py`
-    - 实现 torch.autograd.Function 包装
+    - 在 `python/bindings.cpp` 中添加 `flash_attention` 函数包装（支持 `is_causal` 参数）
+    - 通过 pybind11 注册到 `cuda_llm_ops` 模块
+    - 注意: 仅实现 forward，未包装为 `torch.autograd.Function`
     - _Requirements: 8.1, 8.4_
 
 - [x] 6. Checkpoint - FlashAttention 验证
@@ -141,8 +142,9 @@
     - **Validates: Requirements 4.4**
 
   - [x] 9.5 实现 Python 绑定 (GEMM)
-    - 创建 `python/gemm.py`
-    - 支持多种精度和布局选项
+    - 在 `python/bindings.cpp` 中添加 `gemm` 和 `tensor_core_gemm` 函数包装
+    - 支持 `trans_a`/`trans_b` 参数、`alpha`/`beta` 缩放
+    - 支持 FP32 和 FP16 精度
     - _Requirements: 8.2, 8.5_
 
 - [x] 10. Checkpoint - GEMM 验证
@@ -156,8 +158,9 @@
     - _Requirements: 6.1, 6.2, 6.4_
 
   - [x] 11.2 将流水线集成到 FlashAttention
-    - 修改 `src/flash_attention.cu` 使用流水线
-    - 实现数据预取与计算重叠
+    - 修改 `src/flash_attention.cu` 使用 double buffering：smem_K[2] + smem_V[2]
+    - 实现 K/V tile 的数据预取与计算重叠 (prologue + 主循环交替 buffer)
+    - 支持 causal mask 早退时的 prefetch 跳过
     - _Requirements: 6.3, 6.5_
 
   - [x] 11.3 编写流水线配置正确性属性测试
@@ -199,10 +202,42 @@
     - 实现瓶颈分析报告
     - _Requirements: 7.4, 7.5_
 
-- [x] 14. Final Checkpoint - 完整验证
+- [ ] 14. Final Checkpoint - 完整验证
   - 确保所有测试通过
   - 运行性能基准测试
   - 如有问题请询问用户
+
+## 待办任务 (Backlog)
+
+以下任务尚未实现，作为后续开发计划。
+
+- [x] 15. INT8 GEMM Python 绑定
+  - [x] 15.1 在 `bindings.cpp` 中添加 `tensor_core_gemm_int8` 包装函数
+    - 支持 INT8 输入 + INT32 输出
+    - 添加架构能力运行时检查 (SM ≥ 7.2)
+    - 在 `__init__.py` 中导出 `tensor_core_gemm_int8`
+    - _Requirements: 4.3, 5.2, 8.2_
+  - [x] 15.2 编写 INT8 GEMM Python 层测试
+    - 属性测试: 随机 INT8 矩阵与 INT32 参考实现对比
+    - 单元测试: 全 1 矩阵、错误处理
+    - **Property 6: INT8 GEMM 正确性**
+    - **Validates: Requirements 4.3, 5.2**
+
+- [ ] 16. BF16 精度支持
+  - [ ] 16.1 实现 BF16 Attention Kernel
+    - 扩展 `naive_attention` / `flash_attention` 支持 `__nv_bfloat16`
+    - _Requirements: 精度支持扩展_
+  - [ ] 16.2 实现 BF16 GEMM Kernel
+    - 扩展 `hgemm_kernel` 支持 `__nv_bfloat16`
+    - _Requirements: 精度支持扩展_
+  - [ ] 16.3 添加 BF16 Python 绑定和测试
+
+- [ ] 17. FlashAttention Backward Pass
+  - [ ] 17.1 实现 FlashAttention backward kernel
+    - 保存 forward 的 logsumexp (L) 用于反向计算
+    - 实现 dQ, dK, dV 的计算
+  - [ ] 17.2 将 forward + backward 包装为 `torch.autograd.Function`
+  - [ ] 17.3 编写 backward 正确性测试 (数值梯度检查)
 
 ## Notes
 
@@ -213,17 +248,19 @@
 
 ## 实现状态总结
 
-| 模块 | 状态 | 关键文件 |
-|------|------|----------|
-| 项目基础设施 | ✅ 完成 | CMakeLists.txt, common.cuh |
-| Naive Attention | ✅ 完成 | naive_attention.cu |
-| Tiled Attention | ✅ 完成 | tiled_attention.cu, shared_memory.cuh |
-| FlashAttention | ✅ 完成 | flash_attention.cu, online_softmax.cuh |
-| Tensor Core GEMM | ✅ 完成 | tensor_core_gemm.cu |
-| 高性能 GEMM | ✅ 完成 | hgemm_kernel.cu |
-| 流水线优化 | ✅ 完成 | pipeline.cuh |
-| Python 接口 | ✅ 完成 | bindings.cpp, __init__.py |
-| 性能分析工具 | ✅ 完成 | profiler.py, benchmarks/ |
+| 模块 | 状态 | 关键文件 | 备注 |
+|------|------|----------|------|
+| 项目基础设施 | ✅ 完成 | CMakeLists.txt, common.cuh | |
+| Naive Attention | ✅ 完成 | naive_attention.cu, warp_primitives.cuh | |
+| Tiled Attention | ✅ 完成 | tiled_attention.cu, shared_memory.cuh | |
+| FlashAttention | ✅ 完成 (forward) | flash_attention.cu, online_softmax.cuh | backward 未实现 |
+| Tensor Core GEMM | ✅ 完成 | tensor_core_gemm.cu | FP16+INT8 kernel |
+| 高性能 GEMM | ✅ 完成 | hgemm_kernel.cu | 包含 double buffering |
+| 流水线优化 | ✅ 完成 | pipeline.cuh, flash_attention.cu | K/V double buffering |
+| Python 接口 | ✅ 完成 | bindings.cpp, __init__.py | 含 INT8 绑定 |
+| 性能分析工具 | ✅ 完成 | profiler.py, benchmarks/ | |
+| BF16 精度支持 | ❌ 未开始 | - | Backlog |
+| FlashAttention Backward | ❌ 未开始 | - | Backlog |
 
 ## 依赖关系
 
@@ -232,9 +269,15 @@
              │
              ├─> 4. Tiled Attention ─┬─> 5. FlashAttention ─> 6. Checkpoint
              │                       │
-             │                       └─> 11. 流水线优化
+             │                       └─> 11. 流水线优化 (部分完成)
              │
              ├─> 7. Warp Primitives ─> 8. Tensor Core GEMM ─> 9. 高性能 GEMM ─> 10. Checkpoint
              │
              └─> 12. Python 接口 ─> 13. 性能分析 ─> 14. Final Checkpoint
+                  (依赖所有 kernel)
+
+Backlog:
+  5. FlashAttention ─> 17. Backward Pass
+  8. Tensor Core GEMM ─> 15. INT8 Python 绑定
+  无依赖 ─> 16. BF16 精度支持
 ```

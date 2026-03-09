@@ -2,20 +2,22 @@
 #include "shared_memory.cuh"
 #include "warp_primitives.cuh"
 #include "online_softmax.cuh"
+#include "pipeline.cuh"
 #include <cfloat>
 
-// FlashAttention forward kernel with online softmax
+// FlashAttention forward kernel with online softmax and double buffering
 // Optimized: all threads cooperate on the expensive output update phase
+// Double buffering: K/V tiles use two buffers for compute/load overlap
 //
 // Shared memory layout (with +1 padding to avoid bank conflicts):
-//   smem_Q  [BLOCK_M * (head_dim+1)]
-//   smem_K  [BLOCK_N * (head_dim+1)]
-//   smem_V  [BLOCK_N * (head_dim+1)]
-//   smem_S  [BLOCK_M * (BLOCK_N+1)]    — attention scores, then exp(scores)
-//   output  [BLOCK_M * head_dim]        — output accumulator
-//   row_max [BLOCK_M]                   — per-row running max
-//   row_sum [BLOCK_M]                   — per-row running sum
-//   rescale [BLOCK_M]                   — per-row rescale factor
+//   smem_Q    [BLOCK_M * (head_dim+1)]
+//   smem_K[2] [2 * BLOCK_N * (head_dim+1)]   — double buffer for K tiles
+//   smem_V[2] [2 * BLOCK_N * (head_dim+1)]   — double buffer for V tiles
+//   smem_S    [BLOCK_M * (BLOCK_N+1)]         — attention scores, then exp(scores)
+//   output    [BLOCK_M * head_dim]            — output accumulator
+//   row_max   [BLOCK_M]                       — per-row running max
+//   row_sum   [BLOCK_M]                       — per-row running sum
+//   rescale   [BLOCK_M]                       — per-row rescale factor
 template<typename T, int BLOCK_M, int BLOCK_N>
 __global__ void flash_attention_forward_kernel(
     const T* __restrict__ Q,
@@ -39,19 +41,24 @@ __global__ void flash_attention_forward_kernel(
     int tid = threadIdx.x;
     int row_start = block_row * BLOCK_M;
     
-    // Shared memory layout with padding
+    // Shared memory layout with padding and double buffering for K/V
     extern __shared__ float smem[];
     int hd_stride = head_dim + 1;  // padded stride for bank conflict avoidance
     int sn_stride = BLOCK_N + 1;
+    int kv_buf_size = BLOCK_N * hd_stride;  // size of one K or V buffer
     
-    float* smem_Q  = smem;
-    float* smem_K  = smem_Q + BLOCK_M * hd_stride;
-    float* smem_V  = smem_K + BLOCK_N * hd_stride;
-    float* smem_S  = smem_V + BLOCK_N * hd_stride;
-    float* output  = smem_S + BLOCK_M * sn_stride;
-    float* row_max = output + BLOCK_M * head_dim;
-    float* row_sum = row_max + BLOCK_M;
-    float* rescale = row_sum + BLOCK_M;
+    float* smem_Q     = smem;
+    float* smem_K_buf = smem_Q + BLOCK_M * hd_stride;            // K double buffer [2 * kv_buf_size]
+    float* smem_V_buf = smem_K_buf + 2 * kv_buf_size;            // V double buffer [2 * kv_buf_size]
+    float* smem_S     = smem_V_buf + 2 * kv_buf_size;
+    float* output     = smem_S + BLOCK_M * sn_stride;
+    float* row_max    = output + BLOCK_M * head_dim;
+    float* row_sum    = row_max + BLOCK_M;
+    float* rescale    = row_sum + BLOCK_M;
+    
+    // Double buffer accessors
+    #define SMEM_K(buf) (smem_K_buf + (buf) * kv_buf_size)
+    #define SMEM_V(buf) (smem_V_buf + (buf) * kv_buf_size)
     
     // Pointer offsets
     int offset = (batch_idx * num_heads + head_idx) * seq_len * head_dim;
@@ -82,27 +89,51 @@ __global__ void flash_attention_forward_kernel(
     
     int num_kv_blocks = (seq_len + BLOCK_N - 1) / BLOCK_N;
     
+    // Helper: load K/V tile into the specified buffer
+    #define LOAD_KV_TILE(buf_idx, col_start_val) \
+        for (int i = tid; i < BLOCK_N * head_dim; i += blockDim.x) { \
+            int n = i / head_dim; \
+            int d = i % head_dim; \
+            int global_col = (col_start_val) + n; \
+            float kval = (global_col < seq_len) \
+                ? static_cast<float>(k_ptr[global_col * head_dim + d]) : 0.0f; \
+            float vval = (global_col < seq_len) \
+                ? static_cast<float>(v_ptr[global_col * head_dim + d]) : 0.0f; \
+            SMEM_K(buf_idx)[n * hd_stride + d] = kval; \
+            SMEM_V(buf_idx)[n * hd_stride + d] = vval; \
+        }
+    
+    // Prologue: load first KV tile into buffer 0
+    if (num_kv_blocks > 0) {
+        int col_start_0 = 0;
+        LOAD_KV_TILE(0, col_start_0);
+    }
+    __syncthreads();
+    
     for (int kv_block = 0; kv_block < num_kv_blocks; kv_block++) {
         int col_start = kv_block * BLOCK_N;
+        int cur_buf = kv_block % 2;
+        int next_buf = 1 - cur_buf;
         
         // Early exit for causal
         if (is_causal && col_start > row_start + BLOCK_M) break;
         
-        // Load K, V tiles (all threads cooperate)
-        for (int i = tid; i < BLOCK_N * head_dim; i += blockDim.x) {
-            int n = i / head_dim;
-            int d = i % head_dim;
-            int global_col = col_start + n;
-            float kval = (global_col < seq_len)
-                ? static_cast<float>(k_ptr[global_col * head_dim + d]) : 0.0f;
-            float vval = (global_col < seq_len)
-                ? static_cast<float>(v_ptr[global_col * head_dim + d]) : 0.0f;
-            smem_K[n * hd_stride + d] = kval;
-            smem_V[n * hd_stride + d] = vval;
+        // Prefetch next KV tile into alternate buffer (if available)
+        int next_kv_block = kv_block + 1;
+        bool has_next = (next_kv_block < num_kv_blocks);
+        if (is_causal && has_next) {
+            int next_col_start = next_kv_block * BLOCK_N;
+            if (next_col_start > row_start + BLOCK_M) has_next = false;
         }
-        __syncthreads();
+        if (has_next) {
+            int next_col_start = next_kv_block * BLOCK_N;
+            LOAD_KV_TILE(next_buf, next_col_start);
+        }
         
-        // Compute attention scores: Q @ K^T * scale (all threads cooperate)
+        // Compute attention scores: Q @ K^T * scale using current buffer
+        float* cur_K = SMEM_K(cur_buf);
+        float* cur_V = SMEM_V(cur_buf);
+        
         for (int i = tid; i < BLOCK_M * BLOCK_N; i += blockDim.x) {
             int m = i / BLOCK_N;
             int n = i % BLOCK_N;
@@ -112,7 +143,7 @@ __global__ void flash_attention_forward_kernel(
             float score = 0.0f;
             if (global_row < seq_len && global_col < seq_len) {
                 for (int d = 0; d < head_dim; d++) {
-                    score += smem_Q[m * hd_stride + d] * smem_K[n * hd_stride + d];
+                    score += smem_Q[m * hd_stride + d] * cur_K[n * hd_stride + d];
                 }
                 score *= scale;
                 if (is_causal && global_col > global_row) {
@@ -178,7 +209,7 @@ __global__ void flash_attention_forward_kernel(
                 // Compute new contribution: exp_scores[m,:] @ V[:,d]
                 float new_val = 0.0f;
                 for (int n = 0; n < BLOCK_N; n++) {
-                    new_val += smem_S[m * sn_stride + n] * smem_V[n * hd_stride + d];
+                    new_val += smem_S[m * sn_stride + n] * cur_V[n * hd_stride + d];
                 }
                 
                 output[i] = old_val + new_val / row_sum[m];
@@ -186,6 +217,10 @@ __global__ void flash_attention_forward_kernel(
         }
         __syncthreads();
     }
+    
+    #undef SMEM_K
+    #undef SMEM_V
+    #undef LOAD_KV_TILE
     
     // Write output to global memory
     for (int i = tid; i < BLOCK_M * head_dim; i += blockDim.x) {
@@ -213,7 +248,7 @@ void flash_attention_fp32(
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
     size_t smem_size = (BLOCK_M * hd_stride            // smem_Q
-                       + 2 * BLOCK_N * hd_stride        // smem_K + smem_V
+                       + 4 * BLOCK_N * hd_stride        // smem_K[2] + smem_V[2] (double buffered)
                        + BLOCK_M * sn_stride             // smem_S
                        + BLOCK_M * head_dim              // output
                        + 3 * BLOCK_M                     // row_max + row_sum + rescale
@@ -239,7 +274,7 @@ void flash_attention_fp16(
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
     size_t smem_size = (BLOCK_M * hd_stride
-                       + 2 * BLOCK_N * hd_stride
+                       + 4 * BLOCK_N * hd_stride        // double buffered K/V
                        + BLOCK_M * sn_stride
                        + BLOCK_M * head_dim
                        + 3 * BLOCK_M

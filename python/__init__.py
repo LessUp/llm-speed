@@ -10,6 +10,7 @@ try:
         flash_attention,
         gemm,
         tensor_core_gemm,
+        tensor_core_gemm_int8,
     )
 except ImportError:
     # Fallback for when the module is not built yet
@@ -30,6 +31,9 @@ except ImportError:
     
     def tensor_core_gemm(*args, **kwargs):
         raise NotImplementedError("CUDA kernels not built")
+    
+    def tensor_core_gemm_int8(*args, **kwargs):
+        raise NotImplementedError("CUDA kernels not built")
 
 __all__ = [
     'naive_attention',
@@ -37,6 +41,7 @@ __all__ = [
     'flash_attention',
     'gemm',
     'tensor_core_gemm',
+    'tensor_core_gemm_int8',
 ]
 
 __version__ = '0.1.0'

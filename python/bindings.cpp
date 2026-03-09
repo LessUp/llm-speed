@@ -29,6 +29,8 @@ void hgemm_fp32(const float*, const float*, float*,
 void hgemm_fp16(const half*, const half*, half*,
                 int, int, int, float, float,
                 MatrixLayout, MatrixLayout, cudaStream_t);
+void tensor_core_gemm_int8(const int8_t*, const int8_t*, int32_t*,
+                           int, int, int, cudaStream_t);
 
 // Input validation
 void validate_attention_inputs(
@@ -284,6 +286,39 @@ torch::Tensor tensor_core_gemm(
     return output;
 }
 
+// INT8 Tensor Core GEMM wrapper (INT8 input, INT32 output)
+torch::Tensor tensor_core_gemm_int8_wrapper(
+    const torch::Tensor& a,
+    const torch::Tensor& b
+) {
+    TORCH_CHECK(a.scalar_type() == torch::kInt8, "INT8 Tensor Core GEMM requires INT8 input for A");
+    TORCH_CHECK(b.scalar_type() == torch::kInt8, "INT8 Tensor Core GEMM requires INT8 input for B");
+    TORCH_CHECK(a.dim() == 2, "A must be 2D tensor [M, K]");
+    TORCH_CHECK(b.dim() == 2, "B must be 2D tensor [K, N]");
+    TORCH_CHECK(a.size(1) == b.size(0),
+                "Inner dimensions must match: A[M,K] @ B[K,N]");
+    TORCH_CHECK(a.is_cuda(), "A must be on CUDA device");
+    TORCH_CHECK(b.is_cuda(), "B must be on CUDA device");
+    TORCH_CHECK(a.is_contiguous(), "A must be contiguous");
+    TORCH_CHECK(b.is_contiguous(), "B must be contiguous");
+    
+    int M = a.size(0);
+    int K = a.size(1);
+    int N = b.size(1);
+    
+    auto output = torch::empty({M, N}, torch::dtype(torch::kInt32).device(a.device()));
+    cudaStream_t stream = at::cuda::getCurrentCUDAStream();
+    
+    tensor_core_gemm_int8(
+        reinterpret_cast<const int8_t*>(a.data_ptr<int8_t>()),
+        reinterpret_cast<const int8_t*>(b.data_ptr<int8_t>()),
+        output.data_ptr<int32_t>(),
+        M, N, K, stream
+    );
+    
+    return output;
+}
+
 PYBIND11_MODULE(cuda_llm_ops, m) {
     m.doc() = "CUDA LLM Kernel Optimization - High-performance attention and GEMM kernels";
     
@@ -312,4 +347,8 @@ PYBIND11_MODULE(cuda_llm_ops, m) {
           py::arg("a"), py::arg("b"),
           py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
           "Tensor Core GEMM (FP16 input, FP32 output)");
+    
+    m.def("tensor_core_gemm_int8", &tensor_core_gemm_int8_wrapper,
+          py::arg("a"), py::arg("b"),
+          "Tensor Core GEMM (INT8 input, INT32 output, requires Turing+ SM>=7.2)");
 }

@@ -7,9 +7,12 @@
 ### 项目范围
 
 - **目标 GPU 架构**: NVIDIA Volta (SM70+), Ampere (SM80+), Hopper (SM90+)
-- **支持精度**: FP32, FP16, BF16, INT8
+- **支持精度**: FP32, FP16, BF16¹, INT8²
 - **核心算子**: Attention (Naive, Tiled, Flash), GEMM (Naive, Tensor Core, Register Tiling)
-- **接口**: Python/PyTorch 兼容接口
+- **接口**: Python/PyTorch 兼容接口 (通过 pybind11 C++ 绑定)
+
+> ¹ BF16: `Precision` 枚举已声明，但无实际 kernel 实现，待后续开发
+> ² INT8: C++ kernel 已实现 (`tensor_core_gemm_int8_kernel`)，但未暴露 Python 接口
 
 ### 性能目标
 
@@ -134,19 +137,24 @@
 
 ## 需求追溯矩阵
 
-| 需求 | 设计组件 | 正确性属性 | 实现文件 |
-|------|----------|------------|----------|
-| 1.1-1.5 | Naive Attention Kernel | Property 1, 2 | naive_attention.cu |
-| 2.1-2.5 | Shared Memory Manager | - | shared_memory.cuh, tiled_attention.cu |
-| 3.1-3.6 | FlashAttention Engine | Property 3, 4 | flash_attention.cu, online_softmax.cuh |
-| 4.1-4.5 | Tensor Core Accelerator | Property 5, 6, 8 | tensor_core_gemm.cu |
-| 5.1-5.6 | GEMM Kernel | Property 5, 6, 7, 12 | hgemm_kernel.cu |
-| 6.1-6.5 | Pipeline Scheduler | Property 9 | pipeline.cuh |
-| 7.1-7.5 | Profiler | - | profiler.py, benchmarks/ |
-| 8.1-8.5 | Python Interface | Property 10, 11, 13 | bindings.cpp, __init__.py |
+| 需求 | 设计组件 | 正确性属性 | 实现文件 | 实现状态 |
+|------|----------|------------|----------|----------|
+| 1.1-1.5 | Naive Attention Kernel | Property 1, 2 | naive_attention.cu, warp_primitives.cuh | ✅ 完成 |
+| 2.1-2.5 | Shared Memory Manager | - | shared_memory.cuh, tiled_attention.cu | ✅ 完成 |
+| 3.1-3.6 | FlashAttention Engine | Property 3, 4 | flash_attention.cu, online_softmax.cuh | ✅ 完成 (forward only) |
+| 4.1-4.3 | Tensor Core Accelerator | Property 5, 6, 8 | tensor_core_gemm.cu | ✅ FP16+INT8 kernel 完成 |
+| 4.4-4.5 | Tensor Core 对齐/性能 | Property 8 | tensor_core_gemm.cu | ✅ 完成 |
+| 5.1-5.6 | GEMM Kernel | Property 5, 6, 7, 12 | hgemm_kernel.cu, warp_primitives.cuh | ✅ 完成 |
+| 6.1-6.3 | Pipeline Scheduler | Property 9 | pipeline.cuh, hgemm_kernel.cu | ✅ 完成 |
+| 6.4-6.5 | 流水线集成 | Property 9 | pipeline.cuh, flash_attention.cu | ✅ 完成 (K/V double buffering) |
+| 7.1-7.5 | Profiler | - | profiler.py, benchmarks/ | ✅ 完成 |
+| 8.1-8.5 | Python Interface | Property 10, 11, 13 | bindings.cpp, __init__.py | ✅ 完成 |
+
+> ³ hgemm_kernel.cu 自行实现 double buffering；flash_attention.cu 现已集成 K/V double buffering
 
 ## 版本历史
 
 | 版本 | 日期 | 变更说明 |
 |------|------|----------|
 | 1.0 | 2026-01-01 | 初始版本，完成所有核心需求定义 |
+| 1.1 | 2026-02-27 | 更新追溯矩阵添加实现状态列；标注 BF16/INT8/流水线集成的实际完成情况；修正文件引用 |
