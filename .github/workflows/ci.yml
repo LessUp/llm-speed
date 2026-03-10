@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-        cache: pip
+          cache: pip
 
       - name: Install ruff
         run: pip install ruff
@@ -65,7 +65,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-        cache: pip
+          cache: pip
 
       - name: Install test dependencies
         run: pip install pytest hypothesis torch --index-url https://download.pytorch.org/whl/cpu
