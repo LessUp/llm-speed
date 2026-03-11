@@ -5,7 +5,6 @@ Performance profiler for CUDA kernels.
 from __future__ import annotations
 
 import torch
-import time
 from dataclasses import dataclass
 from typing import Callable
 from enum import Enum

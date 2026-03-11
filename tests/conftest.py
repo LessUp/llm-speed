@@ -5,7 +5,6 @@ Pytest configuration and fixtures for CUDA kernel tests.
 import pytest
 import torch
 import numpy as np
-from typing import Tuple
 
 
 def pytest_configure(config):

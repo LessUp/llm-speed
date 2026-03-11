@@ -7,7 +7,7 @@ Compares custom implementations with PyTorch/cuDNN reference.
 import argparse
 import json
 import torch
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -205,7 +205,7 @@ def main():
     
     dtype = torch.float16 if args.dtype == 'fp16' else torch.float32
     
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Batch size: {args.batch_size}")
     print(f"  Num heads: {args.num_heads}")
     print(f"  Head dim: {args.head_dim}")

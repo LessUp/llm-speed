@@ -5,8 +5,7 @@ Property-based tests using Hypothesis.
 
 import pytest
 import torch
-import numpy as np
-from hypothesis import given, settings, strategies as st, assume
+from hypothesis import given, settings, strategies as st
 
 from conftest import assert_close, compute_attention_reference
 

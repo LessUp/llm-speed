@@ -48,8 +48,12 @@ def compute_gemm_flops(M: int, N: int, K: int) -> int:
 
 
 def benchmark_gemm(
-    sizes: List[Tuple[int, int, int]] = [(1024, 1024, 1024), (2048, 2048, 2048), 
-                                          (4096, 4096, 4096), (8192, 8192, 8192)],
+    sizes: List[Tuple[int, int, int]] = [
+        (1024, 1024, 1024),
+        (2048, 2048, 2048),
+        (4096, 4096, 4096),
+        (8192, 8192, 8192),
+    ],
     dtype: torch.dtype = torch.float16,
     warmup: int = 10,
     iterations: int = 100
@@ -213,7 +217,7 @@ def main():
     
     dtype = torch.float16 if args.dtype == 'fp16' else torch.float32
     
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Sizes: {sizes}")
     print(f"  Dtype: {args.dtype}")
     print(f"  Warmup: {args.warmup}")

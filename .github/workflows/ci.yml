@@ -68,7 +68,10 @@ jobs:
           cache: pip
 
       - name: Install test dependencies
-        run: pip install pytest hypothesis torch --index-url https://download.pytorch.org/whl/cpu
+        run: |
+          pip install -U pip
+          pip install pytest hypothesis
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Run tests (skip CUDA)
         run: pytest tests/ -v -m "not cuda" --tb=short || true
