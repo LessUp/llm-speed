@@ -1,56 +1,62 @@
 ---
 layout: default
 title: LLM-Speed
+description: CUDA LLM 内核优化项目的文档入口：项目定位、阅读路径与核心页面导航
 ---
 
 # LLM-Speed
 
-CUDA LLM Kernel Optimization — 高性能 LLM 推理算子库，含 FlashAttention (online softmax)、FP16/INT8 GEMM with Tensor Core。
+[![GitHub Pages](https://github.com/LessUp/llm-speed/actions/workflows/pages.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/pages.yml)
+[![CI](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![CUDA](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)
 
-## 核心特性
+LLM-Speed 面向“理解并验证 LLM 推理算子如何从朴素实现逐步优化到高性能版本”的学习与工程实践场景，覆盖 FlashAttention、Tensor Core GEMM、Python 绑定和属性测试。
 
-- **FlashAttention** — Online softmax 实现，支持因果遮罩
-- **FP16 HGEMM** — Tensor Core 加速半精度矩阵乘法
-- **INT8 GEMM** — SM 75+ Tensor Core 量化矩阵乘
-- **Warp Primitives** — 高效 warp-level reduction / scan
-- **共享内存优化** — Bank conflict-free 访问模式
-- **Python 绑定** — 通过 pybind11 提供 Python 接口
+## 项目定位
 
-## 算子实现
+这是一个把 CUDA 内核实验、Python 集成和验证流程放在同一仓库里的工程化学习项目。仓库 `README` 只保留最小构建入口，这个页面负责说明项目适合谁、先看什么以及重要文档在哪。
 
-| Kernel | 关键技术 | 架构要求 |
-|--------|---------|---------|
-| Naive Attention | 共享内存 QK^T | SM 70+ |
-| Tiled Attention | 分块计算 + 流式 softmax | SM 70+ |
-| Flash Attention | Online softmax + 因果遮罩 | SM 70+ |
-| HGEMM | WMMA Tensor Core (FP16→FP32) | SM 70+ |
-| Tensor Core GEMM | INT8/FP16 混合精度 | SM 75+ |
+## 适合谁
 
-## 快速开始
+- 想系统理解 FlashAttention、共享内存分块和 Tensor Core GEMM 的开发者
+- 想参考 CUDA C++ 与 pybind11 绑定协同组织方式的工程师
+- 需要快速定位测试、贡献流程和历史变更记录的维护者
 
-```bash
-# CMake 构建
-cmake --preset release
-cmake --build build/release -j$(nproc)
+## 从哪里开始
 
-# Python 安装
-pip install -e .
+1. 先看 [README](README.md)，完成依赖安装、构建与测试。
+2. 再看 [DeepWiki](docs/deepwiki.md)，理解核心 kernel、头文件原语与优化思路。
+3. 需要参与协作或追踪演进时，继续查看 [CONTRIBUTING](CONTRIBUTING.md) 与 [更新日志](changelog/)。
 
-# 运行测试
-pytest tests/
-```
+## 推荐阅读路径
 
-## 技术栈
+### 我只想先编译并跑测试
 
-| 类别 | 技术 |
-|------|------|
-| 语言 | CUDA C++17, Python |
-| 构建 | CMake 3.18+, setup.py (CUDAExtension) |
-| 绑定 | pybind11 v2.11.1 |
-| GPU | SM 70+ (Volta → Hopper) |
-| 测试 | pytest + Hypothesis |
-
-## 链接
-
-- [GitHub 仓库](https://github.com/LessUp/llm-speed)
 - [README](README.md)
+- [CONTRIBUTING](CONTRIBUTING.md)
+
+### 我想先理解优化路线
+
+- [DeepWiki](docs/deepwiki.md)
+- `src/`
+- `include/`
+
+### 我准备继续维护
+
+- [CONTRIBUTING](CONTRIBUTING.md)
+- [更新日志](changelog/)
+- [GitHub 仓库](https://github.com/LessUp/llm-speed)
+
+## 核心入口
+
+| 类别 | 页面 | 说明 |
+|------|------|------|
+| 概览 | [README](README.md) | 仓库定位、最小构建命令与文档链接 |
+| 快速开始 | [README](README.md) | 安装依赖、构建扩展与运行测试 |
+| 使用指南 | [DeepWiki](docs/deepwiki.md) | 核心 kernel、原语与优化策略说明 |
+| 开发指南 | [CONTRIBUTING](CONTRIBUTING.md) | 提交流程、代码规范与测试要求 |
+| 归档 | [更新日志](changelog/) | 工作流、文档与实现迭代记录 |
+| 外部链接 | [GitHub 仓库](https://github.com/LessUp/llm-speed) | 源码、Issue 与协作入口 |

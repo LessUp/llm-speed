@@ -1,0 +1,1 @@
+# Changelog\n\n## 2026-01-10\n\n### Added\n- Created CLAUDE.md with build commands, testing instructions, and architecture overview\n- Created docs/deepwiki.md with comprehensive project documentation
