@@ -4,7 +4,6 @@ Version is read from pyproject.toml (single source of truth).
 """
 
 import os
-import sys
 import platform
 import re
 from pathlib import Path
