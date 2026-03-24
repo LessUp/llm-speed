@@ -3,8 +3,12 @@ Pytest configuration and fixtures for CUDA kernel tests.
 """
 
 import pytest
-import torch
 import numpy as np
+
+try:
+    import torch
+except ImportError:  # pragma: no cover - environment-dependent guard
+    pytest.skip("PyTorch is not installed", allow_module_level=True)
 
 
 def pytest_configure(config):

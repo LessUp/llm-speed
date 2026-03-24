@@ -4,8 +4,12 @@ Property-based tests using Hypothesis.
 """
 
 import pytest
-import torch
 from hypothesis import given, settings, strategies as st
+
+try:
+    import torch
+except ImportError:  # pragma: no cover - environment-dependent guard
+    pytest.skip("PyTorch is not installed", allow_module_level=True)
 
 from conftest import assert_close, compute_attention_reference
 
