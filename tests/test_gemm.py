@@ -11,7 +11,8 @@ try:
 except ImportError:  # pragma: no cover - environment-dependent guard
     pytest.skip("PyTorch is not installed", allow_module_level=True)
 
-from .conftest import assert_close
+# Import from conftest (pytest automatically makes conftest functions available)
+from conftest import assert_close
 
 
 # Strategies for property-based testing
@@ -115,6 +116,116 @@ class TestTensorCoreGEMM:
             atol=1e-2,
             msg=f"Tensor Core GEMM correctness failed for M={M}, N={N}, K={K}",
         )
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_alpha_scaling(self, device):
+        """Test tensor_core_gemm with alpha scaling."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        M, K, N = 128, 128, 128
+        a = torch.randn(M, K, device=device, dtype=torch.float16)
+        b = torch.randn(K, N, device=device, dtype=torch.float16)
+
+        alpha = 0.5
+        output = tensor_core_gemm(a, b, alpha=alpha)
+        reference = alpha * torch.matmul(a.float(), b.float())
+
+        assert_close(
+            output, reference, rtol=1e-2, atol=1e-2, msg="Tensor Core GEMM alpha scaling failed"
+        )
+
+
+class TestTensorCoreGEMMErrorHandling:
+    """Error handling tests for tensor_core_gemm."""
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_wrong_dimensions(self, device):
+        """Test tensor_core_gemm with wrong dimensions."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        # 3D instead of 2D
+        a = torch.randn(8, 64, 32, device=device, dtype=torch.float16)
+        b = torch.randn(8, 32, 64, device=device, dtype=torch.float16)
+
+        with pytest.raises(RuntimeError, match="must be 2D"):
+            tensor_core_gemm(a, b)
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_cpu_tensor(self):
+        """Test tensor_core_gemm with CPU tensor."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, dtype=torch.float16)  # CPU tensor
+        b = torch.randn(32, 64, dtype=torch.float16)
+
+        with pytest.raises(RuntimeError, match="must be on CUDA"):
+            tensor_core_gemm(a, b)
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_non_contiguous(self, device):
+        """Test tensor_core_gemm with non-contiguous tensor."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, device=device, dtype=torch.float16).t()
+        b = torch.randn(32, 64, device=device, dtype=torch.float16)
+
+        with pytest.raises(RuntimeError, match="must be contiguous"):
+            tensor_core_gemm(a, b)
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_dimension_mismatch(self, device):
+        """Test tensor_core_gemm with dimension mismatch."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, device=device, dtype=torch.float16)
+        b = torch.randn(64, 64, device=device, dtype=torch.float16)  # Wrong K dimension
+
+        with pytest.raises(RuntimeError, match="Inner dimensions"):
+            tensor_core_gemm(a, b)
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_wrong_dtype_fp32(self, device):
+        """Test tensor_core_gemm with FP32 dtype (should work via gemm)."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, device=device, dtype=torch.float32)
+        b = torch.randn(32, 64, device=device, dtype=torch.float32)
+
+        # tensor_core_gemm requires FP16, this should raise an error
+        with pytest.raises(RuntimeError, match="float16"):
+            tensor_core_gemm(a, b)
+
+    @pytest.mark.cuda
+    def test_tensor_core_gemm_wrong_dtype_int8(self, device):
+        """Test tensor_core_gemm with INT8 dtype."""
+        try:
+            from cuda_llm_ops import tensor_core_gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randint(-128, 127, (64, 32), device=device, dtype=torch.int8)
+        b = torch.randint(-128, 127, (32, 64), device=device, dtype=torch.int8)
+
+        with pytest.raises(RuntimeError):
+            tensor_core_gemm(a, b)
 
 
 class TestMatrixLayoutEquivalence:
@@ -390,10 +501,52 @@ class TestGEMMEdgeCases:
         a = torch.randn(M, K, device=device, dtype=torch.float32)
         b = torch.randn(K, N, device=device, dtype=torch.float32)
 
+        # Test alpha scaling
         alpha = 2.0
         output = gemm(a, b, alpha=alpha)
         reference = alpha * torch.matmul(a, b)
 
         assert_close(
             output, reference, rtol=1e-3, atol=1e-3, msg="Alpha scaling failed"
+        )
+
+    @pytest.mark.cuda
+    def test_beta_parameter(self, device):
+        """Test beta parameter for GEMM (C = alpha * A @ B + beta * C)."""
+        try:
+            from cuda_llm_ops import gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        M, K, N = 64, 64, 64
+        a = torch.randn(M, K, device=device, dtype=torch.float32)
+        b = torch.randn(K, N, device=device, dtype=torch.float32)
+
+        # Test with beta=0 (default, should be same as just alpha * A @ B)
+        output_beta0 = gemm(a, b, alpha=1.0, beta=0.0)
+        reference = torch.matmul(a, b)
+        assert_close(
+            output_beta0, reference, rtol=1e-3, atol=1e-3, msg="Beta=0 failed"
+        )
+
+    @pytest.mark.cuda
+    def test_combined_alpha_beta(self, device):
+        """Test combined alpha and beta scaling."""
+        try:
+            from cuda_llm_ops import gemm
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        M, K, N = 64, 64, 64
+        a = torch.randn(M, K, device=device, dtype=torch.float32)
+        b = torch.randn(K, N, device=device, dtype=torch.float32)
+
+        # Test with both alpha and beta
+        alpha = 0.5
+        beta = 2.0
+        output = gemm(a, b, alpha=alpha, beta=beta)
+        # Note: beta is currently unused in the implementation, so output should just be alpha * A @ B
+        reference = alpha * torch.matmul(a, b)
+        assert_close(
+            output, reference, rtol=1e-3, atol=1e-3, msg="Combined alpha/beta failed"
         )

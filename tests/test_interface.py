@@ -11,7 +11,8 @@ try:
 except ImportError:  # pragma: no cover - environment-dependent guard
     pytest.skip("PyTorch is not installed", allow_module_level=True)
 
-from .conftest import assert_close
+# Import from conftest (pytest automatically makes conftest functions available)
+from conftest import assert_close
 
 
 class TestPythonInterface:

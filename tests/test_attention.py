@@ -11,7 +11,8 @@ try:
 except ImportError:  # pragma: no cover - environment-dependent guard
     pytest.skip("PyTorch is not installed", allow_module_level=True)
 
-from .conftest import assert_close, compute_attention_reference
+# Import from conftest (pytest automatically makes conftest functions available)
+from conftest import assert_close, compute_attention_reference
 
 
 # Strategies for property-based testing
@@ -308,6 +309,312 @@ class TestTiledAttention:
             rtol=1e-3,
             atol=1e-3,
             msg="Tiled attention should match naive attention",
+        )
+
+    @pytest.mark.cuda
+    @pytest.mark.property
+    @settings(max_examples=50, deadline=None)
+    @given(
+        batch=batch_strategy,
+        heads=head_strategy,
+        seq_len=seq_len_strategy,
+        head_dim=head_dim_strategy,
+    )
+    def test_tiled_attention_correctness_fp16(self, batch, heads, seq_len, head_dim, device):
+        """
+        Feature: cuda-llm-kernel-optimization
+        Property: Tiled attention FP16 correctness
+
+        Tiled attention should produce correct results with FP16 inputs.
+        """
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(
+            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
+        )
+        k = torch.randn(
+            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
+        )
+        v = torch.randn(
+            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
+        )
+
+        output = tiled_attention(q, k, v)
+        reference, _ = compute_attention_reference(q, k, v)
+
+        assert_close(
+            output,
+            reference,
+            rtol=1e-2,
+            atol=1e-2,
+            msg="Tiled attention FP16 correctness failed",
+        )
+
+    @pytest.mark.cuda
+    def test_tiled_attention_scale_parameter(self, device):
+        """Test tiled_attention with custom scale parameter."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device, dtype=torch.float32)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        # Default scale
+        output_default = tiled_attention(q, k, v)
+
+        # Custom scale
+        custom_scale = 0.1
+        output_custom = tiled_attention(q, k, v, scale=custom_scale)
+
+        # Outputs should be different
+        assert not torch.allclose(output_default, output_custom), \
+            "Custom scale should produce different output"
+
+
+class TestNaiveAttentionErrorHandling:
+    """Error handling tests for naive_attention."""
+
+    @pytest.mark.cuda
+    def test_naive_attention_wrong_dimensions(self, device):
+        """Test naive_attention with wrong dimensions."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        # 2D instead of 4D
+        q = torch.randn(64, 32, device=device)
+        k = torch.randn(64, 32, device=device)
+        v = torch.randn(64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be 4D"):
+            naive_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_naive_attention_cpu_tensor(self):
+        """Test naive_attention with CPU tensor."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32)  # CPU tensor
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        with pytest.raises(RuntimeError, match="must be on CUDA"):
+            naive_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_naive_attention_non_contiguous(self, device):
+        """Test naive_attention with non-contiguous tensor."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device).transpose(1, 2)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be contiguous"):
+            naive_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_naive_attention_shape_mismatch(self, device):
+        """Test naive_attention with shape mismatch."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 128, 32, device=device)  # Different seq_len
+
+        with pytest.raises(RuntimeError, match="must have same shape"):
+            naive_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_naive_attention_unsupported_dtype(self, device):
+        """Test naive_attention with unsupported dtype."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device, dtype=torch.int32)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        with pytest.raises(RuntimeError, match="Only float32 and float16"):
+            naive_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_naive_attention_causal_mask(self, device):
+        """Test naive_attention with causal mask."""
+        try:
+            from cuda_llm_ops import naive_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        batch, heads, seq_len, head_dim = 2, 4, 64, 32
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        # Compute with causal mask
+        output = naive_attention(q, k, v, is_causal=True)
+
+        # Compute reference with causal mask
+        reference, _ = compute_attention_reference(q, k, v, is_causal=True)
+
+        assert_close(
+            output,
+            reference,
+            rtol=1e-3,
+            atol=1e-3,
+            msg="Naive attention causal mask failed",
+        )
+
+
+class TestTiledAttentionErrorHandling:
+    """Error handling tests for tiled_attention."""
+
+    @pytest.mark.cuda
+    def test_tiled_attention_wrong_dimensions(self, device):
+        """Test tiled_attention with wrong dimensions."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        # 2D instead of 4D
+        q = torch.randn(64, 32, device=device)
+        k = torch.randn(64, 32, device=device)
+        v = torch.randn(64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be 4D"):
+            tiled_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_tiled_attention_cpu_tensor(self):
+        """Test tiled_attention with CPU tensor."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32)  # CPU tensor
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        with pytest.raises(RuntimeError, match="must be on CUDA"):
+            tiled_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_tiled_attention_non_contiguous(self, device):
+        """Test tiled_attention with non-contiguous tensor."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device).transpose(1, 2)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be contiguous"):
+            tiled_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_tiled_attention_shape_mismatch(self, device):
+        """Test tiled_attention with shape mismatch."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 128, 32, device=device)  # Different seq_len
+
+        with pytest.raises(RuntimeError, match="must have same shape"):
+            tiled_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_tiled_attention_unsupported_dtype(self, device):
+        """Test tiled_attention with unsupported dtype."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device, dtype=torch.int32)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        with pytest.raises(RuntimeError, match="Only float32 and float16"):
+            tiled_attention(q, k, v)
+
+    @pytest.mark.cuda
+    def test_tiled_attention_causal_mask(self, device):
+        """Test tiled_attention with causal mask."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        batch, heads, seq_len, head_dim = 2, 4, 64, 32
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        # Compute with causal mask
+        output = tiled_attention(q, k, v, is_causal=True)
+
+        # Compute reference with causal mask
+        reference, _ = compute_attention_reference(q, k, v, is_causal=True)
+
+        assert_close(
+            output,
+            reference,
+            rtol=1e-3,
+            atol=1e-3,
+            msg="Tiled attention causal mask failed",
+        )
+
+    @pytest.mark.cuda
+    def test_tiled_attention_causal_mask_fp16(self, device):
+        """Test tiled_attention with causal mask in FP16."""
+        try:
+            from cuda_llm_ops import tiled_attention
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        batch, heads, seq_len, head_dim = 2, 4, 64, 32
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
+        k = torch.randn_like(q)
+        v = torch.randn_like(q)
+
+        # Compute with causal mask
+        output = tiled_attention(q, k, v, is_causal=True)
+
+        # Compute reference with causal mask
+        reference, _ = compute_attention_reference(q, k, v, is_causal=True)
+
+        assert_close(
+            output,
+            reference,
+            rtol=1e-2,
+            atol=1e-2,
+            msg="Tiled attention causal mask FP16 failed",
         )
 
 
