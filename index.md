@@ -1,62 +1,134 @@
 ---
 layout: default
 title: LLM-Speed
-description: CUDA LLM 内核优化项目的文档入口：项目定位、阅读路径与核心页面导航
+description: High-performance CUDA kernel library for LLM inference — FlashAttention, Tensor Core GEMM, and Python bindings
 ---
 
 # LLM-Speed
 
-[![GitHub Pages](https://github.com/LessUp/llm-speed/actions/workflows/pages.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/pages.yml)
-[![CI](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![CUDA](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white)
-![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)
+<div class="badges">
+  <img src="https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  <img src="https://github.com/LessUp/llm-speed/actions/workflows/pages.yml/badge.svg" alt="Pages Status">
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white" alt="CUDA">
+  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white" alt="C++">
+  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white" alt="Python">
+</div>
 
-LLM-Speed 面向“理解并验证 LLM 推理算子如何从朴素实现逐步优化到高性能版本”的学习与工程实践场景，覆盖 FlashAttention、Tensor Core GEMM、Python 绑定和属性测试。
+**LLM-Speed** is a high-performance CUDA kernel library for LLM inference, featuring FlashAttention with O(N) memory complexity, Tensor Core GEMM with FP16/INT8 support, and seamless PyTorch integration via pybind11.
 
-## 项目定位
+## Quick Start
 
-这是一个把 CUDA 内核实验、Python 集成和验证流程放在同一仓库里的工程化学习项目。仓库 `README` 只保留最小构建入口，这个页面负责说明项目适合谁、先看什么以及重要文档在哪。
+### Installation
 
-## 适合谁
+```bash
+# Clone the repository
+git clone https://github.com/LessUp/llm-speed.git
+cd llm-speed
 
-- 想系统理解 FlashAttention、共享内存分块和 Tensor Core GEMM 的开发者
-- 想参考 CUDA C++ 与 pybind11 绑定协同组织方式的工程师
-- 需要快速定位测试、贡献流程和历史变更记录的维护者
+# Install dependencies and build
+pip install -r requirements.txt
+pip install -e .
+```
 
-## 从哪里开始
+### Usage
 
-1. 先看 [README](README.md)，完成依赖安装、构建与测试。
-2. 再看 [DeepWiki](docs/deepwiki.md)，理解核心 kernel、头文件原语与优化思路。
-3. 需要参与协作或追踪演进时，继续查看 [CONTRIBUTING](CONTRIBUTING.md) 与 [更新日志](changelog/)。
+```python
+import torch
+from cuda_llm_ops import flash_attention, gemm
 
-## 推荐阅读路径
+# FlashAttention
+q = torch.randn(2, 8, 512, 64, device='cuda', dtype=torch.float16)
+k = torch.randn_like(q)
+v = torch.randn_like(q)
+output = flash_attention(q, k, v)
 
-### 我只想先编译并跑测试
+# GEMM
+a = torch.randn(1024, 512, device='cuda', dtype=torch.float16)
+b = torch.randn(512, 1024, device='cuda', dtype=torch.float16)
+c = gemm(a, b)
+```
 
-- [README](README.md)
-- [CONTRIBUTING](CONTRIBUTING.md)
+## Documentation
 
-### 我想先理解优化路线
+| Section | Description |
+|---------|-------------|
+| [User Guide](docs/deepwiki) | Technical deep dive into CUDA kernels and optimization strategies |
+| [API Reference](docs/api) | Complete API documentation with examples |
+| [Performance Guide](docs/performance) | Hardware requirements, benchmarking, and optimization tips |
+| [Contributing](https://github.com/LessUp/llm-speed/blob/master/CONTRIBUTING.md) | Development workflow and coding standards |
+| [Changelog](changelog/) | Version history and release notes |
 
-- [DeepWiki](docs/deepwiki.md)
-- `src/`
-- `include/`
+## Features
 
-### 我准备继续维护
+### Attention Kernels
 
-- [CONTRIBUTING](CONTRIBUTING.md)
-- [更新日志](changelog/)
-- [GitHub 仓库](https://github.com/LessUp/llm-speed)
+| Kernel | Memory | Description |
+|--------|--------|-------------|
+| `naive_attention` | O(N²) | Baseline implementation for correctness verification |
+| `tiled_attention` | O(N²) | Shared memory tiling optimization |
+| `flash_attention` | O(N) | Online softmax algorithm with causal mask support |
 
-## 核心入口
+### GEMM Kernels
 
-| 类别 | 页面 | 说明 |
-|------|------|------|
-| 概览 | [README](README.md) | 仓库定位、最小构建命令与文档链接 |
-| 快速开始 | [README](README.md) | 安装依赖、构建扩展与运行测试 |
-| 使用指南 | [DeepWiki](docs/deepwiki.md) | 核心 kernel、原语与优化策略说明 |
-| 开发指南 | [CONTRIBUTING](CONTRIBUTING.md) | 提交流程、代码规范与测试要求 |
-| 归档 | [更新日志](changelog/) | 工作流、文档与实现迭代记录 |
-| 外部链接 | [GitHub 仓库](https://github.com/LessUp/llm-speed) | 源码、Issue 与协作入口 |
+| Kernel | Precision | Description |
+|--------|-----------|-------------|
+| `gemm` | FP16/FP32 | High-performance GEMM with register tiling |
+| `tensor_core_gemm` | FP16→FP32 | Tensor Core accelerated with WMMA |
+| `tensor_core_gemm_int8` | INT8→INT32 | Quantized GEMM (Turing+ SM≥7.2) |
+
+### Key Highlights
+
+- **O(N) Memory**: FlashAttention reduces memory from O(N²) to O(N)
+- **Tensor Core Acceleration**: WMMA API for hardware-accelerated matrix operations
+- **Double Buffering**: Compute/memory overlap for improved throughput
+- **Bank Conflict Elimination**: Padding strategies for optimal memory access
+- **Python Integration**: Native PyTorch Tensor support via pybind11
+
+## Who Should Use This?
+
+- **Developers** learning CUDA kernel optimization for LLM inference
+- **Engineers** implementing attention mechanisms and matrix operations
+- **Researchers** studying FlashAttention and Tensor Core programming
+- **Maintainers** needing reliable tests and comprehensive documentation
+
+## GPU Architecture Support
+
+| Architecture | SM | Tensor Core | Status |
+|--------------|-----|-------------|--------|
+| Volta | 7.0 | FP16 | ✅ Supported |
+| Turing | 7.5 | FP16, INT8 | ✅ Supported |
+| Ampere | 8.0, 8.6 | FP16, BF16, INT8 | ✅ Recommended |
+| Ada Lovelace | 8.9 | FP16, BF16, INT8, FP8 | ✅ Supported |
+| Hopper | 9.0 | FP16, BF16, INT8, FP8 | ✅ Supported |
+
+## Performance
+
+### FlashAttention Memory Reduction
+
+| Sequence Length | Standard | FlashAttention | Reduction |
+|-----------------|----------|----------------|-----------|
+| 1024 | 4 MB | 0.25 MB | 94% |
+| 2048 | 16 MB | 0.5 MB | 97% |
+| 4096 | 64 MB | 1 MB | 98% |
+
+### GEMM Target
+
+Target: **≥90% of cuBLAS performance** for matrices ≥1024×1024
+
+## Resources
+
+- [GitHub Repository](https://github.com/LessUp/llm-speed)
+- [Issue Tracker](https://github.com/LessUp/llm-speed/issues)
+- [Discussions](https://github.com/LessUp/llm-speed/discussions)
+
+## License
+
+[MIT License](https://github.com/LessUp/llm-speed/blob/master/LICENSE)
+
+## References
+
+1. **FlashAttention**: Dao et al., NeurIPS 2022
+2. **FlashAttention-2**: Dao, 2023
+3. **CUTLASS**: NVIDIA CUDA Templates for Linear Algebra
+4. **CUDA Programming Guide**: NVIDIA

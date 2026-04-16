@@ -60,8 +60,8 @@ __global__ void flash_attention_forward_kernel(
     #define SMEM_K(buf) (smem_K_buf + (buf) * kv_buf_size)
     #define SMEM_V(buf) (smem_V_buf + (buf) * kv_buf_size)
     
-    // Pointer offsets
-    int offset = (batch_idx * num_heads + head_idx) * seq_len * head_dim;
+    // Pointer offsets (use int64 to avoid overflow for large tensors)
+    int64_t offset = (static_cast<int64_t>(batch_idx) * num_heads + head_idx) * seq_len * head_dim;
     const T* q_ptr = Q + offset;
     const T* k_ptr = K + offset;
     const T* v_ptr = V + offset;
@@ -201,18 +201,20 @@ __global__ void flash_attention_forward_kernel(
             int m = i / head_dim;
             int d = i % head_dim;
             int global_row = row_start + m;
-            
+
             if (global_row < seq_len) {
                 // Rescale old output
                 float old_val = output[i] * rescale[m];
-                
+
                 // Compute new contribution: exp_scores[m,:] @ V[:,d]
                 float new_val = 0.0f;
                 for (int n = 0; n < BLOCK_N; n++) {
                     new_val += smem_S[m * sn_stride + n] * cur_V[n * hd_stride + d];
                 }
-                
-                output[i] = old_val + new_val / row_sum[m];
+
+                // Protect against divide by zero (row_sum can be 0 for masked rows)
+                float inv_sum = row_sum[m] > 0.0f ? 1.0f / row_sum[m] : 0.0f;
+                output[i] = old_val + new_val * inv_sum;
             }
         }
         __syncthreads();

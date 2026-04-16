@@ -1,283 +1,241 @@
-# Implementation Plan: CUDA LLM Kernel Optimization
+# Implementation Tasks
 
 ## Overview
 
-本实现计划将设计文档分解为可执行的编码任务，从基础设施搭建开始，逐步实现 Naive Attention、Tiled Attention、FlashAttention 和高性能 GEMM kernel。每个阶段都包含正确性验证和属性测试。
+Implementation plan decomposed into executable tasks, progressing from infrastructure through attention kernels to GEMM optimization.
 
-## Tasks
+---
 
-- [x] 1. 项目基础设施搭建
-  - [x] 1.1 创建项目目录结构和 CMake 构建系统
-    - 创建 `src/`, `include/`, `python/`, `tests/` 目录
-    - 配置 CMakeLists.txt 支持 CUDA 编译
-    - 配置 pybind11 用于 Python 绑定
-    - _Requirements: 8.1, 8.2_
+## Phase 1: Infrastructure
 
-  - [x] 1.2 实现通用工具函数和类型定义
-    - 创建 `include/common.cuh` 定义数据类型和配置结构
-    - 实现 CUDA 错误检查宏
-    - 定义 MatrixLayout、AttentionConfig、GemmConfig 结构
-    - _Requirements: 8.3_
+### Task 1: Project Setup ✅
 
-  - [x] 1.3 搭建测试框架
-    - 配置 pytest 和 Hypothesis
-    - 创建测试辅助函数（随机张量生成、误差计算）
-    - _Requirements: 7.3_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 1.1 | Create directory structure and CMake build | ✅ |
+| 1.2 | Implement common utilities and types | ✅ |
+| 1.3 | Setup pytest and Hypothesis framework | ✅ |
 
-- [x] 2. Naive Attention 实现
-  - [x] 2.1 实现 Naive Attention Kernel
-    - 创建 `src/naive_attention.cu`
-    - 实现 Q*K^T 矩阵乘法
-    - 实现 Softmax 归一化
-    - 实现完整的 Softmax(Q*K^T)*V 计算
-    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+**Files:** `CMakeLists.txt`, `include/common.cuh`, `tests/conftest.py`
 
-  - [x] 2.2 编写 Attention 正确性属性测试
-    - **Property 1: Attention 计算正确性**
-    - **Validates: Requirements 1.1, 1.3, 1.4, 1.5**
+---
 
-  - [x] 2.3 编写 Softmax 不变量属性测试
-    - **Property 2: Softmax 数学不变量**
-    - **Validates: Requirements 1.2**
+## Phase 2: Attention Kernels
 
-  - [x] 2.4 实现 Python 绑定 (Naive Attention)
-    - 在 `python/bindings.cpp` 中添加 `naive_attention` 函数包装和输入验证
-    - 通过 pybind11 注册到 `cuda_llm_ops` 模块
-    - _Requirements: 8.1, 8.4_
+### Task 2: Naive Attention ✅
 
-- [x] 3. Checkpoint - Naive Attention 验证
-  - 确保所有测试通过，如有问题请询问用户
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 2.1 | Implement Q·K^T, softmax, and output computation | ✅ |
+| 2.2 | Property test: Attention correctness (P1) | ✅ |
+| 2.3 | Property test: Softmax invariants (P2) | ✅ |
+| 2.4 | Python binding with input validation | ✅ |
 
-- [x] 4. Tiled Attention 实现
-  - [x] 4.1 实现共享内存管理器
-    - 创建 `include/shared_memory.cuh`
-    - 实现 tile 划分逻辑
-    - 实现合并访存加载函数
-    - 实现 bank conflict 消除（padding）
-    - _Requirements: 2.1, 2.2, 2.4_
+**Files:** `src/naive_attention.cu`, `python/bindings.cpp`
 
-  - [x] 4.2 实现 Tiled Attention Kernel
-    - 创建 `src/tiled_attention.cu`
-    - 使用共享内存进行分块计算
-    - 实现 tile 内矩阵乘法
-    - _Requirements: 2.3, 2.5_
+---
 
-  - [x] 4.3 编写 Tiled Attention 正确性测试
-    - 验证 Tiled 实现与 Naive 实现数值一致
-    - _Requirements: 1.5_
+### Task 3: Tiled Attention ✅
 
-- [x] 5. FlashAttention 实现
-  - [x] 5.1 实现 Online Softmax 算法
-    - 创建 `include/online_softmax.cuh`
-    - 实现流式最大值和指数和计算
-    - 实现累积输出更新逻辑
-    - _Requirements: 3.1_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 3.1 | Implement shared memory manager | ✅ |
+| 3.2 | Implement tiled attention kernel | ✅ |
+| 3.3 | Verify numerical equivalence with naive | ✅ |
 
-  - [x] 5.2 实现 FlashAttention Forward Kernel
-    - 创建 `src/flash_attention.cu`
-    - 在单个 kernel 内完成完整 attention 计算
-    - 实现因果掩码支持
-    - _Requirements: 3.2, 3.3, 3.4, 3.5_
+**Files:** `include/shared_memory.cuh`, `src/tiled_attention.cu`
 
-  - [x] 5.3 编写 FlashAttention 一致性属性测试
-    - **Property 3: FlashAttention 与标准实现一致性**
-    - **Validates: Requirements 3.1, 3.6**
+---
 
-  - [x] 5.4 编写因果掩码正确性属性测试
-    - **Property 4: 因果掩码正确性**
-    - **Validates: Requirements 3.5**
+### Task 4: FlashAttention ✅
 
-  - [x] 5.5 实现 Python 绑定 (FlashAttention)
-    - 在 `python/bindings.cpp` 中添加 `flash_attention` 函数包装（支持 `is_causal` 参数）
-    - 通过 pybind11 注册到 `cuda_llm_ops` 模块
-    - 注意: 仅实现 forward，未包装为 `torch.autograd.Function`
-    - _Requirements: 8.1, 8.4_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 4.1 | Implement online softmax algorithm | ✅ |
+| 4.2 | Implement FlashAttention forward kernel | ✅ |
+| 4.3 | Property test: Equivalence with standard (P3) | ✅ |
+| 4.4 | Property test: Causal mask correctness (P4) | ✅ |
+| 4.5 | Python binding with is_causal parameter | ✅ |
 
-- [x] 6. Checkpoint - FlashAttention 验证
-  - 确保所有测试通过，如有问题请询问用户
+**Files:** `include/online_softmax.cuh`, `src/flash_attention.cu`
 
-- [x] 7. Warp-Level Primitives 实现
-  - [x] 7.1 实现 Warp Shuffle 规约函数
-    - 创建 `include/warp_primitives.cuh`
-    - 实现 warp_reduce_sum 和 warp_reduce_max
-    - 实现 block_reduce_sum
-    - _Requirements: 5.4_
+---
 
-- [x] 8. Tensor Core GEMM 实现
-  - [x] 8.1 实现基础 Tensor Core GEMM Kernel
-    - 创建 `src/tensor_core_gemm.cu`
-    - 使用 WMMA API 实现 FP16 矩阵乘法
-    - 实现维度对齐检查和 padding
-    - _Requirements: 4.1, 4.2, 4.4_
+## Phase 3: GEMM Kernels
 
-  - [x] 8.2 编写 FP16 GEMM 正确性属性测试
-    - **Property 5: FP16 GEMM 正确性**
-    - **Validates: Requirements 4.2, 5.1**
+### Task 5: Warp Primitives ✅
 
-  - [x] 8.3 实现 INT8 Tensor Core GEMM
-    - 扩展支持 INT8 输入和 INT32 累加
-    - _Requirements: 4.3_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 5.1 | Implement warp/block reduction functions | ✅ |
 
-  - [x] 8.4 编写 INT8 GEMM 正确性属性测试
-    - **Property 6: INT8 GEMM 正确性**
-    - **Validates: Requirements 4.3, 5.2**
+**Files:** `include/warp_primitives.cuh`
 
-- [x] 9. 高性能 GEMM 实现
-  - [x] 9.1 实现 Register Tiling GEMM Kernel
-    - 创建 `src/hgemm_kernel.cu`
-    - 实现多级 tiling（Block -> Warp -> Thread）
-    - 实现寄存器级数据复用
-    - _Requirements: 5.3_
+---
 
-  - [x] 9.2 实现矩阵布局支持
-    - 支持 NN, NT, TN, TT 四种布局
-    - _Requirements: 5.6_
+### Task 6: Tensor Core GEMM ✅
 
-  - [x] 9.3 编写矩阵布局等价性属性测试
-    - **Property 7: 矩阵布局等价性**
-    - **Validates: Requirements 5.6**
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 6.1 | Implement FP16 WMMA kernel | ✅ |
+| 6.2 | Property test: FP16 GEMM correctness (P5) | ✅ |
+| 6.3 | Implement INT8 WMMA kernel (Turing+) | ✅ |
+| 6.4 | Property test: INT8 GEMM correctness (P6) | ✅ |
 
-  - [x] 9.4 编写维度对齐处理属性测试
-    - **Property 8: 维度对齐处理**
-    - **Validates: Requirements 4.4**
+**Files:** `src/tensor_core_gemm.cu`
 
-  - [x] 9.5 实现 Python 绑定 (GEMM)
-    - 在 `python/bindings.cpp` 中添加 `gemm` 和 `tensor_core_gemm` 函数包装
-    - 支持 `trans_a`/`trans_b` 参数、`alpha`/`beta` 缩放
-    - 支持 FP32 和 FP16 精度
-    - _Requirements: 8.2, 8.5_
+---
 
-- [x] 10. Checkpoint - GEMM 验证
-  - 确保所有测试通过，如有问题请询问用户
+### Task 7: High-Performance GEMM ✅
 
-- [x] 11. 流水线优化
-  - [x] 11.1 实现 Pipeline Scheduler
-    - 创建 `include/pipeline.cuh`
-    - 实现 Double Buffering
-    - 实现可配置的流水线深度（2-4 级）
-    - _Requirements: 6.1, 6.2, 6.4_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 7.1 | Implement register tiling kernel | ✅ |
+| 7.2 | Support NN, NT, TN, TT layouts | ✅ |
+| 7.3 | Property test: Layout equivalence (P7) | ✅ |
+| 7.4 | Property test: Alignment handling (P8) | ✅ |
+| 7.5 | Python binding with trans_a/trans_b | ✅ |
 
-  - [x] 11.2 将流水线集成到 FlashAttention
-    - 修改 `src/flash_attention.cu` 使用 double buffering：smem_K[2] + smem_V[2]
-    - 实现 K/V tile 的数据预取与计算重叠 (prologue + 主循环交替 buffer)
-    - 支持 causal mask 早退时的 prefetch 跳过
-    - _Requirements: 6.3, 6.5_
+**Files:** `src/hgemm_kernel.cu`
 
-  - [x] 11.3 编写流水线配置正确性属性测试
-    - **Property 9: 流水线深度配置正确性**
-    - **Validates: Requirements 6.4**
+---
 
-- [x] 12. Python 接口完善
-  - [x] 12.1 实现输入验证和错误处理
-    - 添加维度检查、dtype 检查
-    - 实现明确的错误消息
-    - _Requirements: 8.3_
+## Phase 4: Optimization
 
-  - [x] 12.2 编写 Python 接口兼容性属性测试
-    - **Property 10: Python 接口兼容性**
-    - **Validates: Requirements 8.1, 8.2**
+### Task 8: Pipeline Optimization ✅
 
-  - [x] 12.3 编写批量和多头支持属性测试
-    - **Property 11: 批量和多头支持**
-    - **Validates: Requirements 8.4**
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 8.1 | Implement double buffering scheduler | ✅ |
+| 8.2 | Integrate into FlashAttention (K/V buffering) | ✅ |
+| 8.3 | Property test: Pipeline correctness (P9) | ✅ |
 
-  - [x] 12.4 编写任意形状矩阵支持属性测试
-    - **Property 12: 任意形状矩阵支持**
-    - **Validates: Requirements 8.5**
+**Files:** `include/pipeline.cuh`
 
-  - [x] 12.5 编写无效输入错误处理属性测试
-    - **Property 13: 无效输入错误处理**
-    - **Validates: Requirements 8.3**
+---
 
-- [x] 13. 性能分析工具
-  - [x] 13.1 实现 Profiler 接口
-    - 创建 `python/profiler.py`
-    - 集成 CUDA 事件计时
-    - 实现 TFLOPS 和带宽计算
-    - _Requirements: 7.1, 7.2_
+### Task 9: Python Interface Completion ✅
 
-  - [x] 13.2 实现性能基准测试脚本
-    - 创建 `benchmarks/` 目录
-    - 实现与 cuBLAS 的对比测试
-    - 实现瓶颈分析报告
-    - _Requirements: 7.4, 7.5_
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 9.1 | Input validation and error handling | ✅ |
+| 9.2 | Property test: Interface compatibility (P10) | ✅ |
+| 9.3 | Property test: Batch/multi-head support (P11) | ✅ |
+| 9.4 | Property test: Arbitrary shapes (P12) | ✅ |
+| 9.5 | Property test: Error handling (P13) | ✅ |
 
-- [ ] 14. Final Checkpoint - 完整验证
-  - 确保所有测试通过
-  - 运行性能基准测试
-  - 如有问题请询问用户
+**Files:** `python/bindings.cpp`, `python/__init__.py`
 
-## 待办任务 (Backlog)
+---
 
-以下任务尚未实现，作为后续开发计划。
+### Task 10: Profiler ✅
 
-- [x] 15. INT8 GEMM Python 绑定
-  - [x] 15.1 在 `bindings.cpp` 中添加 `tensor_core_gemm_int8` 包装函数
-    - 支持 INT8 输入 + INT32 输出
-    - 添加架构能力运行时检查 (SM ≥ 7.2)
-    - 在 `__init__.py` 中导出 `tensor_core_gemm_int8`
-    - _Requirements: 4.3, 5.2, 8.2_
-  - [x] 15.2 编写 INT8 GEMM Python 层测试
-    - 属性测试: 随机 INT8 矩阵与 INT32 参考实现对比
-    - 单元测试: 全 1 矩阵、错误处理
-    - **Property 6: INT8 GEMM 正确性**
-    - **Validates: Requirements 4.3, 5.2**
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 10.1 | Implement profiler with CUDA events | ✅ |
+| 10.2 | Create benchmark scripts | ✅ |
 
-- [ ] 16. BF16 精度支持
-  - [ ] 16.1 实现 BF16 Attention Kernel
-    - 扩展 `naive_attention` / `flash_attention` 支持 `__nv_bfloat16`
-    - _Requirements: 精度支持扩展_
-  - [ ] 16.2 实现 BF16 GEMM Kernel
-    - 扩展 `hgemm_kernel` 支持 `__nv_bfloat16`
-    - _Requirements: 精度支持扩展_
-  - [ ] 16.3 添加 BF16 Python 绑定和测试
+**Files:** `python/profiler.py`, `benchmarks/`
 
-- [ ] 17. FlashAttention Backward Pass
-  - [ ] 17.1 实现 FlashAttention backward kernel
-    - 保存 forward 的 logsumexp (L) 用于反向计算
-    - 实现 dQ, dK, dV 的计算
-  - [ ] 17.2 将 forward + backward 包装为 `torch.autograd.Function`
-  - [ ] 17.3 编写 backward 正确性测试 (数值梯度检查)
+---
 
-## Notes
+### Task 11: INT8 Python Binding ✅
 
-- 每个任务都引用了具体的需求条款以确保可追溯性
-- Checkpoint 任务用于阶段性验证
-- 属性测试验证通用正确性属性，单元测试验证边界情况
-- 所有测试任务都是必须完成的
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 11.1 | Add tensor_core_gemm_int8 wrapper | ✅ |
+| 11.2 | Runtime SM version check | ✅ |
+| 11.3 | Python layer tests | ✅ |
 
-## 实现状态总结
+**Files:** `python/bindings.cpp`
 
-| 模块 | 状态 | 关键文件 | 备注 |
-|------|------|----------|------|
-| 项目基础设施 | ✅ 完成 | CMakeLists.txt, common.cuh | |
-| Naive Attention | ✅ 完成 | naive_attention.cu, warp_primitives.cuh | |
-| Tiled Attention | ✅ 完成 | tiled_attention.cu, shared_memory.cuh | |
-| FlashAttention | ✅ 完成 (forward) | flash_attention.cu, online_softmax.cuh | backward 未实现 |
-| Tensor Core GEMM | ✅ 完成 | tensor_core_gemm.cu | FP16+INT8 kernel |
-| 高性能 GEMM | ✅ 完成 | hgemm_kernel.cu | 包含 double buffering |
-| 流水线优化 | ✅ 完成 | pipeline.cuh, flash_attention.cu | K/V double buffering |
-| Python 接口 | ✅ 完成 | bindings.cpp, __init__.py | 含 INT8 绑定 |
-| 性能分析工具 | ✅ 完成 | profiler.py, benchmarks/ | |
-| BF16 精度支持 | ❌ 未开始 | - | Backlog |
-| FlashAttention Backward | ❌ 未开始 | - | Backlog |
+---
 
-## 依赖关系
+## Phase 5: Finalization
+
+### Task 12: Final Verification ⏳
+
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 12.1 | All tests passing | ⏳ |
+| 12.2 | Performance benchmarks complete | ⏳ |
+| 12.3 | Documentation complete | ✅ |
+
+---
+
+## Backlog
+
+### Task 13: BF16 Precision ⏳
+
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 13.1 | BF16 attention kernel | ⏳ |
+| 13.2 | BF16 GEMM kernel | ⏳ |
+| 13.3 | BF16 Python bindings | ⏳ |
+
+---
+
+### Task 14: FlashAttention Backward ⏳
+
+| Subtask | Description | Status |
+|---------|-------------|--------|
+| 14.1 | Implement backward kernel | ⏳ |
+| 14.2 | Wrap as torch.autograd.Function | ⏳ |
+| 14.3 | Gradient check tests | ⏳ |
+
+---
+
+## Implementation Status
+
+| Module | Status | Key Files |
+|--------|--------|-----------|
+| Infrastructure | ✅ | `CMakeLists.txt`, `common.cuh` |
+| Naive Attention | ✅ | `naive_attention.cu` |
+| Tiled Attention | ✅ | `tiled_attention.cu` |
+| FlashAttention | ✅ | `flash_attention.cu` (forward only) |
+| Tensor Core GEMM | ✅ | `tensor_core_gemm.cu` |
+| High-Perf GEMM | ✅ | `hgemm_kernel.cu` |
+| Pipeline | ✅ | `pipeline.cuh` |
+| Python Interface | ✅ | `bindings.cpp` |
+| Profiler | ✅ | `profiler.py` |
+| BF16 Support | ⏳ | Backlog |
+| FlashAttention Backward | ⏳ | Backlog |
+
+---
+
+## Dependency Graph
 
 ```
-1. 基础设施 ─┬─> 2. Naive Attention ─> 3. Checkpoint
-             │
-             ├─> 4. Tiled Attention ─┬─> 5. FlashAttention ─> 6. Checkpoint
-             │                       │
-             │                       └─> 11. 流水线优化 (部分完成)
-             │
-             ├─> 7. Warp Primitives ─> 8. Tensor Core GEMM ─> 9. 高性能 GEMM ─> 10. Checkpoint
-             │
-             └─> 12. Python 接口 ─> 13. 性能分析 ─> 14. Final Checkpoint
-                  (依赖所有 kernel)
+Phase 1: Infrastructure
+    │
+    ├─▶ Phase 2: Attention
+    │       ├─▶ Task 2: Naive
+    │       ├─▶ Task 3: Tiled
+    │       └─▶ Task 4: Flash
+    │
+    └─▶ Phase 3: GEMM
+            ├─▶ Task 5: Warp Primitives
+            ├─▶ Task 6: Tensor Core
+            └─▶ Task 7: HGEMM
+                    │
+                    └─▶ Phase 4: Optimization
+                            ├─▶ Task 8: Pipeline
+                            ├─▶ Task 9: Python Interface
+                            ├─▶ Task 10: Profiler
+                            ├─▶ Task 11: INT8 Binding
+                            └─▶ Task 12: Final
 
 Backlog:
-  5. FlashAttention ─> 17. Backward Pass
-  8. Tensor Core GEMM ─> 15. INT8 Python 绑定
-  无依赖 ─> 16. BF16 精度支持
+  Task 4 (FlashAttention) ─▶ Task 14 (Backward)
+  No dependency ─▶ Task 13 (BF16)
 ```
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2025-01-01 | Initial task breakdown |
+| 1.1 | 2025-02-27 | Updated status, added backlog |
+| 1.2 | 2026-04-16 | Restructured with phases and tables |

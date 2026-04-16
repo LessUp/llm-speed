@@ -41,23 +41,27 @@ void validate_attention_inputs(
     TORCH_CHECK(q.dim() == 4, "Q must be 4D tensor [batch, heads, seq_len, head_dim]");
     TORCH_CHECK(k.dim() == 4, "K must be 4D tensor [batch, heads, seq_len, head_dim]");
     TORCH_CHECK(v.dim() == 4, "V must be 4D tensor [batch, heads, seq_len, head_dim]");
-    
+
     TORCH_CHECK(q.sizes() == k.sizes(), "Q and K must have same shape");
     TORCH_CHECK(k.sizes() == v.sizes(), "K and V must have same shape");
-    
+
     TORCH_CHECK(q.is_cuda(), "Q must be on CUDA device");
     TORCH_CHECK(k.is_cuda(), "K must be on CUDA device");
     TORCH_CHECK(v.is_cuda(), "V must be on CUDA device");
-    
+
     TORCH_CHECK(q.is_contiguous(), "Q must be contiguous");
     TORCH_CHECK(k.is_contiguous(), "K must be contiguous");
     TORCH_CHECK(v.is_contiguous(), "V must be contiguous");
-    
+
     auto dtype = q.scalar_type();
     TORCH_CHECK(dtype == torch::kFloat32 || dtype == torch::kFloat16,
                 "Only float32 and float16 are supported");
     TORCH_CHECK(k.scalar_type() == dtype, "K must have same dtype as Q");
     TORCH_CHECK(v.scalar_type() == dtype, "V must have same dtype as Q");
+
+    // Validate tensor dimensions are positive
+    TORCH_CHECK(q.size(0) > 0 && q.size(1) > 0 && q.size(2) > 0 && q.size(3) > 0,
+                "Tensor dimensions must be positive (non-zero)");
 }
 
 void validate_gemm_inputs(
@@ -73,12 +77,18 @@ void validate_gemm_inputs(
     auto b_rows = trans_b ? b.size(1) : b.size(0);
     TORCH_CHECK(a_cols == b_rows,
                 "Inner dimensions must match: A[M,K] @ B[K,N] (considering transposes)");
-    
+
     TORCH_CHECK(a.is_cuda(), "A must be on CUDA device");
     TORCH_CHECK(b.is_cuda(), "B must be on CUDA device");
-    
+
     TORCH_CHECK(a.is_contiguous(), "A must be contiguous");
     TORCH_CHECK(b.is_contiguous(), "B must be contiguous");
+
+    // Validate tensor dimensions are positive
+    TORCH_CHECK(a.size(0) > 0 && a.size(1) > 0,
+                "A tensor dimensions must be positive (non-zero)");
+    TORCH_CHECK(b.size(0) > 0 && b.size(1) > 0,
+                "B tensor dimensions must be positive (non-zero)");
 }
 
 // Naive attention wrapper

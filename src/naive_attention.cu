@@ -23,7 +23,8 @@ __global__ void naive_attention_simple_kernel(
     
     if (batch_idx >= batch_size || row_idx >= seq_len) return;
     
-    int offset = (batch_idx * num_heads + head_idx) * seq_len * head_dim;
+    // Pointer offsets (use int64 to avoid overflow for large tensors)
+    int64_t offset = (static_cast<int64_t>(batch_idx) * num_heads + head_idx) * seq_len * head_dim;
     const T* q_ptr = Q + offset + row_idx * head_dim;
     const T* k_ptr = K + offset;
     const T* v_ptr = V + offset;
@@ -71,8 +72,8 @@ __global__ void naive_attention_simple_kernel(
     }
     __syncthreads();
     
-    // Normalize
-    float inv_sum = 1.0f / block_sum;
+    // Normalize (protect against divide by zero)
+    float inv_sum = block_sum > 0.0f ? 1.0f / block_sum : 0.0f;
     for (int j = tid; j < seq_len; j += blockDim.x) {
         scores[j] *= inv_sum;
     }

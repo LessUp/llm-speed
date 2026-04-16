@@ -148,13 +148,15 @@ __global__ void hgemm_register_tiled_kernel(
         for (int n = 0; n < THREAD_N; n++) {
             int global_row = block_row + warp_row + thread_row + m;
             int global_col = block_col + warp_col + thread_col + n;
-            
+
             if (global_row < M && global_col < N) {
+                // Use int64_t for index calculation to avoid overflow for large matrices
+                int64_t idx = static_cast<int64_t>(global_row) * N + global_col;
                 float result = alpha * reg_C[m][n];
                 if (beta != 0.0f) {
-                    result += beta * static_cast<float>(C[global_row * N + global_col]);
+                    result += beta * static_cast<float>(C[idx]);
                 }
-                C[global_row * N + global_col] = static_cast<T>(result);
+                C[idx] = static_cast<T>(result);
             }
         }
     }

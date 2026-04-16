@@ -2,11 +2,13 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master, main]
+    branches: [main, master]
     paths:
-      - '*.md'
+      - '**.md'
       - 'docs/**'
+      - 'changelog/**'
       - '_config.yml'
+      - '_layouts/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -16,11 +18,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,6 +33,7 @@ jobs:
           sparse-checkout: |
             *.md
             _config.yml
+            _layouts
             docs
             changelog
             LICENSE
@@ -47,6 +51,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
 
   deploy:
+    name: Deploy
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

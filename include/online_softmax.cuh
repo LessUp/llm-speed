@@ -72,7 +72,8 @@ __device__ __forceinline__ OnlineSoftmaxState online_softmax_merge(
 __device__ __forceinline__ float online_softmax_finalize(
     const OnlineSoftmaxState& state
 ) {
-    return 1.0f / state.sum_exp;
+    // Protect against divide by zero (sum_exp can be 0 for empty/fully-masked inputs)
+    return state.sum_exp > 0.0f ? 1.0f / state.sum_exp : 0.0f;
 }
 
 // Compute softmax weight for a value given the final state
@@ -80,7 +81,9 @@ __device__ __forceinline__ float online_softmax_weight(
     float value,
     const OnlineSoftmaxState& state
 ) {
-    return expf(value - state.max_val) / state.sum_exp;
+    // Protect against divide by zero
+    float inv_sum = state.sum_exp > 0.0f ? 1.0f / state.sum_exp : 0.0f;
+    return expf(value - state.max_val) * inv_sum;
 }
 
 // Update output accumulator with rescaling for online softmax
@@ -102,14 +105,14 @@ __device__ __forceinline__ void online_softmax_update_output(
     float old_sum,
     float new_sum
 ) {
-    // Rescale factor for old output
-    float rescale = expf(old_max - new_max) * old_sum / new_sum;
-    float inv_new_sum = 1.0f / new_sum;
-    
+    // Protect against divide by zero
+    float rescale = new_sum > 0.0f ? expf(old_max - new_max) * old_sum / new_sum : 0.0f;
+    float inv_new_sum = new_sum > 0.0f ? 1.0f / new_sum : 0.0f;
+
     for (int d = 0; d < dim; d++) {
         // Rescale old accumulator
         float val = output[d] * rescale;
-        
+
         // Add new contribution: exp_weights @ V_block[:, d]
         float new_val = 0.0f;
         for (int j = 0; j < block_n; j++) {
@@ -134,11 +137,11 @@ __device__ __forceinline__ void flash_attention_update_output(
     for (int j = 0; j < block_n; j++) {
         block_max = fmaxf(block_max, scores[j]);
     }
-    
+
     // Compute new max and scaling factors
     float new_max = fmaxf(state.max_val, block_max);
     float old_scale = expf(state.max_val - new_max);
-    
+
     // Compute exp(scores - new_max) and their sum
     float exp_scores[BLOCK_N];
     float block_sum = 0.0f;
@@ -146,14 +149,14 @@ __device__ __forceinline__ void flash_attention_update_output(
         exp_scores[j] = expf(scores[j] - new_max);
         block_sum += exp_scores[j];
     }
-    
+
     // New sum
     float new_sum = state.sum_exp * old_scale + block_sum;
-    
-    // Rescale old output and add new contribution
-    float rescale_old = old_scale * state.sum_exp / new_sum;
-    float scale_new = 1.0f / new_sum;
-    
+
+    // Rescale old output and add new contribution (protect against divide by zero)
+    float rescale_old = new_sum > 0.0f ? old_scale * state.sum_exp / new_sum : 0.0f;
+    float scale_new = new_sum > 0.0f ? 1.0f / new_sum : 0.0f;
+
     #pragma unroll
     for (int d = 0; d < HEAD_DIM; d++) {
         float new_val = 0.0f;
@@ -162,7 +165,7 @@ __device__ __forceinline__ void flash_attention_update_output(
         }
         output[d] = output[d] * rescale_old + new_val * scale_new;
     }
-    
+
     // Update state
     state.max_val = new_max;
     state.sum_exp = new_sum;

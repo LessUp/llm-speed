@@ -1,26 +1,28 @@
 title: LLM-Speed
 description: >-
-  CUDA LLM 内核优化 — FlashAttention、FP16/INT8 Tensor Core GEMM、
-  pybind11 Python 绑定与 Hypothesis 属性测试
-remote_theme: pages-themes/cayman@v0.2.0
+  CUDA LLM Kernel Optimization Library — FlashAttention, Tensor Core GEMM,
+  Python bindings with pybind11, and property-based testing with Hypothesis
+remote_theme: null
 plugins:
-  - jekyll-remote-theme
   - jekyll-seo-tag
 repository: LessUp/llm-speed
 show_downloads: false
 
-# SEO & metadata
+# Site URL configuration
 url: https://lessup.github.io
 baseurl: /llm-speed
-lang: zh-CN
+lang: en
 author: LessUp
 
-# Markdown rendering
+# Markdown configuration
 markdown: kramdown
 kramdown:
   input: GFM
   hard_wrap: false
   syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
 
 # Default layout for all pages
 defaults:
@@ -32,13 +34,18 @@ defaults:
       path: "changelog"
     values:
       layout: default
+  - scope:
+      path: "docs"
+    values:
+      layout: default
 
-# Exclude irrelevant files from Jekyll build
+# Exclude build artifacts and source files from Jekyll
 exclude:
   - .git
   - .github
   - .kiro
   - .vscode
+  - .ruff_cache
   - include
   - src
   - python
@@ -46,6 +53,8 @@ exclude:
   - benchmarks
   - build
   - cmake-build-*
+  - __pycache__
+  - "*.egg-info"
   - CMakeLists.txt
   - CMakePresets.json
   - pyproject.toml
@@ -63,5 +72,33 @@ exclude:
   - "*.h"
   - "*.o"
   - "*.so"
-  - __pycache__
-  - "*.egg-info"
+
+# Include these files explicitly
+include:
+  - _layouts
+
+# SEO and social media
+twitter:
+  username: nvidia
+  card: summary
+
+social:
+  name: NVIDIA CUDA
+  links:
+    - https://developer.nvidia.com/cuda-toolkit
+
+# Navigation (for custom use)
+navigation:
+  - name: Home
+    url: /
+  - name: Guide
+    url: /docs/deepwiki
+  - name: API
+    url: /docs/api
+  - name: Performance
+    url: /docs/performance
+  - name: Changelog
+    url: /changelog/
+  - name: GitHub
+    url: https://github.com/LessUp/llm-speed
+    external: true

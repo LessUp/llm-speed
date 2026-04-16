@@ -14,6 +14,7 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 def _read_version() -> str:
     """Read version from pyproject.toml."""
     text = Path(__file__).with_name("pyproject.toml").read_text()
+    # Match version = "X.Y.Z" in [project] section
     match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
     if not match:
         raise RuntimeError("Cannot find version in pyproject.toml")

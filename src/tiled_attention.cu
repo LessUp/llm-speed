@@ -56,8 +56,8 @@ __global__ void tiled_attention_kernel(
         row_sum[m] = 0.0f;
     }
     
-    // Pointer offsets
-    int offset = (batch_idx * num_heads + head_idx) * seq_len * head_dim;
+    // Pointer offsets (use int64 to avoid overflow for large tensors)
+    int64_t offset = (static_cast<int64_t>(batch_idx) * num_heads + head_idx) * seq_len * head_dim;
     const T* q_ptr = Q + offset;
     const T* k_ptr = K + offset;
     const T* v_ptr = V + offset;

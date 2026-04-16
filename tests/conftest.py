@@ -44,21 +44,33 @@ def random_seed():
 @pytest.fixture
 def attention_inputs(device):
     """Generate random attention inputs."""
-    def _generate(batch_size=2, num_heads=4, seq_len=64, head_dim=32, dtype=torch.float32):
-        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
-        k = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
-        v = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
+
+    def _generate(
+        batch_size=2, num_heads=4, seq_len=64, head_dim=32, dtype=torch.float32
+    ):
+        q = torch.randn(
+            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
+        )
+        k = torch.randn(
+            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
+        )
+        v = torch.randn(
+            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
+        )
         return q, k, v
+
     return _generate
 
 
 @pytest.fixture
 def gemm_inputs(device):
     """Generate random GEMM inputs."""
+
     def _generate(M=64, N=64, K=64, dtype=torch.float32):
         a = torch.randn(M, K, device=device, dtype=dtype)
         b = torch.randn(K, N, device=device, dtype=dtype)
         return a, b
+
     return _generate
 
 
@@ -78,20 +90,20 @@ def compute_attention_reference(q, k, v, scale=None, is_causal=False):
     """Compute attention using PyTorch reference implementation."""
     if scale is None:
         scale = 1.0 / (q.size(-1) ** 0.5)
-    
+
     # Q @ K^T
     scores = torch.matmul(q, k.transpose(-2, -1)) * scale
-    
+
     # Causal mask
     if is_causal:
         seq_len = q.size(-2)
         mask = torch.triu(torch.ones(seq_len, seq_len, device=q.device), diagonal=1)
-        scores = scores.masked_fill(mask.bool(), float('-inf'))
-    
+        scores = scores.masked_fill(mask.bool(), float("-inf"))
+
     # Softmax
     attn_weights = torch.softmax(scores, dim=-1)
-    
+
     # Attention @ V
     output = torch.matmul(attn_weights, v)
-    
+
     return output, attn_weights
