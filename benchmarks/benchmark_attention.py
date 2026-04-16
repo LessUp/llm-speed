@@ -76,9 +76,7 @@ def benchmark_attention(
         print(f"\nBenchmarking seq_len={seq_len}...")
 
         # Create inputs
-        q = torch.randn(
-            batch_size, num_heads, seq_len, head_dim, device="cuda", dtype=dtype
-        )
+        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device="cuda", dtype=dtype)
         k = torch.randn_like(q)
         v = torch.randn_like(q)
 
@@ -107,9 +105,7 @@ def benchmark_attention(
         if has_custom:
             # Naive attention
             try:
-                naive_time = benchmark_kernel(
-                    naive_attention, q, k, v, warmup, iterations
-                )
+                naive_time = benchmark_kernel(naive_attention, q, k, v, warmup, iterations)
                 result["naive_ms"] = naive_time
                 result["naive_tflops"] = (flops / 1e12) / (naive_time / 1000)
                 result["naive_speedup"] = pytorch_time / naive_time
@@ -119,9 +115,7 @@ def benchmark_attention(
 
             # Tiled attention
             try:
-                tiled_time = benchmark_kernel(
-                    tiled_attention, q, k, v, warmup, iterations
-                )
+                tiled_time = benchmark_kernel(tiled_attention, q, k, v, warmup, iterations)
                 result["tiled_ms"] = tiled_time
                 result["tiled_tflops"] = (flops / 1e12) / (tiled_time / 1000)
                 result["tiled_speedup"] = pytorch_time / tiled_time
@@ -131,9 +125,7 @@ def benchmark_attention(
 
             # Flash attention
             try:
-                flash_time = benchmark_kernel(
-                    flash_attention, q, k, v, warmup, iterations
-                )
+                flash_time = benchmark_kernel(flash_attention, q, k, v, warmup, iterations)
                 result["flash_ms"] = flash_time
                 result["flash_tflops"] = (flops / 1e12) / (flash_time / 1000)
                 result["flash_speedup"] = pytorch_time / flash_time
@@ -143,9 +135,9 @@ def benchmark_attention(
 
         # Record peak GPU memory
         result["peak_memory_mb"] = torch.cuda.max_memory_allocated() / (1024 * 1024)
-        result["input_memory_mb"] = (
-            mem_before + q.nelement() * q.element_size() * 3
-        ) / (1024 * 1024)
+        result["input_memory_mb"] = (mem_before + q.nelement() * q.element_size() * 3) / (
+            1024 * 1024
+        )
 
         results.append(result)
 
@@ -162,9 +154,7 @@ def print_results(results: List[Dict]):
     print(
         f"\n{'Seq Len':>8} | {'PyTorch':>10} | {'Naive':>10} | {'Tiled':>10} | {'Flash':>10} | {'Best Speedup':>12}"
     )
-    print(
-        f"{'':>8} | {'(ms)':>10} | {'(ms)':>10} | {'(ms)':>10} | {'(ms)':>10} | {'':>12}"
-    )
+    print(f"{'':>8} | {'(ms)':>10} | {'(ms)':>10} | {'(ms)':>10} | {'(ms)':>10} | {'':>12}")
     print("-" * 80)
 
     for r in results:
@@ -184,12 +174,8 @@ def print_results(results: List[Dict]):
     print("TFLOPS COMPARISON")
     print("=" * 80)
 
-    print(
-        f"\n{'Seq Len':>8} | {'PyTorch':>12} | {'Naive':>12} | {'Tiled':>12} | {'Flash':>12}"
-    )
-    print(
-        f"{'':>8} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12}"
-    )
+    print(f"\n{'Seq Len':>8} | {'PyTorch':>12} | {'Naive':>12} | {'Tiled':>12} | {'Flash':>12}")
+    print(f"{'':>8} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12}")
     print("-" * 80)
 
     for r in results:
@@ -213,17 +199,13 @@ def main():
         help="Sequence lengths to benchmark",
     )
     parser.add_argument("--batch-size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--num-heads", type=int, default=32, help="Number of attention heads"
-    )
+    parser.add_argument("--num-heads", type=int, default=32, help="Number of attention heads")
     parser.add_argument("--head-dim", type=int, default=128, help="Head dimension")
     parser.add_argument(
         "--dtype", type=str, default="fp16", choices=["fp16", "fp32"], help="Data type"
     )
     parser.add_argument("--warmup", type=int, default=10, help="Warmup iterations")
-    parser.add_argument(
-        "--iterations", type=int, default=100, help="Benchmark iterations"
-    )
+    parser.add_argument("--iterations", type=int, default=100, help="Benchmark iterations")
     parser.add_argument(
         "--output", type=str, default=None, help="Output JSON file path for results"
     )

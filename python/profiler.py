@@ -69,16 +69,12 @@ class CUDAProfiler:
     ) -> KernelMetrics:
         """Profile attention kernel and compute metrics."""
         # Create inputs
-        q = torch.randn(
-            batch_size, num_heads, seq_len, head_dim, device="cuda", dtype=dtype
-        )
+        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device="cuda", dtype=dtype)
         k = torch.randn_like(q)
         v = torch.randn_like(q)
 
         # Measure time
-        elapsed_ms = self.measure_time(
-            func, q, k, v, warmup=warmup, iterations=iterations
-        )
+        elapsed_ms = self.measure_time(func, q, k, v, warmup=warmup, iterations=iterations)
 
         # Compute FLOPs
         # Attention: 2 * batch * heads * seq^2 * head_dim (Q@K^T)

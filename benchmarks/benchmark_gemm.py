@@ -103,9 +103,7 @@ def benchmark_gemm(
                 custom_time = benchmark_kernel(gemm, a, b, warmup, iterations)
                 result["custom_ms"] = custom_time
                 result["custom_tflops"] = (flops / 1e12) / (custom_time / 1000)
-                result["custom_relative"] = (
-                    result["custom_tflops"] / result["cublas_tflops"]
-                )
+                result["custom_relative"] = result["custom_tflops"] / result["cublas_tflops"]
             except Exception as e:
                 print(f"  Custom GEMM failed: {e}")
                 result["custom_ms"] = float("inf")
@@ -114,9 +112,7 @@ def benchmark_gemm(
             # Tensor Core GEMM (FP16 only)
             if dtype == torch.float16:
                 try:
-                    tc_time = benchmark_kernel(
-                        tensor_core_gemm, a, b, warmup, iterations
-                    )
+                    tc_time = benchmark_kernel(tensor_core_gemm, a, b, warmup, iterations)
                     result["tensor_core_ms"] = tc_time
                     result["tensor_core_tflops"] = (flops / 1e12) / (tc_time / 1000)
                     result["tensor_core_relative"] = (
@@ -170,9 +166,7 @@ def print_results(results: List[Dict]):
     print("=" * 100)
 
     print(f"\n{'Size':>20} | {'cuBLAS':>12} | {'Custom':>12} | {'TC GEMM':>12}")
-    print(
-        f"{'(M x N x K)':>20} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12}"
-    )
+    print(f"{'(M x N x K)':>20} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12} | {'(TFLOPS)':>12}")
     print("-" * 100)
 
     for r in results:
@@ -183,22 +177,16 @@ def print_results(results: List[Dict]):
 
         tc_str = f"{tc_tflops:.2f}" if tc_tflops > 0 else "N/A"
 
-        print(
-            f"{size_str:>20} | {cublas_tflops:>12.2f} | {custom_tflops:>12.2f} | {tc_str:>12}"
-        )
+        print(f"{size_str:>20} | {cublas_tflops:>12.2f} | {custom_tflops:>12.2f} | {tc_str:>12}")
 
     # Summary
     print("\n" + "=" * 100)
     print("SUMMARY")
     print("=" * 100)
 
-    avg_custom_rel = (
-        sum(r.get("custom_relative", 0) for r in results) / len(results) * 100
-    )
+    avg_custom_rel = sum(r.get("custom_relative", 0) for r in results) / len(results) * 100
     avg_tc_rel = sum(
-        r.get("tensor_core_relative", 0)
-        for r in results
-        if r.get("tensor_core_relative", 0) > 0
+        r.get("tensor_core_relative", 0) for r in results if r.get("tensor_core_relative", 0) > 0
     )
     tc_count = sum(1 for r in results if r.get("tensor_core_relative", 0) > 0)
     if tc_count > 0:
@@ -231,9 +219,7 @@ def main():
         "--dtype", type=str, default="fp16", choices=["fp16", "fp32"], help="Data type"
     )
     parser.add_argument("--warmup", type=int, default=10, help="Warmup iterations")
-    parser.add_argument(
-        "--iterations", type=int, default=100, help="Benchmark iterations"
-    )
+    parser.add_argument("--iterations", type=int, default=100, help="Benchmark iterations")
     parser.add_argument(
         "--output", type=str, default=None, help="Output JSON file path for results"
     )

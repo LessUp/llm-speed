@@ -10,13 +10,13 @@ namespace py = pybind11;
 
 // Forward declarations
 void naive_attention_fp32(const float*, const float*, const float*, float*,
-                          int, int, int, int, float, cudaStream_t);
+                          int, int, int, int, float, bool, cudaStream_t);
 void naive_attention_fp16(const half*, const half*, const half*, half*,
-                          int, int, int, int, float, cudaStream_t);
+                          int, int, int, int, float, bool, cudaStream_t);
 void tiled_attention_fp32(const float*, const float*, const float*, float*,
-                          int, int, int, int, float, cudaStream_t);
+                          int, int, int, int, float, bool, cudaStream_t);
 void tiled_attention_fp16(const half*, const half*, const half*, half*,
-                          int, int, int, int, float, cudaStream_t);
+                          int, int, int, int, float, bool, cudaStream_t);
 void flash_attention_fp32(const float*, const float*, const float*, float*,
                           int, int, int, int, float, bool, cudaStream_t);
 void flash_attention_fp16(const half*, const half*, const half*, half*,
@@ -96,22 +96,23 @@ torch::Tensor naive_attention(
     const torch::Tensor& q,
     const torch::Tensor& k,
     const torch::Tensor& v,
-    float scale = 0.0f
+    float scale = 0.0f,
+    bool is_causal = false
 ) {
     validate_attention_inputs(q, k, v);
-    
+
     int batch_size = q.size(0);
     int num_heads = q.size(1);
     int seq_len = q.size(2);
     int head_dim = q.size(3);
-    
+
     if (scale == 0.0f) {
         scale = 1.0f / sqrtf(static_cast<float>(head_dim));
     }
-    
+
     auto output = torch::empty_like(q);
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-    
+
     if (q.scalar_type() == torch::kFloat32) {
         naive_attention_fp32(
             q.data_ptr<float>(),
@@ -119,7 +120,7 @@ torch::Tensor naive_attention(
             v.data_ptr<float>(),
             output.data_ptr<float>(),
             batch_size, num_heads, seq_len, head_dim,
-            scale, stream
+            scale, is_causal, stream
         );
     } else {
         naive_attention_fp16(
@@ -128,10 +129,10 @@ torch::Tensor naive_attention(
             reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
             reinterpret_cast<half*>(output.data_ptr<at::Half>()),
             batch_size, num_heads, seq_len, head_dim,
-            scale, stream
+            scale, is_causal, stream
         );
     }
-    
+
     return output;
 }
 
@@ -140,22 +141,23 @@ torch::Tensor tiled_attention(
     const torch::Tensor& q,
     const torch::Tensor& k,
     const torch::Tensor& v,
-    float scale = 0.0f
+    float scale = 0.0f,
+    bool is_causal = false
 ) {
     validate_attention_inputs(q, k, v);
-    
+
     int batch_size = q.size(0);
     int num_heads = q.size(1);
     int seq_len = q.size(2);
     int head_dim = q.size(3);
-    
+
     if (scale == 0.0f) {
         scale = 1.0f / sqrtf(static_cast<float>(head_dim));
     }
-    
+
     auto output = torch::empty_like(q);
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-    
+
     if (q.scalar_type() == torch::kFloat32) {
         tiled_attention_fp32(
             q.data_ptr<float>(),
@@ -163,7 +165,7 @@ torch::Tensor tiled_attention(
             v.data_ptr<float>(),
             output.data_ptr<float>(),
             batch_size, num_heads, seq_len, head_dim,
-            scale, stream
+            scale, is_causal, stream
         );
     } else {
         tiled_attention_fp16(
@@ -172,10 +174,10 @@ torch::Tensor tiled_attention(
             reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
             reinterpret_cast<half*>(output.data_ptr<at::Half>()),
             batch_size, num_heads, seq_len, head_dim,
-            scale, stream
+            scale, is_causal, stream
         );
     }
-    
+
     return output;
 }
 
@@ -331,33 +333,35 @@ torch::Tensor tensor_core_gemm_int8_wrapper(
 
 PYBIND11_MODULE(cuda_llm_ops, m) {
     m.doc() = "CUDA LLM Kernel Optimization - High-performance attention and GEMM kernels";
-    
+
     // Attention functions
     m.def("naive_attention", &naive_attention,
-          py::arg("q"), py::arg("k"), py::arg("v"), py::arg("scale") = 0.0f,
+          py::arg("q"), py::arg("k"), py::arg("v"),
+          py::arg("scale") = 0.0f, py::arg("is_causal") = false,
           "Naive attention implementation (baseline)");
-    
+
     m.def("tiled_attention", &tiled_attention,
-          py::arg("q"), py::arg("k"), py::arg("v"), py::arg("scale") = 0.0f,
+          py::arg("q"), py::arg("k"), py::arg("v"),
+          py::arg("scale") = 0.0f, py::arg("is_causal") = false,
           "Tiled attention with shared memory optimization");
-    
+
     m.def("flash_attention", &flash_attention,
-          py::arg("q"), py::arg("k"), py::arg("v"), 
+          py::arg("q"), py::arg("k"), py::arg("v"),
           py::arg("scale") = 0.0f, py::arg("is_causal") = false,
           "FlashAttention with online softmax");
-    
+
     // GEMM functions
     m.def("gemm", &gemm,
           py::arg("a"), py::arg("b"),
           py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
           py::arg("trans_a") = false, py::arg("trans_b") = false,
           "High-performance GEMM with register tiling");
-    
+
     m.def("tensor_core_gemm", &tensor_core_gemm,
           py::arg("a"), py::arg("b"),
           py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
           "Tensor Core GEMM (FP16 input, FP32 output)");
-    
+
     m.def("tensor_core_gemm_int8", &tensor_core_gemm_int8_wrapper,
           py::arg("a"), py::arg("b"),
           "Tensor Core GEMM (INT8 input, INT32 output, requires Turing+ SM>=7.2)");

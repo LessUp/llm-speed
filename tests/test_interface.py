@@ -27,9 +27,7 @@ class TestPythonInterface:
         seq_len=st.integers(min_value=16, max_value=128),
         head_dim=st.sampled_from([32, 64, 128]),
     )
-    def test_pytorch_tensor_compatibility(
-        self, batch, heads, seq_len, head_dim, device
-    ):
+    def test_pytorch_tensor_compatibility(self, batch, heads, seq_len, head_dim, device):
         """
         Feature: cuda-llm-kernel-optimization
         Property 10: Python 接口兼容性
@@ -56,14 +54,10 @@ class TestPythonInterface:
             assert isinstance(output, torch.Tensor), "Output should be PyTorch Tensor"
 
             # Check device preserved
-            assert output.device == q.device, (
-                f"Device mismatch: {output.device} vs {q.device}"
-            )
+            assert output.device == q.device, f"Device mismatch: {output.device} vs {q.device}"
 
             # Check dtype preserved
-            assert output.dtype == q.dtype, (
-                f"Dtype mismatch: {output.dtype} vs {q.dtype}"
-            )
+            assert output.dtype == q.dtype, f"Dtype mismatch: {output.dtype} vs {q.dtype}"
 
     @pytest.mark.cuda
     @pytest.mark.property
@@ -121,10 +115,7 @@ class TestErrorHandling:
             flash_attention(q, k, v)
 
         # Should have meaningful error message
-        assert (
-            "shape" in str(excinfo.value).lower()
-            or "match" in str(excinfo.value).lower()
-        )
+        assert "shape" in str(excinfo.value).lower() or "match" in str(excinfo.value).lower()
 
     @pytest.mark.cuda
     def test_wrong_tensor_dim_error(self, device):
@@ -160,10 +151,7 @@ class TestErrorHandling:
         with pytest.raises(Exception) as excinfo:
             flash_attention(q, k, v)
 
-        assert (
-            "cuda" in str(excinfo.value).lower()
-            or "device" in str(excinfo.value).lower()
-        )
+        assert "cuda" in str(excinfo.value).lower() or "device" in str(excinfo.value).lower()
 
     @pytest.mark.cuda
     def test_unsupported_dtype_error(self, device):
@@ -181,10 +169,7 @@ class TestErrorHandling:
         with pytest.raises(Exception) as excinfo:
             flash_attention(q, k, v)
 
-        assert (
-            "dtype" in str(excinfo.value).lower()
-            or "type" in str(excinfo.value).lower()
-        )
+        assert "dtype" in str(excinfo.value).lower() or "type" in str(excinfo.value).lower()
 
     @pytest.mark.cuda
     def test_gemm_dimension_mismatch(self, device):
@@ -200,10 +185,7 @@ class TestErrorHandling:
         with pytest.raises(Exception) as excinfo:
             gemm(a, b)
 
-        assert (
-            "dimension" in str(excinfo.value).lower()
-            or "match" in str(excinfo.value).lower()
-        )
+        assert "dimension" in str(excinfo.value).lower() or "match" in str(excinfo.value).lower()
 
     @pytest.mark.cuda
     @pytest.mark.property
@@ -274,15 +256,9 @@ class TestPipelineConfiguration:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         # FlashAttention uses pipelining internally
         pipelined_output = flash_attention(q, k, v)

@@ -45,18 +45,10 @@ def random_seed():
 def attention_inputs(device):
     """Generate random attention inputs."""
 
-    def _generate(
-        batch_size=2, num_heads=4, seq_len=64, head_dim=32, dtype=torch.float32
-    ):
-        q = torch.randn(
-            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
-        )
-        k = torch.randn(
-            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
-        )
-        v = torch.randn(
-            batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype
-        )
+    def _generate(batch_size=2, num_heads=4, seq_len=64, head_dim=32, dtype=torch.float32):
+        q = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
+        k = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
+        v = torch.randn(batch_size, num_heads, seq_len, head_dim, device=device, dtype=dtype)
         return q, k, v
 
     return _generate
@@ -81,8 +73,7 @@ def assert_close(actual, expected, rtol=1e-3, atol=1e-3, msg=""):
         max_diff = diff.max().item()
         mean_diff = diff.mean().item()
         raise AssertionError(
-            f"{msg}\nMax diff: {max_diff}, Mean diff: {mean_diff}, "
-            f"rtol: {rtol}, atol: {atol}"
+            f"{msg}\nMax diff: {max_diff}, Mean diff: {mean_diff}, rtol: {rtol}, atol: {atol}"
         )
 
 
