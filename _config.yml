@@ -1,20 +1,66 @@
-title: LLM-Speed
-description: >-
-  CUDA LLM Kernel Optimization Library — FlashAttention, Tensor Core GEMM,
-  Python bindings with pybind11, and property-based testing with Hypothesis
-remote_theme: null
-plugins:
-  - jekyll-seo-tag
-repository: LessUp/llm-speed
-show_downloads: false
+# ═════════════════════════════════════════════════════════════════════════════
+# LLM-Speed GitHub Pages Configuration - Premium Edition
+# ═════════════════════════════════════════════════════════════════════════════
 
-# Site URL configuration
+title: "LLM-Speed"
+description: >-
+  High-performance CUDA kernel library for LLM inference — FlashAttention with O(N) memory,
+  Tensor Core GEMM acceleration, and seamless PyTorch integration
+
+# Repository Info
+repository: LessUp/llm-speed
+show_downloads: true
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SITE CONFIGURATION
+# ═════════════════════════════════════════════════════════════════════════════
 url: https://lessup.github.io
 baseurl: /llm-speed
 lang: en
-author: LessUp
 
-# Markdown configuration
+# Author & Social
+author:
+  name: LessUp
+  email: 
+  twitter: 
+  github: LessUp
+
+# Social Links
+social:
+  name: LLM-Speed
+  links:
+    - https://github.com/LessUp/llm-speed
+    - https://lessup.github.io/llm-speed
+
+# Twitter Card
+twitter:
+  username: 
+  card: summary_large_image
+
+# ═════════════════════════════════════════════════════════════════════════════
+# THEME & PLUGINS - POWERED BY JEKYLL
+# ═════════════════════════════════════════════════════════════════════════════
+remote_theme: null
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-last-modified-at
+
+# SEO Settings
+seo:
+  type: SoftwareApplication
+  name: LLM-Speed
+  application:
+    category: DeveloperApplication
+    operating_system: Linux
+    price: 0
+    price_currency: USD
+
+# ═════════════════════════════════════════════════════════════════════════════
+# MARKDOWN PROCESSING
+# ═════════════════════════════════════════════════════════════════════════════
 markdown: kramdown
 kramdown:
   input: GFM
@@ -22,30 +68,176 @@ kramdown:
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     block:
+      line_numbers: true
+      line_numbers_start: 1
+      wrap: false
+    css_class: 'highlight'
+    span:
       line_numbers: false
 
-# Default layout for all pages
+# ═════════════════════════════════════════════════════════════════════════════
+# DEFAULT LAYOUTS BY PATH
+# ═════════════════════════════════════════════════════════════════════════════
 defaults:
+  # Root pages
   - scope:
       path: ""
+      type: pages
     values:
       layout: default
+      lang: en
+  
+  # English docs
+  - scope:
+      path: "docs/en"
+    values:
+      layout: docs
+      lang: en
+      nav_section: docs-en
+  
+  # Chinese docs
+  - scope:
+      path: "docs/zh-CN"
+    values:
+      layout: docs
+      lang: zh-CN
+      nav_section: docs-zh
+  
+  # Docs index
+  - scope:
+      path: "docs/README.md"
+    values:
+      layout: default
+      lang: en
+  
+  # Changelog
   - scope:
       path: "changelog"
     values:
-      layout: default
-  - scope:
-      path: "docs"
-    values:
-      layout: default
+      layout: page
+      nav_section: changelog
 
-# Exclude build artifacts and source files from Jekyll
+# ═════════════════════════════════════════════════════════════════════════════
+# NAVIGATION STRUCTURE
+# ═════════════════════════════════════════════════════════════════════════════
+navigation:
+  # English Navigation
+  en:
+    - name: Home
+      url: /
+      icon: 🏠
+    - name: Quick Start
+      url: /docs/en/quickstart
+      icon: 🚀
+    - name: API
+      url: /docs/en/api
+      icon: 📚
+      submenu:
+        - name: API Reference
+          url: /docs/en/api
+        - name: Architecture
+          url: /docs/en/architecture
+    - name: Performance
+      url: /docs/en/performance
+      icon: ⚡
+    - name: Changelog
+      url: /changelog/
+      icon: 📝
+    - name: GitHub
+      url: https://github.com/LessUp/llm-speed
+      icon: 💻
+      external: true
+  
+  # Chinese Navigation
+  zh:
+    - name: 首页
+      url: /
+      icon: 🏠
+    - name: 快速入门
+      url: /docs/zh-CN/quickstart
+      icon: 🚀
+    - name: API
+      url: /docs/zh-CN/api
+      icon: 📚
+      submenu:
+        - name: API 参考
+          url: /docs/zh-CN/api
+        - name: 架构设计
+          url: /docs/zh-CN/architecture
+    - name: 性能指南
+      url: /docs/zh-CN/performance
+      icon: ⚡
+    - name: 变更日志
+      url: /changelog/
+      icon: 📝
+    - name: GitHub
+      url: https://github.com/LessUp/llm-speed
+      icon: 💻
+      external: true
+
+# ═════════════════════════════════════════════════════════════════════════════
+# DOC SECTIONS FOR SIDEBAR
+# ═════════════════════════════════════════════════════════════════════════════
+doc_sections:
+  en:
+    - title: Getting Started
+      items:
+        - name: Quick Start
+          url: /docs/en/quickstart
+        - name: Troubleshooting
+          url: /docs/en/troubleshooting
+    - title: Core Documentation
+      items:
+        - name: API Reference
+          url: /docs/en/api
+        - name: Architecture
+          url: /docs/en/architecture
+        - name: Performance
+          url: /docs/en/performance
+  
+  zh:
+    - title: 开始使用
+      items:
+        - name: 快速入门
+          url: /docs/zh-CN/quickstart
+        - name: 故障排除
+          url: /docs/zh-CN/troubleshooting
+    - title: 核心文档
+      items:
+        - name: API 参考
+          url: /docs/zh-CN/api
+        - name: 架构设计
+          url: /docs/zh-CN/architecture
+        - name: 性能指南
+          url: /docs/zh-CN/performance
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SEARCH CONFIGURATION
+# ═════════════════════════════════════════════════════════════════════════════
+search:
+  enabled: true
+  placeholder:
+    en: "Search documentation..."
+    zh: "搜索文档..."
+  empty:
+    en: "No results found"
+    zh: "未找到结果"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# EXCLUDE & INCLUDE
+# ═════════════════════════════════════════════════════════════════════════════
 exclude:
+  # Build artifacts
   - .git
+  - .gitignore
   - .github
-  - .kiro
   - .vscode
+  - .kiro
   - .ruff_cache
+  - .clang-format
+  - .editorconfig
+  
+  # Source code
   - include
   - src
   - python
@@ -55,50 +247,56 @@ exclude:
   - cmake-build-*
   - __pycache__
   - "*.egg-info"
+  - vendor
+  
+  # Build files
   - CMakeLists.txt
   - CMakePresets.json
   - pyproject.toml
   - setup.py
   - requirements.txt
-  - .clang-format
-  - .editorconfig
-  - .gitignore
   - Gemfile
   - Gemfile.lock
-  - vendor
+  
+  # Source files
   - "*.cu"
   - "*.cuh"
   - "*.cpp"
   - "*.h"
   - "*.o"
   - "*.so"
+  - "*.pyc"
 
-# Include these files explicitly
 include:
   - _layouts
+  - _includes
+  - _sass
+  - assets
+  - docs/en
+  - docs/zh-CN
+  - docs/README.md
+  - changelog
 
-# SEO and social media
-twitter:
-  username: nvidia
-  card: summary
+# ═════════════════════════════════════════════════════════════════════════════
+# PERFORMANCE SETTINGS
+# ═════════════════════════════════════════════════════════════════════════════
+incremental: false
+safe: false
+lsi: false
+highlighter: rouge
+gist:
+  noscript: false
 
-social:
-  name: NVIDIA CUDA
-  links:
-    - https://developer.nvidia.com/cuda-toolkit
+# ═════════════════════════════════════════════════════════════════════════════
+# CUSTOM VARIABLES
+# ═════════════════════════════════════════════════════════════════════════════
+google_analytics: 
 
-# Navigation (for custom use)
-navigation:
-  - name: Home
-    url: /
-  - name: Guide
-    url: /docs/deepwiki
-  - name: API
-    url: /docs/api
-  - name: Performance
-    url: /docs/performance
-  - name: Changelog
-    url: /changelog/
-  - name: GitHub
-    url: https://github.com/LessUp/llm-speed
-    external: true
+# Version
+current_version: 0.3.0
+
+# Latest release
+github:
+  repository_url: https://github.com/LessUp/llm-speed
+  releases_url: https://github.com/LessUp/llm-speed/releases
+  issues_url: https://github.com/LessUp/llm-speed/issues

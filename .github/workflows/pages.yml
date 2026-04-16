@@ -2,13 +2,14 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, master]
+    branches: [master, main]
     paths:
       - '**.md'
       - 'docs/**'
       - 'changelog/**'
       - '_config.yml'
       - '_layouts/**'
+      - 'assets/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -22,9 +23,117 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build
+  # Job 1: Build search index
+  build-search-index:
+    name: Build Search Index
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+
+      - name: Generate Search Index
+        run: |
+          # Create search index script
+          cat > build_search_index.rb << 'RUBY'
+          require 'json'
+          require 'yaml'
+
+          def extract_front_matter(content)
+            if content =~ /\A---\s*\n(.*?)\n---\s*\n/m
+              YAML.safe_load($1) rescue {}
+            else
+              {}
+            end
+          end
+
+          def strip_front_matter(content)
+            content.sub(/\A---\s*\n.*?\n---\s*\n/m, '')
+          end
+
+          def strip_markdown(content)
+            content
+              .gsub(/!\[.*?\]\(.*?\)/, '') # Images
+              .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1') # Links
+              .gsub(/`{1,3}[^`]*`{1,3}/, '') # Code
+              .gsub(/[#*_~|>-]/, '') # Markdown syntax
+              .gsub(/\s+/, ' ')
+              .strip
+          end
+
+          search_index = []
+          baseurl = "/llm-speed"
+
+          # Process all markdown files
+          Dir.glob('docs/**/*.{md,markdown}').each do |file|
+            content = File.read(file)
+            front_matter = extract_front_matter(content)
+            body = strip_front_matter(content)
+            plain_text = strip_markdown(body)
+
+            # Skip files without proper front matter
+            next if front_matter['layout'] == nil
+
+            url_path = file
+              .sub(/^docs/, '')
+              .sub(/\.md$/, '')
+              .sub(/index$/, '')
+            
+            url = "#{baseurl}#{url_path}"
+
+            search_index << {
+              title: front_matter['title'] || File.basename(file, '.md'),
+              url: url,
+              content: plain_text[0..500],
+              excerpt: plain_text[0..200] + '...'
+            }
+          end
+
+          # Also process root changelog
+          Dir.glob('changelog/*.md').each do |file|
+            next if file.include?('README')
+            content = File.read(file)
+            front_matter = extract_front_matter(content)
+            body = strip_front_matter(content)
+            plain_text = strip_markdown(body)
+
+            url = "#{baseurl}/changelog/"
+
+            search_index << {
+              title: front_matter['title'] || 'Changelog',
+              url: url,
+              content: plain_text[0..500],
+              excerpt: plain_text[0..200] + '...'
+            }
+          end
+
+          # Write search index
+          FileUtils.mkdir_p('assets/js')
+          File.write('assets/js/search-index.js', "window.searchIndexData = #{search_index.to_json};")
+          
+          puts "Generated search index with #{search_index.length} entries"
+          search_index.each { |item| puts "  - #{item[:title]}" }
+          RUBY
+
+          ruby build_search_index.rb
+
+      - name: Upload Search Index
+        uses: actions/upload-artifact@v4
+        with:
+          name: search-index
+          path: assets/js/search-index.js
+          retention-days: 1
+
+  # Job 2: Build Jekyll site
+  build:
+    name: Build Jekyll Site
+    runs-on: ubuntu-latest
+    needs: build-search-index
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,9 +143,18 @@ jobs:
             *.md
             _config.yml
             _layouts
+            _includes
+            _sass
+            assets
             docs
             changelog
             LICENSE
+
+      - name: Download Search Index
+        uses: actions/download-artifact@v4
+        with:
+          name: search-index
+          path: assets/js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -50,8 +168,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
+  # Job 3: Deploy
   deploy:
-    name: Deploy
+    name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
