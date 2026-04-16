@@ -1,51 +1,66 @@
-# Changelog Directory
+# Changelog Directory / 变更日志目录
 
-Project change history and version tracking.
+Project change history and version tracking. / 项目变更历史和版本追踪。
 
-## Files
+---
 
-| File | Description |
-|------|-------------|
-| [CHANGELOG.md](CHANGELOG.md) | Main changelog (Keep a Changelog format) |
+## Files / 文件
 
-## Version History
+| Language | File | Description |
+|----------|------|-------------|
+| English | [CHANGELOG.md](CHANGELOG.md) | Keep a Changelog format |
+| 中文 | [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md) | 中文变更日志 |
+
+---
+
+## Quick Links / 快速链接
+
+- **Latest Release / 最新版本**: [v0.3.0](https://github.com/LessUp/llm-speed/releases/tag/v0.3.0)
+- **All Releases / 所有版本**: [GitHub Releases](https://github.com/LessUp/llm-speed/releases)
+- **Unreleased Changes / 未发布变更**: [Unreleased Section](CHANGELOG.md#unreleased)
+
+---
+
+## Version History / 版本历史
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| Unreleased | - | Documentation restructure |
-| 0.2.0 | 2026-04-16 | CI fixes, docs, formatting |
-| 0.1.2 | 2026-03-10 | Workflow standardization |
-| 0.1.1 | 2025-02-27 | Double buffering, INT8, fixes |
-| 0.1.0 | 2025-02-13 | Initial release |
+| [0.3.0] | 2026-04-16 | Bilingual documentation / 双语文档 |
+| [0.2.0] | 2026-04-16 | CI improvements / CI 改进 |
+| [0.1.2] | 2026-03-10 | Workflow standardization / 工作流标准化 |
+| [0.1.1] | 2025-02-27 | INT8 support, bug fixes / INT8 支持，错误修复 |
+| [0.1.0] | 2025-02-13 | Initial release / 初始发布 |
 
-## Contributing
+[0.3.0]: CHANGELOG.md#030---2026-04-16
+[0.2.0]: CHANGELOG.md#020---2026-04-16
+[0.1.2]: CHANGELOG.md#012---2026-03-10
+[0.1.1]: CHANGELOG.md#011---2025-02-27
+[0.1.0]: CHANGELOG.md#010---2025-02-13
 
-When adding changes, update `CHANGELOG.md`:
+---
 
-### Categories
+## Conventions / 规范
 
-- **Added**: New features
-- **Changed**: Modified functionality
-- **Deprecated**: Pending removal
-- **Removed**: Deleted features
-- **Fixed**: Bug fixes
-- **Security**: Security improvements
+### Commit Categories / 提交类别
 
-### Format
+- **Added / 新增**: New features / 新功能
+- **Changed / 变更**: Changes to existing functionality / 现有功能的变更
+- **Deprecated / 弃用**: Soon-to-be removed features / 即将移除的功能
+- **Removed / 移除**: Removed features / 已移除的功能
+- **Fixed / 修复**: Bug fixes / 错误修复
+- **Security / 安全**: Security improvements / 安全改进
+
+### Version Format / 版本格式
 
 ```markdown
-## [Unreleased]
+## [Version] - YYYY-MM-DD
 
-### Added
-- Feature description (#issue)
-
-### Fixed
-- Fix description (#issue)
+### Category
+- Description of change
 ```
 
-### Release Process
+---
 
-1. Move items from `[Unreleased]` to new version section
-2. Add version header with date
-3. Update version comparison links
-4. Update version history table
+For detailed release notes, visit [GitHub Releases](https://github.com/LessUp/llm-speed/releases).
+
+详细发布说明请访问 [GitHub Releases](https://github.com/LessUp/llm-speed/releases)。

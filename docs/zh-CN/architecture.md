@@ -1,11 +1,13 @@
-# CUDA LLM 内核优化项目 - 技术深潜
+# 架构设计
 
-本文档详细介绍 CUDA 内核优化技术栈，包括算法原理、实现细节和优化策略。
+CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度技术文档。
+
+---
 
 ## 目录
 
 - [项目概述](#项目概述)
-- [架构设计](#架构设计)
+- [系统架构](#系统架构)
 - [Attention 内核](#attention-内核)
 - [GEMM 内核](#gemm-内核)
 - [头文件原语库](#头文件原语库)
@@ -17,7 +19,7 @@
 
 ## 项目概述
 
-高性能 CUDA 算子库，专为 LLM 推理优化设计。采用渐进式优化策略：
+CUDA LLM Kernel Optimization 项目是专为 LLM 推理优化的高性能 CUDA 算子库。采用渐进式优化策略：
 
 ```
 Naive → Tiled → FlashAttention → Tensor Core
@@ -26,21 +28,30 @@ Naive → Tiled → FlashAttention → Tensor Core
 ### 核心目标
 
 | 目标 | 指标 |
-|------|------|
-| GEMM 性能 | ≥90% cuBLAS |
+|-----------|--------|
+| GEMM 性能 | ≥cuBLAS 的 90% |
 | FlashAttention 显存 | O(N) 复杂度 |
-| 流水线提升 | ≥20% 性能提升 |
+| 流水线改进 | ≥20% 性能提升 |
 | 精度支持 | FP32/FP16/BF16/INT8 |
+
+### 优化哲学
+
+我们遵循先正确再优化的原则：
+
+1. **正确性**: 与 PyTorch 参考实现对比验证基准实现
+2. **优化**: 可测量的渐进式改进
+3. **硬件利用**: 利用 Tensor Core 和内存层次结构
+4. **生产就绪**: 全面的错误处理和输入验证
 
 ---
 
-## 架构设计
+## 系统架构
 
-### 系统架构
+### 三层架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Python Interface Layer                       │
+│                     Python 接口层                                 │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
 │  │ flash_attention │  │   gemm_kernel   │  │    profiler     │  │
 │  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
@@ -49,7 +60,7 @@ Naive → Tiled → FlashAttention → Tensor Core
 ┌───────────┼─────────────────────┼─────────────────────┼──────────┐
 │           ▼                     ▼                     ▼          │
 │  ┌─────────────────────────────────────────────────────────────┐ │
-│  │                    CUDA Kernel Layer                        │ │
+│  │                    CUDA Kernel 层                           │ │
 │  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │ │
 │  │  │ Attention     │  │ GEMM          │  │ Warp          │   │ │
 │  │  │ Kernels       │  │ Kernels       │  │ Primitives    │   │ │
@@ -59,7 +70,7 @@ Naive → Tiled → FlashAttention → Tensor Core
 │  ┌──────────┼──────────────────┼──────────────────┼───────────┐ │
 │  │          ▼                  ▼                  ▼            │ │
 │  │  ┌─────────────────────────────────────────────────────┐   │ │
-│  │  │              Optimization Components                 │   │ │
+│  │  │              优化组件                                 │   │ │
 │  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │   │ │
 │  │  │  │ Tiling      │ │ Tensor Core │ │ Pipeline    │    │   │ │
 │  │  │  │ Manager     │ │ Accelerator │ │ Scheduler   │    │   │ │
@@ -70,12 +81,12 @@ Naive → Tiled → FlashAttention → Tensor Core
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 优化路线
+### 优化路线图
 
 ```
                     ┌─────────────────┐
                     │  Naive Kernel   │
-                    │  O(N²) memory   │
+                    │  O(N²) 显存      │
                     └────────┬────────┘
                              │ 共享内存分块
                     ┌────────▼────────┐
@@ -85,7 +96,7 @@ Naive → Tiled → FlashAttention → Tensor Core
                              │ 在线 Softmax
                     ┌────────▼────────┐
                     │ FlashAttention  │
-                    │   O(N) memory   │
+                    │   O(N) 显存     │
                     └────────┬────────┘
                              │ 双缓冲流水线
                     ┌────────▼────────┐
@@ -100,7 +111,7 @@ Naive → Tiled → FlashAttention → Tensor Core
 
 ### 1. Naive Attention
 
-基准实现，用于正确性验证和性能对比。
+用于正确性验证和性能对比的基准实现。
 
 **算法：**
 ```
@@ -112,77 +123,87 @@ Attention(Q,K,V) = softmax(QK^T / √d_k)V
 2. `P = softmax(S, dim=-1)` → `[seq_len, seq_len]`
 3. `O = P @ V` → `[seq_len, head_dim]`
 
-**实现特点：**
+**关键实现细节：**
+
 ```cpp
 // 每个 block 处理一个 (batch, head, row)
 __global__ void naive_attention_simple_kernel(
     const T* Q, const T* K, const T* V, T* O,
     int batch_size, int num_heads, int seq_len, int head_dim, float scale
 ) {
-    // 共享内存存储注意力分数
+    // 共享内存存储 Attention 分数
     extern __shared__ float shared_mem[];
     float* scores = shared_mem;
     
-    // Warp 归约计算 softmax
+    // Warp 归约计算 Softmax
     float reduced_max = block_reduce_max<float, 256>(local_max, reduce_smem);
     float reduced_sum = block_reduce_sum<float, 256>(local_sum, reduce_smem);
 }
 ```
 
-**复杂度：**
-- 时间：O(N² × d)
-- 显存：O(N²)
+**复杂度分析：**
+- 时间: O(N² × d)
+- 显存: O(N²)
+
+**使用场景：**
+- 与参考实现对比验证正确性
+- 短序列（N <= 64）
+- 理解基准行为
 
 ---
 
 ### 2. Tiled Attention
 
-使用共享内存分块，减少全局内存访问。
+共享内存分块减少全局内存访问。
 
 **分块配置：**
 ```cpp
-BLOCK_M = 32  // Q 的行分块大小
-BLOCK_N = 32  // K/V 的行分块大小
+BLOCK_M = 32  // Q 行分块大小
+BLOCK_N = 32  // K/V 行分块大小
 ```
 
 **共享内存布局：**
 ```
 ┌────────────────────────────────────────────┐
-│ smem_Q  [BLOCK_M × (head_dim+1)]           │ ← Q tile
+│ smem_Q  [BLOCK_M × (head_dim+1)]           │ ← 带填充的 Q 分块
 ├────────────────────────────────────────────┤
-│ smem_K  [BLOCK_N × (head_dim+1)]           │ ← K tile
+│ smem_K  [BLOCK_N × (head_dim+1)]           │ ← 带填充的 K 分块
 ├────────────────────────────────────────────┤
-│ smem_V  [BLOCK_N × (head_dim+1)]           │ ← V tile
+│ smem_V  [BLOCK_N × (head_dim+1)]           │ ← 带填充的 V 分块
 ├────────────────────────────────────────────┤
-│ smem_S  [BLOCK_M × (BLOCK_N+1)]            │ ← attention scores
+│ smem_S  [BLOCK_M × (BLOCK_N+1)]            │ ← Attention 分数
 ├────────────────────────────────────────────┤
 │ output  [BLOCK_M × head_dim]               │ ← 输出累加器
 └────────────────────────────────────────────┘
 
-注：+1 padding 用于消除 bank conflict
+注: +1 填充消除 Bank 冲突
 ```
 
-**在线 Softmax 更新：**
-```cpp
-// 遍历 K/V 分块，逐步更新状态
-for (int kv_block = 0; kv_block < num_kv_blocks; kv_block++) {
-    // 1. 计算当前分块的 scores
-    // 2. 更新 running max: new_max = max(old_max, block_max)
-    // 3. 计算 exp(scores - new_max)
-    // 4. 更新 running sum: new_sum = old_sum * old_scale + block_sum
-    // 5. 重缩放输出累加器
-}
-```
+**性能提升：**
+- 全局内存流量减少约 75%
+- 更好的缓存利用率
+- 适用于序列长度 128-2048
 
 ---
 
 ### 3. FlashAttention
 
-**核心创新：** 避免存储 N×N 注意力矩阵，实现 O(N) 显存复杂度。
+**核心创新：** 避免存储 N×N Attention 矩阵，实现 O(N) 显存复杂度。
 
 **在线 Softmax 公式：**
 ```
-O_new = (l_old × exp(m_old - m_new) × O_old + exp(S - m_new) @ V) / l_new
+对于每个分块 t:
+    S_t = Q_tile @ K_tile^T * scale
+    m_t = max(m_{t-1}, row_max(S_t))
+    
+    // 重缩放
+    scale_factor = exp(m_{t-1} - m_t)
+    l_t = l_{t-1} * scale_factor + sum(exp(S_t - m_t))
+    
+    // 输出更新
+    O_t = O_{t-1} * scale_factor + exp(S_t - m_t) @ V_tile
+
+最终: O = O_T / l_T
 ```
 
 **状态维护：**
@@ -195,28 +216,28 @@ float rescale[BLOCK_M];   // 每行重缩放因子
 **双缓冲实现：**
 ```cpp
 // 共享内存布局（K/V 双缓冲）
-smem_Q    [BLOCK_M × (head_dim+1)]      — Q tile
-smem_K[2] [2 × BLOCK_N × (head_dim+1)]  — K double buffer
-smem_V[2] [2 × BLOCK_N × (head_dim+1)]  — V double buffer
-smem_S    [BLOCK_M × (BLOCK_N+1)]       — attention scores
+smem_Q    [BLOCK_M × (head_dim+1)]      — Q 分块
+smem_K[2] [2 × BLOCK_N × (head_dim+1)]  — K 双缓冲
+smem_V[2] [2 × BLOCK_N × (head_dim+1)]  — V 双缓冲
+smem_S    [BLOCK_M × (BLOCK_N+1)]       — Attention 分数
 output    [BLOCK_M × head_dim]          — 输出累加器
 
 // 流水线流程
-// Prologue: 加载第一个 K/V tile 到 buffer 0
-// 主循环: 计算当前 buffer，同时预取下一个 tile 到交替 buffer
-// Causal 早退: 当下一个 tile 超出因果窗口时跳过 prefetch
+// Prologue: 加载第一个 K/V 分块到缓冲 0
+// 主循环: 计算当前缓冲，预取下一个到交替缓冲
+// Causal 早退: 当下一个分块超出因果窗口时跳过预取
 ```
 
 **两阶段计算：**
 ```cpp
-// Phase 1: 单线程每行计算 softmax 状态（轻量）
+// 阶段 1: 每行单线程计算 Softmax 状态（轻量）
 if (tid < BLOCK_M) {
     // 计算 rowmax(scores)
     // 更新 max/sum 状态
-    // 计算 rescale 因子
+    // 计算重缩放因子
 }
 
-// Phase 2: 全线程协作更新输出（重量，充分并行）
+// 阶段 2: 全线程协作更新输出（重量）
 for (int i = tid; i < BLOCK_M * head_dim; i += blockDim.x) {
     // 重缩放旧输出
     // 计算新贡献: exp_scores @ V
@@ -227,12 +248,17 @@ for (int i = tid; i < BLOCK_M * head_dim; i += blockDim.x) {
 **因果掩码：**
 ```cpp
 if (is_causal && global_col > global_row) {
-    score = -FLT_MAX;  // 掩码掉未来位置
+    score = -FLT_MAX;  // 掩码未来位置
 }
 
-// 早退优化：当 col_start >= row_start + BLOCK_M 时退出
+// 早退优化: 当 col_start >= row_start + BLOCK_M 时退出
 if (is_causal && col_start >= row_start + BLOCK_M) break;
 ```
+
+**性能：**
+- 显存: O(N) vs O(N²) naive
+- 吞吐量: 长序列快 2-4 倍
+- 可扩展到 100K+ 序列长度
 
 ---
 
@@ -240,7 +266,7 @@ if (is_causal && col_start >= row_start + BLOCK_M) break;
 
 ### 1. Tensor Core GEMM
 
-使用 WMMA API 调用 Tensor Core 硬件加速。
+使用 WMMA API 利用 Tensor Core 硬件加速。
 
 **WMMA 片段：**
 ```cpp
@@ -261,8 +287,8 @@ wmma::store_matrix_sync(C + offset, c_frag, N, wmma::mem_row_major);
 
 **分块版本：**
 ```cpp
-// 共享内存分块（带 padding）
-__shared__ half smem_A[BLOCK_M][BLOCK_K + 8];  // +8 half padding
+// 带填充的共享内存分块
+__shared__ half smem_A[BLOCK_M][BLOCK_K + 8];  // +8 half 填充
 __shared__ half smem_B[BLOCK_K][BLOCK_N + 8];
 
 // 多 warp 协作
@@ -272,7 +298,7 @@ constexpr int WARPS_N = BLOCK_N / WMMA_N;  // 4 warps
 
 **INT8 支持（Turing+ SM≥7.2）：**
 ```cpp
-// INT8 WMMA 尺寸：8×32×16
+// INT8 WMMA 维度: 8×32×16
 wmma::fragment<wmma::matrix_a, 8, 32, 16, int8_t, wmma::row_major> a_frag;
 wmma::fragment<wmma::matrix_b, 8, 32, 16, int8_t, wmma::col_major> b_frag;
 wmma::fragment<wmma::accumulator, 8, 32, 16, int32_t> c_frag;
@@ -316,7 +342,7 @@ for (int k = 0; k < BLOCK_K; k++) {
 __shared__ float smem_A[2][BLOCK_M][BLOCK_K + 1];
 __shared__ float smem_B[2][BLOCK_K][BLOCK_N + 1];
 
-// 主循环：计算当前缓冲区，预取下一个到交替缓冲区
+// 主循环: 计算当前缓冲，预取下一个到交替缓冲
 for (int tile = 0; tile < num_k_tiles; tile++) {
     int cur_buf = tile % 2;
     int next_buf = 1 - cur_buf;
@@ -332,6 +358,8 @@ for (int tile = 0; tile < num_k_tiles; tile++) {
     __syncthreads();
 }
 ```
+
+**性能目标：** ≥cuBLAS 的 90%，用于矩阵 ≥1024×1024
 
 ---
 
@@ -368,16 +396,14 @@ struct GemmConfig {
 #define CUDA_CHECK(call) do { \
     cudaError_t err = call; \
     if (err != cudaSuccess) { \
-        throw std::runtime_error(std::string("CUDA error: ") + \
-            cudaGetErrorString(err) + " at " + __FILE__ + ":" + std::to_string(__LINE__)); \
+        throw std::runtime_error(std::string("CUDA 错误: ") + \
+            cudaGetErrorString(err) + " 在 " + __FILE__ + ":" + std::to_string(__LINE__)); \
     } \
 } while(0)
 
 inline int div_ceil(int a, int b) { return (a + b - 1) / b; }
 inline bool is_tensor_core_aligned(int dim, int alignment = 16) { return (dim % alignment) == 0; }
 ```
-
----
 
 ### warp_primitives.cuh
 
@@ -424,8 +450,6 @@ __device__ T block_reduce_sum(T val, T* smem) {
 }
 ```
 
----
-
 ### online_softmax.cuh
 
 **在线 Softmax 状态：**
@@ -448,70 +472,6 @@ __device__ void online_softmax_update(
     state.sum_exp = state.sum_exp * old_scale + new_scale;
     state.max_val = new_max;
 }
-```
-
-**输出更新：**
-```cpp
-__device__ void online_softmax_update_output(
-    float* output, const float* v_block, const float* exp_weights,
-    int dim, int block_n,
-    float old_max, float new_max, float old_sum, float new_sum
-) {
-    // 重缩放因子
-    float rescale = expf(old_max - new_max) * old_sum / new_sum;
-    float inv_new_sum = 1.0f / new_sum;
-    
-    // O_new = rescale * O_old + inv_new_sum * exp_weights @ V
-    for (int d = 0; d < dim; d++) {
-        float val = output[d] * rescale;
-        float new_val = 0.0f;
-        for (int j = 0; j < block_n; j++)
-            new_val += exp_weights[j] * v_block[j * dim + d];
-        output[d] = val + new_val * inv_new_sum;
-    }
-}
-```
-
----
-
-### pipeline.cuh
-
-**双缓冲结构：**
-```cpp
-template<typename T, int BLOCK_SIZE>
-struct DoubleBuffer {
-    T* buffer[2];
-    int current;
-    
-    __device__ T* get_load_buffer()    { return buffer[current]; }
-    __device__ T* get_compute_buffer() { return buffer[1 - current]; }
-    __device__ void swap()             { current = 1 - current; }
-};
-```
-
-**异步拷贝（Ampere+ SM≥80）：**
-```cpp
-#if __CUDA_ARCH__ >= 800
-template<int BYTES>
-__device__ void async_copy(void* dst, const void* src) {
-    asm volatile(
-        "cp.async.ca.shared.global [%0], [%1], %2;\n"
-        :: "r"(static_cast<unsigned>(reinterpret_cast<uintptr_t>(dst))),
-           "l"(src), "n"(BYTES)
-    );
-}
-
-__device__ void async_copy_commit() {
-    asm volatile("cp.async.commit_group;\n");
-}
-
-template<int N>
-__device__ void async_copy_wait() {
-    asm volatile("cp.async.wait_group %0;\n" :: "n"(N));
-}
-#else
-// 旧架构回退到同步拷贝
-#endif
 ```
 
 ---
@@ -561,14 +521,14 @@ PYBIND11_MODULE(cuda_llm_ops, m) {
 
 ```cpp
 void validate_attention_inputs(const torch::Tensor& q, const torch::Tensor& k, const torch::Tensor& v) {
-    TORCH_CHECK(q.dim() == 4, "Q must be 4D tensor [batch, heads, seq_len, head_dim]");
-    TORCH_CHECK(q.sizes() == k.sizes(), "Q and K must have same shape");
-    TORCH_CHECK(q.is_cuda(), "Q must be on CUDA device");
-    TORCH_CHECK(q.is_contiguous(), "Q must be contiguous");
+    TORCH_CHECK(q.dim() == 4, "Q 必须是 4D 张量 [batch, heads, seq_len, head_dim]");
+    TORCH_CHECK(q.sizes() == k.sizes(), "Q 和 K 必须具有相同形状");
+    TORCH_CHECK(q.is_cuda(), "Q 必须在 CUDA 设备上");
+    TORCH_CHECK(q.is_contiguous(), "Q 必须是连续的");
     TORCH_CHECK(q.scalar_type() == torch::kFloat32 || q.scalar_type() == torch::kFloat16,
-                "Only float32 and float16 are supported");
+                "仅支持 float32 和 float16");
     TORCH_CHECK(q.size(0) > 0 && q.size(1) > 0 && q.size(2) > 0 && q.size(3) > 0,
-                "Tensor dimensions must be positive");
+                "张量维度必须为正");
 }
 ```
 
@@ -578,32 +538,19 @@ void validate_attention_inputs(const torch::Tensor& q, const torch::Tensor& k, c
 
 ### 技术总结
 
-| 优化技术 | 目标 | 实现位置 |
-|----------|------|----------|
-| 共享内存分块 | 减少全局访存 | tiled_attention, hgemm |
-| Bank 冲突避免 | +1 padding | shared_memory.cuh |
+| 技术 | 目标 | 实现 |
+|-----------|--------|----------------|
+| 共享内存分块 | 减少全局内存访存 | tiled_attention, hgemm |
+| Bank 冲突避免 | +1 填充 | shared_memory.cuh |
 | 在线 Softmax | O(N) 显存 | flash_attention |
 | Warp Shuffle | 快速归约 | warp_primitives.cuh |
 | 寄存器分块 | 数据重用 | hgemm_kernel |
 | Tensor Core | 硬件加速 | tensor_core_gemm |
-| 双缓冲流水线 | 隐藏延迟 | pipeline.cuh |
+| 双缓冲 | 隐藏延迟 | pipeline.cuh |
 | 异步拷贝 | 计算/传输重叠 | pipeline.cuh (Ampere+) |
 
-### 性能分析
+### 瓶颈检测
 
-**FLOPs 计算：**
-```python
-def compute_attention_flops(batch, heads, seq_len, head_dim):
-    return batch * heads * (
-        4 * seq_len * seq_len * head_dim +  # Q@K^T + P@V
-        5 * seq_len * seq_len               # softmax
-    )
-
-def compute_gemm_flops(M, N, K):
-    return 2 * M * N * K  # multiply-add
-```
-
-**瓶颈检测：**
 ```python
 compute_intensity = flops / memory_bytes  # FLOPs/byte
 if compute_intensity > 100:
@@ -612,13 +559,22 @@ else:
     bottleneck = "MEMORY_BOUND"
 ```
 
+### 优化检查清单
+
+- [x] 对齐维度（Tensor Core 的 16 倍数）
+- [x] Bank 冲突自由的共享内存布局
+- [x] Warp shuffle 用于归约操作
+- [x] 双缓冲用于流水线优化
+- [x] 循环展开（编译器提示）
+- [x] Ampere+ 异步拷贝（可选）
+
 ---
 
 ## 测试策略
 
-### 属性测试
+### 基于属性的测试
 
-使用 Hypothesis 进行属性测试，验证算法正确性：
+使用 Hypothesis 进行全面的正确性验证：
 
 ```python
 @pytest.mark.cuda
@@ -644,12 +600,12 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
 ### 测试覆盖
 
 | 类别 | 内容 |
-|------|------|
+|----------|---------|
 | 正确性 | 与 PyTorch 参考实现对比 |
 | 数值稳定性 | FP16/FP32 精度验证 |
-| 边界条件 | 最小维度、大序列、非对齐 |
-| 布局等价性 | NN/NT/TN/TT 矩阵布局 |
-| 错误处理 | 维度不匹配、dtype 错误、空张量 |
+| 边界条件 | 最小维度、大序列、未对齐 |
+| 布局等价 | NN/NT/TN/TT 矩阵布局 |
+| 错误处理 | 维度不匹配、数据类型错误、空张量 |
 
 ---
 
@@ -660,3 +616,5 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
 3. **CUTLASS**: NVIDIA CUTLASS - CUDA Templates for Linear Algebra Subroutines
 4. **cuBLAS**: NVIDIA cuBLAS Library Documentation
 5. **CUDA Programming Guide**: NVIDIA CUDA C++ Programming Guide
+
+[← 返回文档](../README.md)

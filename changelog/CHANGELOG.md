@@ -5,39 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
 ## [Unreleased]
 
 ### Added
-- Comprehensive API reference documentation (`docs/api.md`)
-- Performance tuning guide (`docs/performance.md`)
-- Enhanced CLAUDE.md with quick reference tables and common tasks
+- Complete bilingual Chinese and English documentation corpus
+- New documentation structure: Quick Start, Architecture Design, Troubleshooting Guide
+- Professional documentation categorization and navigation
 
 ### Changed
-- Completely restructured documentation architecture
-- Unified all changelog entries into single CHANGELOG.md
-- Optimized .kiro specs documentation format with tables and status indicators
-- Enhanced Git Pages configuration with better SEO and navigation
-- Improved CI workflow reliability
+- Refactored documentation architecture into `docs/en/` and `docs/zh-CN/` directories
+- Optimized API reference documentation with more usage examples
+- Improved professionalism of the performance tuning guide
+
+---
+
+## [0.3.0] - 2026-04-16
+
+### Added
+- **Bilingual Documentation**: Complete Chinese and English documentation support
+- **Quick Start Guide**: Help new users get started quickly
+- **Troubleshooting Guide**: Systematically resolve common issues
+- **Architecture Design Documentation**: In-depth technical detail analysis
+
+### Changed
+- Refactored `docs/` directory into bilingual structure
+- Optimized organization of API reference documentation
+- Improved professionalism of changelog
+
+### Documentation
+- Added `docs/en/` directory (English documentation)
+- Added `docs/zh-CN/` directory (Chinese documentation)
+- Updated README documentation structure
+
+---
 
 ## [0.2.0] - 2026-04-16
 
 ### Added
 - CPU-safe CI workflow with Python syntax validation
 - GitHub Pages deployment triggers on both `master` and `main` branches
-- Path-based filtering for Pages workflow to reduce unnecessary builds
-- API reference documentation (`docs/api.md`)
+- Path-based filtering for Pages workflow
+- Comprehensive API reference documentation (`docs/api.md`)
 - Performance tuning guide (`docs/performance.md`)
 
 ### Changed
-- Documentation architecture restructured: README as repository entry, index.md as docs homepage
+- Restructured documentation architecture: README as repository entry, index.md as docs homepage
 - DeepWiki guide clarified as primary usage documentation
-- CI workflow simplified to Python lint and CPU-safe smoke tests (removed invalid CUDA jobs)
-- Removed `pytest ... || true` fallback logic; accept exit code 5 when no CPU-safe tests available
+- CI workflow simplified to Python lint and CPU-safe smoke tests
+- Removed `pytest ... || true` fallback logic
 - All Python files formatted with ruff
 
 ### Fixed
 - Pages workflow now correctly triggers on the actual `master` branch
 - Python code formatting issues (ruff format)
+
+---
 
 ## [0.1.2] - 2026-03-10
 
@@ -45,6 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized CI workflow permissions (`contents: read`) and concurrency configuration
 - Added `actions/configure-pages@v5` step to Pages workflow
 - Added `paths` trigger filtering to Pages workflow
+
+---
 
 ## [0.1.1] - 2025-02-27
 
@@ -88,6 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dead code: unused `softmax_row` device function and `naive_attention_kernel`
 - Unused `import time` in benchmark scripts
 
+---
+
 ## [0.1.0] - 2025-02-13
 
 ### Added
@@ -103,11 +131,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tensor_core_gemm.cu`: WMMA-based Tensor Core GEMM
   - `hgemm_kernel.cu`: High-performance GEMM with register tiling
 - Header primitives library
-  - `common.cuh`: Core types and utilities
-  - `online_softmax.cuh`: Online softmax algorithm
-  - `warp_primitives.cuh`: Warp-level operations
-  - `shared_memory.cuh`: Shared memory management
-  - `pipeline.cuh`: Memory prefetch pipeline utilities
+  - `common.cuh`: Core types (`AttentionConfig`, `GemmConfig`, `KernelMetrics`), CUDA_CHECK macro
+  - `online_softmax.cuh`: Online softmax algorithm for FlashAttention
+  - `warp_primitives.cuh`: Warp-level operations (reduce_sum, reduce_max, broadcast)
+  - `shared_memory.cuh`: Shared memory management, padding utilities
+  - `pipeline.cuh`: Double buffering, async copy (Ampere+), software pipeline
 - Python bindings via pybind11
   - `naive_attention`, `tiled_attention`, `flash_attention`
   - `gemm`, `tensor_core_gemm`
@@ -121,12 +149,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | Version | Date | Highlights |
 |---------|------|------------|
 | Unreleased | - | Documentation restructure, API reference, performance guide |
+| 0.3.0 | 2026-04-16 | Bilingual documentation, professional docs |
 | 0.2.0 | 2026-04-16 | CI/CD fixes, documentation architecture, Python formatting |
 | 0.1.2 | 2026-03-10 | Workflow deep standardization |
 | 0.1.1 | 2025-02-27 | Double buffering, INT8 binding, critical bug fixes |
 | 0.1.0 | 2025-02-13 | Initial release |
 
+---
+
 ## Migration Guide
+
+### Upgrading to 0.3.0
+
+No breaking changes. Documentation URLs remain stable.
 
 ### Upgrading to 0.2.0
 
@@ -147,8 +182,11 @@ else:
 
 **Attention users**: All attention functions now have proper divide-by-zero protection. No code changes required.
 
-[Unreleased]: https://github.com/LessUp/llm-speed/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/LessUp/llm-speed/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/LessUp/llm-speed/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/LessUp/llm-speed/compare/v0.1.0...v0.1.1
+---
+
 [0.1.0]: https://github.com/LessUp/llm-speed/releases/tag/v0.1.0
+[0.1.1]: https://github.com/LessUp/llm-speed/compare/v0.1.0...v0.1.1
+[0.1.2]: https://github.com/LessUp/llm-speed/compare/v0.1.1...v0.1.2
+[0.2.0]: https://github.com/LessUp/llm-speed/compare/v0.1.2...v0.2.0
+[0.3.0]: https://github.com/LessUp/llm-speed/compare/v0.2.0...v0.3.0
+[Unreleased]: https://github.com/LessUp/llm-speed/compare/v0.3.0...HEAD
