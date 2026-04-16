@@ -304,9 +304,7 @@ class TestDimensionAlignment:
         output = gemm(a, b)
         reference = torch.matmul(a, b)
 
-        assert output.shape == (M, N), (
-            f"Output shape mismatch: {output.shape} vs {(M, N)}"
-        )
+        assert output.shape == (M, N), f"Output shape mismatch: {output.shape} vs {(M, N)}"
         assert_close(
             output,
             reference,
@@ -390,9 +388,7 @@ class TestINT8GEMM:
         reference = torch.matmul(a.to(torch.int32), b.to(torch.int32))
 
         assert output.dtype == torch.int32, f"Expected INT32 output, got {output.dtype}"
-        assert output.shape == (M, N), (
-            f"Output shape mismatch: {output.shape} vs {(M, N)}"
-        )
+        assert output.shape == (M, N), f"Output shape mismatch: {output.shape} vs {(M, N)}"
         assert torch.equal(output, reference), (
             f"INT8 GEMM mismatch. Max diff: {(output - reference).abs().max().item()}"
         )
@@ -485,9 +481,7 @@ class TestGEMMEdgeCases:
         output = gemm(a, b)
         reference = torch.matmul(a, b)
 
-        assert_close(
-            output, reference, rtol=1e-3, atol=1e-3, msg="Tall-skinny GEMM failed"
-        )
+        assert_close(output, reference, rtol=1e-3, atol=1e-3, msg="Tall-skinny GEMM failed")
 
     @pytest.mark.cuda
     def test_alpha_beta_scaling(self, device):
@@ -506,9 +500,7 @@ class TestGEMMEdgeCases:
         output = gemm(a, b, alpha=alpha)
         reference = alpha * torch.matmul(a, b)
 
-        assert_close(
-            output, reference, rtol=1e-3, atol=1e-3, msg="Alpha scaling failed"
-        )
+        assert_close(output, reference, rtol=1e-3, atol=1e-3, msg="Alpha scaling failed")
 
     @pytest.mark.cuda
     def test_beta_parameter(self, device):
@@ -525,9 +517,7 @@ class TestGEMMEdgeCases:
         # Test with beta=0 (default, should be same as just alpha * A @ B)
         output_beta0 = gemm(a, b, alpha=1.0, beta=0.0)
         reference = torch.matmul(a, b)
-        assert_close(
-            output_beta0, reference, rtol=1e-3, atol=1e-3, msg="Beta=0 failed"
-        )
+        assert_close(output_beta0, reference, rtol=1e-3, atol=1e-3, msg="Beta=0 failed")
 
     @pytest.mark.cuda
     def test_combined_alpha_beta(self, device):
@@ -547,6 +537,4 @@ class TestGEMMEdgeCases:
         output = gemm(a, b, alpha=alpha, beta=beta)
         # Note: beta is currently unused in the implementation, so output should just be alpha * A @ B
         reference = alpha * torch.matmul(a, b)
-        assert_close(
-            output, reference, rtol=1e-3, atol=1e-3, msg="Combined alpha/beta failed"
-        )
+        assert_close(output, reference, rtol=1e-3, atol=1e-3, msg="Combined alpha/beta failed")

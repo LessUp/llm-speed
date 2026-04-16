@@ -49,15 +49,9 @@ class TestNaiveAttention:
             pytest.skip("CUDA kernels not built")
 
         # Generate inputs
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         # Compute outputs
         output = naive_attention(q, k, v)
@@ -92,15 +86,9 @@ class TestNaiveAttention:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
 
         output = naive_attention(q, k, v)
         reference, _ = compute_attention_reference(q, k, v)
@@ -149,17 +137,16 @@ class TestSoftmaxInvariants:
 
         # Property 2: Sum equals 1
         row_sums = softmax_output.sum(dim=-1)
-        assert torch.allclose(
-            row_sums, torch.ones_like(row_sums), rtol=1e-5, atol=1e-5
-        ), "Softmax row sums should equal 1"
+        assert torch.allclose(row_sums, torch.ones_like(row_sums), rtol=1e-5, atol=1e-5), (
+            "Softmax row sums should equal 1"
+        )
 
         # Property 3: Monotonicity (larger input -> larger output)
         for i in range(min(5, seq_len - 1)):  # Check a few pairs
             idx1, idx2 = i, i + 1
             mask = scores[..., idx1] > scores[..., idx2]
             assert (
-                softmax_output[..., idx1][mask]
-                >= softmax_output[..., idx2][mask] - 1e-6
+                softmax_output[..., idx1][mask] >= softmax_output[..., idx2][mask] - 1e-6
             ).all(), "Softmax should preserve relative order"
 
 
@@ -189,15 +176,9 @@ class TestFlashAttention:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         flash_output = flash_attention(q, k, v)
         naive_output = naive_attention(q, k, v)
@@ -233,15 +214,9 @@ class TestFlashAttention:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         # Compute causal attention
         causal_output = flash_attention(q, k, v, is_causal=True)
@@ -260,9 +235,9 @@ class TestFlashAttention:
 
         # Verify attention weights are lower triangular
         upper_triangle = torch.triu(attn_weights, diagonal=1)
-        assert torch.allclose(
-            upper_triangle, torch.zeros_like(upper_triangle), atol=1e-6
-        ), "Causal attention weights should be lower triangular"
+        assert torch.allclose(upper_triangle, torch.zeros_like(upper_triangle), atol=1e-6), (
+            "Causal attention weights should be lower triangular"
+        )
 
 
 class TestTiledAttention:
@@ -290,15 +265,9 @@ class TestTiledAttention:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         tiled_output = tiled_attention(q, k, v)
         naive_output = naive_attention(q, k, v)
@@ -332,15 +301,9 @@ class TestTiledAttention:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float16
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float16)
 
         output = tiled_attention(q, k, v)
         reference, _ = compute_attention_reference(q, k, v)
@@ -373,8 +336,9 @@ class TestTiledAttention:
         output_custom = tiled_attention(q, k, v, scale=custom_scale)
 
         # Outputs should be different
-        assert not torch.allclose(output_default, output_custom), \
+        assert not torch.allclose(output_default, output_custom), (
             "Custom scale should produce different output"
+        )
 
 
 class TestNaiveAttentionErrorHandling:
@@ -644,15 +608,9 @@ class TestBatchAndMultiHead:
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
-        q = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        k = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
-        v = torch.randn(
-            batch, heads, seq_len, head_dim, device=device, dtype=torch.float32
-        )
+        q = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        k = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
+        v = torch.randn(batch, heads, seq_len, head_dim, device=device, dtype=torch.float32)
 
         output = flash_attention(q, k, v)
 

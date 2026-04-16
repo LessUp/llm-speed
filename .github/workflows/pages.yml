@@ -43,6 +43,7 @@ jobs:
           cat > build_search_index.rb << 'RUBY'
           require 'json'
           require 'yaml'
+          require 'fileutils'
 
           def extract_front_matter(content)
             if content =~ /\A---\s*\n(.*?)\n---\s*\n/m
