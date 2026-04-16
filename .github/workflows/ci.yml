@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pip
-          pip install pytest hypothesis
+          pip install pytest hypothesis numpy
           pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Verify Python syntax
