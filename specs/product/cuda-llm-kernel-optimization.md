@@ -1,6 +1,6 @@
-# Requirements Specification
+# Requirements: CUDA LLM Kernel Optimization
 
-## Project Overview
+## Overview
 
 High-performance CUDA kernel library for LLM inference, featuring FlashAttention and Tensor Core GEMM with PyTorch integration.
 
@@ -8,11 +8,11 @@ High-performance CUDA kernel library for LLM inference, featuring FlashAttention
 
 | Dimension | Specification | Status |
 |-----------|---------------|--------|
-| **Target GPUs** | Volta (SM70+), Ampere (SM80+), Hopper (SM90+) | ✅ |
-| **Precision** | FP32, FP16, INT8 | ✅ |
+| **Target GPUs** | Volta (SM70+), Ampere (SM80+), Hopper (SM90+) | ✅ Implemented |
+| **Precision** | FP32, FP16, INT8 | ✅ Implemented |
 | **BF16** | Enum declared, no kernel implementation | ⏳ Backlog |
-| **Core Operators** | Attention, GEMM | ✅ |
-| **Python Interface** | PyTorch Tensor (pybind11) | ✅ |
+| **Core Operators** | Attention, GEMM | ✅ Implemented |
+| **Python Interface** | PyTorch Tensor (pybind11) | ✅ Implemented |
 
 ### Performance Targets
 
@@ -214,3 +214,4 @@ High-performance CUDA kernel library for LLM inference, featuring FlashAttention
 | 1.0 | 2025-01-01 | Initial requirements |
 | 1.1 | 2025-02-27 | Added implementation status |
 | 1.2 | 2026-04-16 | Restructured with tables, added traceability |
+| 1.3 | 2026-04-17 | Migrated to /specs/product/ per SDD structure |

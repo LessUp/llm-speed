@@ -4,13 +4,13 @@ High-performance attention and GEMM kernels for LLM inference.
 """
 
 try:
-    from cuda_llm_ops import (
-        naive_attention,
-        tiled_attention,
+    from cuda_llm_ops._cuda_llm_ops import (
         flash_attention,
         gemm,
+        naive_attention,
         tensor_core_gemm,
         tensor_core_gemm_int8,
+        tiled_attention,
     )
 except ImportError:
     # Fallback for when the module is not built yet

@@ -129,18 +129,20 @@ def tiled_attention(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    scale: float = 0.0
+    scale: float = 0.0,
+    is_causal: bool = False
 ) -> torch.Tensor
 ```
 
 #### Parameters
 
-Same as `flash_attention`, except `is_causal` is not supported.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `q`, `k`, `v` | `torch.Tensor` | Query, Key, Value tensors |
-| `scale` | `float` | Attention scale factor |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `q` | `torch.Tensor` | Required | Query tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `k` | `torch.Tensor` | Required | Key tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `v` | `torch.Tensor` | Required | Value tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `scale` | `float` | `0.0` | Attention scale factor. If `0.0`, uses `1/√head_dim` |
+| `is_causal` | `bool` | `False` | Enable causal mask for autoregressive models |
 
 #### Returns
 
@@ -174,13 +176,20 @@ def naive_attention(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    scale: float = 0.0
+    scale: float = 0.0,
+    is_causal: bool = False
 ) -> torch.Tensor
 ```
 
 #### Parameters
 
-Same as `tiled_attention`.
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `q` | `torch.Tensor` | Required | Query tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `k` | `torch.Tensor` | Required | Key tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `v` | `torch.Tensor` | Required | Value tensor, shape `[batch, heads, seq_len, head_dim]` |
+| `scale` | `float` | `0.0` | Attention scale factor. If `0.0`, uses `1/√head_dim` |
+| `is_causal` | `bool` | `False` | Enable causal mask for autoregressive models |
 
 #### Returns
 

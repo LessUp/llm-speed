@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/LessUp/llm-speed/releases)
 
-English | [简体中文](README.zh-CN.md) | [Documentation](https://lessup.github.io/llm-speed/) | [API Reference](docs/en/api.md)
+English | [简体中文](README.zh-CN.md) | [Documentation](https://lessup.github.io/llm-speed/)
 
 ![CUDA](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)
@@ -20,6 +20,7 @@ A high-performance CUDA kernel library for LLM inference, featuring FlashAttenti
 ## ✨ Features
 
 ### Attention Kernels
+
 - **⚡ FlashAttention**: O(N) memory complexity using online softmax algorithm
   - Causal mask support for autoregressive generation
   - Double buffering for compute/memory overlap
@@ -28,6 +29,7 @@ A high-performance CUDA kernel library for LLM inference, featuring FlashAttenti
 - **📊 Naive Attention**: Baseline implementation for correctness verification
 
 ### GEMM Kernels
+
 - **🎯 High-Performance GEMM**: Register tiling with 3-level blocking strategy
 - **🔢 Tensor Core GEMM**: Hardware-accelerated matrix multiplication using WMMA
   - FP16 input with FP32 accumulation
@@ -36,6 +38,7 @@ A high-performance CUDA kernel library for LLM inference, featuring FlashAttenti
 - **📐 Matrix Layout Support**: NN, NT, TN, TT transpose combinations
 
 ### Technical Highlights
+
 - 🏦 Shared memory padding to eliminate bank conflicts
 - ⚙️ Warp-level primitives for efficient reduction
 - 🔄 Double buffering pipeline for latency hiding
@@ -55,13 +58,15 @@ A high-performance CUDA kernel library for LLM inference, featuring FlashAttenti
 
 ### Supported GPU Architectures
 
-| Architecture | SM Version | Tensor Core |
-|--------------|------------|-------------|
-| Volta | SM 7.0 | FP16 |
-| Turing | SM 7.5 | FP16, INT8 |
-| Ampere | SM 8.0, 8.6 | FP16, BF16, INT8, TF32 |
-| Ada Lovelace | SM 8.9 | FP16, BF16, INT8, FP8 |
-| Hopper | SM 9.0 | FP16, BF16, INT8, FP8 |
+| Architecture | SM Version | Tensor Core | Notes |
+|--------------|------------|-------------|-------|
+| Volta | SM 7.0 | FP16 | |
+| Turing | SM 7.5 | FP16, INT8 | |
+| Ampere | SM 8.0, 8.6 | FP16, INT8, TF32 | BF16: planned |
+| Ada Lovelace | SM 8.9 | FP16, INT8 | BF16, FP8: planned |
+| Hopper | SM 9.0 | FP16, INT8 | BF16, FP8: planned |
+
+> **Note**: BF16 and FP8 support are planned features. Currently supported precisions are FP16, FP32, and INT8.
 
 ---
 
@@ -122,21 +127,21 @@ c = tensor_core_gemm(a, b)
 
 | Document | Description |
 |----------|-------------|
-| [Quick Start](docs/en/quickstart.md) | Get started in 5 minutes |
-| [API Reference](docs/en/api.md) | Complete API documentation |
-| [Architecture](docs/en/architecture.md) | Technical deep dive |
-| [Performance Guide](docs/en/performance.md) | Optimization and tuning |
-| [Troubleshooting](docs/en/troubleshooting.md) | Common issues and solutions |
+| [Quick Start](docs/setup/quickstart-en.md) | Get started in 5 minutes |
+| [API Reference](docs/api/api-en.md) | Complete API documentation |
+| [Architecture](docs/architecture/architecture-en.md) | Technical deep dive |
+| [Performance Guide](docs/tutorials/performance-en.md) | Optimization and tuning |
+| [Troubleshooting](docs/tutorials/troubleshooting-en.md) | Common issues and solutions |
 
 ### 中文文档
 
-| 文档 | 描述 |
+| Document | Description |
 |----------|-------------|
-| [快速入门](docs/zh-CN/quickstart.md) | 5 分钟快速上手 |
-| [API 参考](docs/zh-CN/api.md) | 完整 API 文档 |
-| [架构设计](docs/zh-CN/architecture.md) | 技术深度解析 |
-| [性能指南](docs/zh-CN/performance.md) | 优化与调优 |
-| [故障排除](docs/zh-CN/troubleshooting.md) | 常见问题与解决方案 |
+| [快速入门](docs/setup/quickstart-zh.md) | 5 分钟快速上手 |
+| [API 参考](docs/api/api-zh.md) | 完整 API 文档 |
+| [架构设计](docs/architecture/architecture-zh.md) | 技术深度解析 |
+| [性能指南](docs/tutorials/performance-zh.md) | 优化与调优 |
+| [故障排除](docs/tutorials/troubleshooting-zh.md) | 常见问题与解决方案 |
 
 ---
 
@@ -197,23 +202,31 @@ python benchmarks/benchmark_attention.py --output results.json
 
 ```
 llm-speed/
+├── specs/                  # Specification documents (SDD)
+│   ├── product/            # Product requirements
+│   ├── rfc/                # Technical design documents
+│   ├── api/                # API definitions
+│   └── testing/            # BDD test specifications
+├── docs/                   # Documentation (English & Chinese)
+│   ├── setup/              # Setup guides
+│   ├── tutorials/          # Tutorials and guides
+│   ├── architecture/       # Architecture documentation
+│   └── api/                # API reference
 ├── src/                    # CUDA kernel implementations
 ├── include/                # Header primitives
 ├── python/                 # Python bindings
 ├── tests/                  # Test suite
-├── benchmarks/             # Benchmark scripts
-├── docs/                   # Documentation (English & Chinese)
-│   ├── en/                 # English docs
-│   └── zh-CN/              # Chinese docs
-└── changelog/              # Change history
+└── benchmarks/             # Benchmark scripts
 ```
 
 ---
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
-- Development workflow
+This project follows **Spec-Driven Development (SDD)**. See [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
+
+- Spec-Driven Development workflow
+- Development setup and environment
 - Code style guidelines
 - Testing requirements
 - Commit message conventions
@@ -238,6 +251,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - [Documentation Site](https://lessup.github.io/llm-speed/)
 - [GitHub Releases](https://github.com/LessUp/llm-speed/releases)
-- [Changelog](changelog/CHANGELOG.md)
+- [Changelog](CHANGELOG.md)
 - [Issues](https://github.com/LessUp/llm-speed/issues)
 - [Discussions](https://github.com/LessUp/llm-speed/discussions)

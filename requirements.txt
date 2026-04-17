@@ -1,14 +1,8 @@
 # Core dependencies
+# For full installation with all optional dependencies, use:
+#   pip install -e ".[dev]"
+#   or
+#   pip install -e ".[test,benchmark,dev]"
+
 torch>=2.0.0
 numpy>=1.20.0
-
-# Testing
-pytest>=7.0.0
-hypothesis>=6.0.0
-
-# Benchmarking (optional)
-matplotlib>=3.5.0
-pandas>=1.4.0
-
-# Development
-pybind11>=2.10.0

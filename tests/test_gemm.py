@@ -4,7 +4,8 @@ Property-based tests using Hypothesis.
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 try:
     import torch
@@ -13,7 +14,6 @@ except ImportError:  # pragma: no cover - environment-dependent guard
 
 # Import from conftest (pytest automatically makes conftest functions available)
 from conftest import assert_close
-
 
 # Strategies for property-based testing
 dim_strategy = st.integers(min_value=16, max_value=512)

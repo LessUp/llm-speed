@@ -4,10 +4,11 @@ Performance profiler for CUDA kernels.
 
 from __future__ import annotations
 
-import torch
 from dataclasses import dataclass
-from typing import Callable
 from enum import Enum
+from typing import Callable
+
+import torch
 
 
 class Bottleneck(Enum):

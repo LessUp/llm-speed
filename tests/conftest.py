@@ -2,8 +2,8 @@
 Pytest configuration and fixtures for CUDA kernel tests.
 """
 
-import pytest
 import numpy as np
+import pytest
 
 try:
     import torch

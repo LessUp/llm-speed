@@ -129,18 +129,20 @@ def tiled_attention(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    scale: float = 0.0
+    scale: float = 0.0,
+    is_causal: bool = False
 ) -> torch.Tensor
 ```
 
 #### 参数
 
-与 `flash_attention` 相同，但不支持 `is_causal`。
-
-| 参数 | 类型 | 描述 |
-|-----------|------|-------------|
-| `q`, `k`, `v` | `torch.Tensor` | 查询、键、值张量 |
-| `scale` | `float` | Attention 缩放因子 |
+| 参数 | 类型 | 默认值 | 描述 |
+|-----------|------|---------|-------------|
+| `q` | `torch.Tensor` | 必需 | 查询张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `k` | `torch.Tensor` | 必需 | 键张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `v` | `torch.Tensor` | 必需 | 值张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `scale` | `float` | `0.0` | Attention 缩放因子。如果为 `0.0`，使用 `1/√head_dim` |
+| `is_causal` | `bool` | `False` | 为自回归模型启用因果掩码 |
 
 #### 返回值
 
@@ -174,13 +176,20 @@ def naive_attention(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    scale: float = 0.0
+    scale: float = 0.0,
+    is_causal: bool = False
 ) -> torch.Tensor
 ```
 
 #### 参数
 
-与 `tiled_attention` 相同。
+| 参数 | 类型 | 默认值 | 描述 |
+|-----------|------|---------|-------------|
+| `q` | `torch.Tensor` | 必需 | 查询张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `k` | `torch.Tensor` | 必需 | 键张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `v` | `torch.Tensor` | 必需 | 值张量，形状 `[batch, heads, seq_len, head_dim]` |
+| `scale` | `float` | `0.0` | Attention 缩放因子。如果为 `0.0`，使用 `1/√head_dim` |
+| `is_causal` | `bool` | `False` | 为自回归模型启用因果掩码 |
 
 #### 返回值
 

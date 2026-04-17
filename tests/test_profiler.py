@@ -11,9 +11,9 @@ except ImportError:
     pytest.skip("CUDA kernels not built", allow_module_level=True)
 
 from python.profiler import (
+    Bottleneck,
     CUDAProfiler,
     KernelMetrics,
-    Bottleneck,
     benchmark_attention,
     benchmark_gemm,
     print_benchmark_results,

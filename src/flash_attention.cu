@@ -243,10 +243,10 @@ void flash_attention_fp32(
 ) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
-    
+
     dim3 grid(1, (seq_len + BLOCK_M - 1) / BLOCK_M, batch_size * num_heads);
     dim3 block(128);
-    
+
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
     size_t smem_size = (BLOCK_M * hd_stride            // smem_Q
@@ -255,7 +255,21 @@ void flash_attention_fp32(
                        + BLOCK_M * head_dim              // output
                        + 3 * BLOCK_M                     // row_max + row_sum + rescale
                        ) * sizeof(float);
-    
+
+    // Validate shared memory requirement against device limit
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    int max_smem;
+    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
+        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    if (static_cast<int>(smem_size) > max_smem) {
+        throw std::runtime_error(
+            "flash_attention: head_dim=" + std::to_string(head_dim) +
+            " requires " + std::to_string(smem_size) +
+            " bytes shared memory, but device max is " +
+            std::to_string(max_smem) + " bytes.");
+    }
+
     flash_attention_forward_kernel<float, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
     );
@@ -269,10 +283,10 @@ void flash_attention_fp16(
 ) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
-    
+
     dim3 grid(1, (seq_len + BLOCK_M - 1) / BLOCK_M, batch_size * num_heads);
     dim3 block(128);
-    
+
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
     size_t smem_size = (BLOCK_M * hd_stride
@@ -281,7 +295,21 @@ void flash_attention_fp16(
                        + BLOCK_M * head_dim
                        + 3 * BLOCK_M
                        ) * sizeof(float);
-    
+
+    // Validate shared memory requirement against device limit
+    int device;
+    CUDA_CHECK(cudaGetDevice(&device));
+    int max_smem;
+    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
+        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    if (static_cast<int>(smem_size) > max_smem) {
+        throw std::runtime_error(
+            "flash_attention: head_dim=" + std::to_string(head_dim) +
+            " requires " + std::to_string(smem_size) +
+            " bytes shared memory, but device max is " +
+            std::to_string(max_smem) + " bytes.");
+    }
+
     flash_attention_forward_kernel<half, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
         Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
     );

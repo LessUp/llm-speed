@@ -6,10 +6,11 @@ Compares custom implementations with cuBLAS reference.
 
 import argparse
 import json
-import torch
-from typing import List, Dict, Tuple
 import sys
 from pathlib import Path
+from typing import Dict, List, Tuple
+
+import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

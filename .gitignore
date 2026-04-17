@@ -80,6 +80,9 @@ ipython_config.py
 # Ruff
 .ruff_cache/
 
+# Pre-commit
+.pre-commit-cache/
+
 # mypy
 .mypy_cache/
 .dmypy.json

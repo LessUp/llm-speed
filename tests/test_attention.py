@@ -4,7 +4,8 @@ Property-based tests using Hypothesis.
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 try:
     import torch
@@ -13,7 +14,6 @@ except ImportError:  # pragma: no cover - environment-dependent guard
 
 # Import from conftest (pytest automatically makes conftest functions available)
 from conftest import assert_close, compute_attention_reference
-
 
 # Strategies for property-based testing
 batch_strategy = st.integers(min_value=1, max_value=4)
@@ -261,7 +261,7 @@ class TestTiledAttention:
         Tiled attention should produce same results as naive attention.
         """
         try:
-            from cuda_llm_ops import tiled_attention, naive_attention
+            from cuda_llm_ops import naive_attention, tiled_attention
         except ImportError:
             pytest.skip("CUDA kernels not built")
 

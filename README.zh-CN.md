@@ -55,13 +55,15 @@
 
 ### 支持的 GPU 架构
 
-| 架构 | SM 版本 | Tensor Core |
-|------|---------|-------------|
-| Volta | SM 7.0 | FP16 |
-| Turing | SM 7.5 | FP16, INT8 |
-| Ampere | SM 8.0, 8.6 | FP16, BF16, INT8, TF32 |
-| Ada Lovelace | SM 8.9 | FP16, BF16, INT8, FP8 |
-| Hopper | SM 9.0 | FP16, BF16, INT8, FP8 |
+| 架构 | SM 版本 | Tensor Core | 备注 |
+|------|---------|-------------|------|
+| Volta | SM 7.0 | FP16 | |
+| Turing | SM 7.5 | FP16, INT8 | |
+| Ampere | SM 8.0, 8.6 | FP16, INT8, TF32 | BF16: 计划中 |
+| Ada Lovelace | SM 8.9 | FP16, INT8 | BF16, FP8: 计划中 |
+| Hopper | SM 9.0 | FP16, INT8 | BF16, FP8: 计划中 |
+
+> **注意**: BF16 和 FP8 支持是计划中的功能。当前支持的精度为 FP16、FP32 和 INT8。
 
 ---
 

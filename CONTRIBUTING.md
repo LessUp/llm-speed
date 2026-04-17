@@ -4,6 +4,33 @@ Thank you for your interest in contributing! This guide covers development setup
 
 ---
 
+## Project Philosophy: Spec-Driven Development (SDD)
+
+This project strictly follows the **Spec-Driven Development (SDD)** paradigm. All code implementations must use the specification documents in the `/specs` directory as the **Single Source of Truth (SSOT)**.
+
+**Core Principle**: Specs first, code second. Never write code without a corresponding spec.
+
+### Specification Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `/specs/product/` | Product requirements, user stories, and acceptance criteria |
+| `/specs/rfc/` | Technical design documents and architecture decisions |
+| `/specs/api/` | API interface definitions (OpenAPI, etc.) |
+| `/specs/db/` | Database/schema specifications |
+| `/specs/testing/` | BDD test case specifications |
+
+### SDD Workflow for Contributors
+
+1. **Review Existing Specs**: Before starting work, read the relevant specifications in `/specs/`.
+2. **Update Spec First**: If changing interfaces, adding features, or modifying behavior, update the corresponding spec document first.
+3. **Implement Against Spec**: Write code that 100% complies with the spec definitions.
+4. **Test Against Spec**: Ensure tests cover all acceptance criteria defined in the specs.
+
+For detailed AI agent workflow instructions, see [`AGENTS.md`](AGENTS.md).
+
+---
+
 ## Quick Reference
 
 | Task | Command |
@@ -52,6 +79,7 @@ pip install -e . --verbose
 ### IDE Configuration
 
 **VS Code Extensions:**
+
 - ms-vscode.cpptools
 - ms-vscode.cmake-tools
 - ms-python.python
@@ -235,6 +263,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - [ ] Tests pass: `pytest tests/ -v`
 - [ ] Commit messages follow convention
 - [ ] Documentation updated if needed
+- [ ] Spec documents updated if applicable (for SDD compliance)
 
 ---
 
@@ -243,6 +272,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 ### Bug Report
 
 Include:
+
 1. Environment (OS, CUDA, Python, PyTorch, GPU)
 2. Reproduction steps with code
 3. Expected vs actual behavior
@@ -251,6 +281,7 @@ Include:
 ### Feature Request
 
 Include:
+
 1. Use case description
 2. Expected benefits
 3. Implementation suggestions (optional)

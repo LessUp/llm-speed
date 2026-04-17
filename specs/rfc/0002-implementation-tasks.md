@@ -1,4 +1,11 @@
-# Implementation Tasks
+# RFC-0002: Implementation Tasks - CUDA LLM Kernel Optimization
+
+## Status
+- **Proposed:** 2025-01-01
+- **Accepted:** 2025-01-01
+- **Last Updated:** 2026-04-17
+
+---
 
 ## Overview
 
@@ -239,3 +246,4 @@ Backlog:
 | 1.0 | 2025-01-01 | Initial task breakdown |
 | 1.1 | 2025-02-27 | Updated status, added backlog |
 | 1.2 | 2026-04-16 | Restructured with phases and tables |
+| 1.3 | 2026-04-17 | Migrated to /specs/rfc/ per SDD structure |

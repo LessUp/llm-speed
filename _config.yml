@@ -86,33 +86,52 @@ defaults:
     values:
       layout: default
       lang: en
-  
-  # English docs
+
+  # Setup guides
   - scope:
-      path: "docs/en"
+      path: "docs/setup"
     values:
       layout: docs
-      lang: en
-      nav_section: docs-en
-  
-  # Chinese docs
+      nav_section: setup
+
+  # Tutorials and guides
   - scope:
-      path: "docs/zh-CN"
+      path: "docs/tutorials"
     values:
       layout: docs
-      lang: zh-CN
-      nav_section: docs-zh
-  
+      nav_section: tutorials
+
+  # Architecture docs
+  - scope:
+      path: "docs/architecture"
+    values:
+      layout: docs
+      nav_section: architecture
+
+  # API docs
+  - scope:
+      path: "docs/api"
+    values:
+      layout: docs
+      nav_section: api
+
   # Docs index
   - scope:
       path: "docs/README.md"
     values:
       layout: default
       lang: en
-  
+
+  # Specs
+  - scope:
+      path: "specs"
+    values:
+      layout: page
+      nav_section: specs
+
   # Changelog
   - scope:
-      path: "changelog"
+      path: "docs/changelog"
     values:
       layout: page
       nav_section: changelog
@@ -121,95 +140,74 @@ defaults:
 # NAVIGATION STRUCTURE
 # ═════════════════════════════════════════════════════════════════════════════
 navigation:
-  # English Navigation
-  en:
-    - name: Home
-      url: /
-      icon: 🏠
-    - name: Quick Start
-      url: /docs/en/quickstart
-      icon: 🚀
-    - name: API
-      url: /docs/en/api
-      icon: 📚
-      submenu:
-        - name: API Reference
-          url: /docs/en/api
-        - name: Architecture
-          url: /docs/en/architecture
-    - name: Performance
-      url: /docs/en/performance
-      icon: ⚡
-    - name: Changelog
-      url: /changelog/
-      icon: 📝
-    - name: GitHub
-      url: https://github.com/LessUp/llm-speed
-      icon: 💻
-      external: true
-  
-  # Chinese Navigation
-  zh:
-    - name: 首页
-      url: /
-      icon: 🏠
-    - name: 快速入门
-      url: /docs/zh-CN/quickstart
-      icon: 🚀
-    - name: API
-      url: /docs/zh-CN/api
-      icon: 📚
-      submenu:
-        - name: API 参考
-          url: /docs/zh-CN/api
-        - name: 架构设计
-          url: /docs/zh-CN/architecture
-    - name: 性能指南
-      url: /docs/zh-CN/performance
-      icon: ⚡
-    - name: 变更日志
-      url: /changelog/
-      icon: 📝
-    - name: GitHub
-      url: https://github.com/LessUp/llm-speed
-      icon: 💻
-      external: true
+  - name: Home
+    url: /
+    icon: 🏠
+  - name: Quick Start
+    url: /docs/setup/quickstart-en
+    icon: 🚀
+  - name: Documentation
+    url: /docs/
+    icon: 📚
+    submenu:
+      - name: Setup Guides
+        url: /docs/
+      - name: Tutorials
+        url: /docs/
+      - name: Architecture
+        url: /docs/
+      - name: API Reference
+        url: /docs/
+  - name: Specifications
+    url: /specs/
+    icon: 📋
+    submenu:
+      - name: Product Requirements
+        url: /specs/product/cuda-llm-kernel-optimization.md
+      - name: Core Architecture RFC
+        url: /specs/rfc/0001-core-architecture.md
+      - name: Implementation Tasks RFC
+        url: /specs/rfc/0002-implementation-tasks.md
+  - name: Changelog
+    url: /CHANGELOG.md
+    icon: 📝
+  - name: GitHub
+    url: https://github.com/LessUp/llm-speed
+    icon: 💻
+    external: true
 
 # ═════════════════════════════════════════════════════════════════════════════
 # DOC SECTIONS FOR SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 doc_sections:
-  en:
-    - title: Getting Started
-      items:
-        - name: Quick Start
-          url: /docs/en/quickstart
-        - name: Troubleshooting
-          url: /docs/en/troubleshooting
-    - title: Core Documentation
-      items:
-        - name: API Reference
-          url: /docs/en/api
-        - name: Architecture
-          url: /docs/en/architecture
-        - name: Performance
-          url: /docs/en/performance
-  
-  zh:
-    - title: 开始使用
-      items:
-        - name: 快速入门
-          url: /docs/zh-CN/quickstart
-        - name: 故障排除
-          url: /docs/zh-CN/troubleshooting
-    - title: 核心文档
-      items:
-        - name: API 参考
-          url: /docs/zh-CN/api
-        - name: 架构设计
-          url: /docs/zh-CN/architecture
-        - name: 性能指南
-          url: /docs/zh-CN/performance
+  - title: Setup Guides
+    items:
+      - name: Quick Start (English)
+        url: /docs/setup/quickstart-en
+      - name: 快速入门 (中文)
+        url: /docs/setup/quickstart-zh
+  - title: Tutorials & Guides
+    items:
+      - name: Performance Guide
+        url: /docs/tutorials/performance-en
+      - name: Troubleshooting
+        url: /docs/tutorials/troubleshooting-en
+  - title: Architecture
+    items:
+      - name: Architecture Deep Dive
+        url: /docs/architecture/architecture-en
+  - title: API Reference
+    items:
+      - name: API Reference
+        url: /docs/api/api-en
+  - title: Specifications
+    items:
+      - name: Product Requirements
+        url: /specs/product/cuda-llm-kernel-optimization.md
+      - name: Core Architecture RFC
+        url: /specs/rfc/0001-core-architecture.md
+      - name: Implementation Tasks RFC
+        url: /specs/rfc/0002-implementation-tasks.md
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEARCH CONFIGURATION
@@ -232,11 +230,10 @@ exclude:
   - .gitignore
   - .github
   - .vscode
-  - .kiro
   - .ruff_cache
   - .clang-format
   - .editorconfig
-  
+
   # Source code
   - include
   - src
@@ -248,7 +245,7 @@ exclude:
   - __pycache__
   - "*.egg-info"
   - vendor
-  
+
   # Build files
   - CMakeLists.txt
   - CMakePresets.json
@@ -257,7 +254,7 @@ exclude:
   - requirements.txt
   - Gemfile
   - Gemfile.lock
-  
+
   # Source files
   - "*.cu"
   - "*.cuh"
@@ -272,10 +269,9 @@ include:
   - _includes
   - _sass
   - assets
-  - docs/en
-  - docs/zh-CN
-  - docs/README.md
-  - changelog
+  - specs
+  - docs
+  - CHANGELOG.md
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PERFORMANCE SETTINGS

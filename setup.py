@@ -30,7 +30,7 @@ cuda_sources = [
     'src/flash_attention.cu',
     'src/tensor_core_gemm.cu',
     'src/hgemm_kernel.cu',
-    'python/bindings.cpp',
+    'cuda_llm_ops/bindings.cpp',
 ]
 
 # Include directories
@@ -70,10 +70,11 @@ setup(
     version=_read_version(),
     description='High-performance CUDA kernels for LLM inference',
     author='CUDA LLM Kernel Optimization',
-    packages=find_packages(),
+    packages=['cuda_llm_ops'],
+    package_dir={'cuda_llm_ops': 'cuda_llm_ops'},
     ext_modules=[
         CUDAExtension(
-            name='cuda_llm_ops',
+            name='cuda_llm_ops._cuda_llm_ops',
             sources=cuda_sources,
             include_dirs=include_dirs,
             extra_compile_args=extra_compile_args,

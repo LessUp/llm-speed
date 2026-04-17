@@ -6,10 +6,11 @@ Compares custom implementations with PyTorch/cuDNN reference.
 
 import argparse
 import json
-import torch
-from typing import List, Dict
 import sys
 from pathlib import Path
+from typing import Dict, List
+
+import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -63,7 +64,7 @@ def benchmark_attention(
 ) -> List[Dict]:
     """Benchmark attention implementations."""
     try:
-        from cuda_llm_ops import naive_attention, tiled_attention, flash_attention
+        from cuda_llm_ops import flash_attention, naive_attention, tiled_attention
 
         has_custom = True
     except ImportError:

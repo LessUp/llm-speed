@@ -6,7 +6,70 @@ build-backend = "setuptools.build_meta"
 name = "cuda_llm_ops"
 version = "0.3.0"
 description = "High-performance CUDA kernels for LLM inference"
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.8"
+authors = [
+    {name = "LessUp"}
+]
+keywords = [
+    "cuda",
+    "llm",
+    "attention",
+    "gemm",
+    "tensor-core",
+    "flash-attention",
+    "gpu",
+    "deep-learning",
+    "inference",
+    "optimization",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C++",
+    "Programming Language :: CUDA",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: CUDA",
+    "Typing :: Typed",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "hypothesis>=6.0.0",
+    "pytest-cov>=4.0.0",
+]
+benchmark = [
+    "matplotlib>=3.5.0",
+    "pandas>=1.4.0",
+]
+dev = [
+    "ruff>=0.1.0",
+    "pytest>=7.0.0",
+    "hypothesis>=6.0.0",
+    "pytest-cov>=4.0.0",
+    "pybind11>=2.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/LessUp/llm-speed"
+Repository = "https://github.com/LessUp/llm-speed.git"
+Documentation = "https://lessup.github.io/llm-speed/"
+"Bug Tracker" = "https://github.com/LessUp/llm-speed/issues"
 
 [tool.pytest.ini_options]
 markers = [
@@ -15,3 +78,33 @@ markers = [
     "property: mark test as property-based test",
 ]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = [
+    "E501",  # Line length (handled by formatter)
+    "N803",  # Argument name should be lowercase (M, N, K are standard in GEMM)
+    "N806",  # Variable name should be lowercase (M, N, K are standard in GEMM)
+    "B006",  # Mutable default arguments (acceptable in benchmark functions)
+    "B017",  # Blind exception assertions (acceptable in tests)
+    "B028",  # No explicit stacklevel (acceptable in warnings)
+]
+
+# Allow conventional matrix variable names
+[tool.ruff.lint.pep8-naming]
+ignore-names = ["M", "N", "K"]
+
+[tool.coverage.run]
+source = ["cuda_llm_ops"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
