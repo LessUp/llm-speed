@@ -1,0 +1,5 @@
+<!-- This is a placeholder favicon. Replace with your actual favicon -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <circle cx="8" cy="8" r="7" fill="#76b900"/>
+  <path d="M5 8.5 L8 5.5 L8 7 L11 7 L8 10 L8 8.5 Z" fill="white"/>
+</svg>
