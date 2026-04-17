@@ -12,8 +12,12 @@ try:
 except ImportError:  # pragma: no cover - environment-dependent guard
     pytest.skip("PyTorch is not installed", allow_module_level=True)
 
-# Import from conftest (pytest automatically makes conftest functions available)
-from conftest import assert_close, compute_attention_reference
+# Import helper functions from conftest
+try:
+    from conftest import assert_close, compute_attention_reference
+except ImportError:
+    # Fallback for direct module imports
+    from tests.conftest import assert_close, compute_attention_reference
 
 # Strategies for property-based testing
 batch_strategy = st.integers(min_value=1, max_value=4)
