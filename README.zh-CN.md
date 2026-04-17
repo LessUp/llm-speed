@@ -199,15 +199,18 @@ python benchmarks/benchmark_attention.py --output results.json
 
 ```
 llm-speed/
+├── cuda_llm_ops/           # Python 包（绑定、分析器）
 ├── src/                    # CUDA 内核实现
 ├── include/                # 头文件原语
-├── python/                 # Python 绑定
 ├── tests/                  # 测试套件
 ├── benchmarks/             # 性能测试脚本
 ├── docs/                   # 文档（中英文）
-│   ├── en/                 # 英文文档
-│   └── zh-CN/              # 中文文档
-└── changelog/              # 变更历史
+│   ├── setup/              # 安装指南
+│   ├── api/                # API 参考
+│   ├── architecture/       # 架构文档
+│   └── tutorials/          # 教程
+├── specs/                  # 规格文档 (SDD)
+└── .github/workflows/      # CI/CD 流水线
 ```
 
 ---

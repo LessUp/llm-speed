@@ -39,8 +39,8 @@ For detailed AI agent workflow instructions, see [`AGENTS.md`](AGENTS.md).
 | Build extension | `pip install -e .` |
 | Run all tests | `pytest tests/ -v` |
 | Run CPU-safe tests | `pytest tests/ -v -m "not cuda"` |
-| Lint check | `ruff check python/ tests/ benchmarks/` |
-| Format code | `ruff format python/ tests/ benchmarks/` |
+| Lint check | `ruff check cuda_llm_ops/ tests/ benchmarks/` |
+| Format code | `ruff format cuda_llm_ops/ tests/ benchmarks/` |
 
 ---
 
@@ -134,13 +134,13 @@ def compute_flops(batch: int, heads: int, seq_len: int) -> int:
 
 ```bash
 # Check code style
-ruff check python/ tests/ benchmarks/
+ruff check cuda_llm_ops/ tests/ benchmarks/
 
 # Auto-fix issues
-ruff check --fix python/ tests/ benchmarks/
+ruff check --fix cuda_llm_ops/ tests/ benchmarks/
 
 # Format code
-ruff format python/ tests/ benchmarks/
+ruff format cuda_llm_ops/ tests/ benchmarks/
 ```
 
 ---
@@ -217,7 +217,7 @@ class TestFlashAttention:
 
 ```bash
 pip install pytest-cov
-pytest tests/ --cov=python --cov-report=html
+pytest tests/ --cov=cuda_llm_ops --cov-report=html
 ```
 
 ---

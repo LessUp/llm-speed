@@ -98,8 +98,8 @@ When you (AI) are asked to develop a new feature, modify an existing one, or fix
 | Run all tests | `pytest tests/ -v` |
 | Run property tests | `pytest tests/ -v -m property` |
 | Run CPU-safe tests | `pytest tests/ -v -m "not cuda"` |
-| Lint check | `ruff check python/ tests/ benchmarks/` |
-| Format code | `ruff format python/ tests/ benchmarks/` |
+| Lint check | `ruff check cuda_llm_ops/ tests/ benchmarks/` |
+| Format code | `ruff format cuda_llm_ops/ tests/ benchmarks/` |
 | Benchmark attention | `python benchmarks/benchmark_attention.py` |
 | Benchmark GEMM | `python benchmarks/benchmark_gemm.py` |
 
@@ -157,7 +157,7 @@ Naive → Tiled → FlashAttention → Tensor Core
 | `shared_memory.cuh` | Shared memory management, padding utilities |
 | `pipeline.cuh` | Double buffering, async copy (Ampere+), software pipeline |
 
-**Python Bindings (`python/`):**
+**Python Bindings (`cuda_llm_ops/`):**
 
 | File | Description |
 |------|-------------|

@@ -58,7 +58,7 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Verify Python syntax
-        run: python -m compileall python tests benchmarks
+        run: python -m compileall cuda_llm_ops tests benchmarks
 
       - name: Run CPU-safe tests
         run: |
