@@ -1,0 +1,30 @@
+# Include essential files for source distribution
+include README.md
+include README.zh-CN.md
+include LICENSE
+include pyproject.toml
+include CMakeLists.txt
+include CMakePresets.json
+include .clang-format
+include .editorconfig
+
+# Include CUDA source files
+recursive-include src *.cu
+
+# Include header files
+recursive-include include *.cuh
+
+# Include Python package files
+recursive-include cuda_llm_ops *.py *.cpp *.pyi
+
+# Include test files
+recursive-include tests *.py
+
+# Include benchmark files
+recursive-include benchmarks *.py
+
+# Exclude test cache
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .ruff_cache
+global-exclude .pytest_cache
