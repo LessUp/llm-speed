@@ -1,3 +1,10 @@
+---
+layout: docs
+title: API 参考
+description: CUDA LLM Kernel Optimization 库的完整 API 文档
+lang: zh-CN
+---
+
 # API 参考
 
 CUDA LLM Kernel Optimization 库的完整 API 文档。
@@ -554,4 +561,4 @@ print(cuda_llm_ops.__version__)
 - **Issues**: https://github.com/LessUp/llm-speed/issues
 - **文档**: https://lessup.github.io/llm-speed/
 
-[← 返回文档](../README.md)
+[← 返回文档](../)

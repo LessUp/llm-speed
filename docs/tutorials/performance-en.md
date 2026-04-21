@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Performance Tuning Guide
+description: Comprehensive guide for maximizing performance with CUDA LLM Kernel Optimization
+lang: en
+---
+
 # Performance Tuning Guide
 
 Comprehensive guide for maximizing performance with the CUDA LLM Kernel Optimization library.
@@ -512,4 +519,4 @@ def safe_flash_attention(q, k, v, fallback_to_torch=True):
 - [Nsight Compute Documentation](https://docs.nvidia.com/nsight-compute/)
 - [PyTorch Performance Tuning](https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html)
 
-[← Back to Documentation](../README.md)
+[← Back to Documentation](../)

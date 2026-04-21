@@ -36,6 +36,7 @@ __device__ __forceinline__ T warp_reduce_min(T val) {
 // Block-level reduction for sum using shared memory
 template<typename T, int BLOCK_SIZE>
 __device__ __forceinline__ T block_reduce_sum(T val, T* smem) {
+    static_assert(BLOCK_SIZE % 32 == 0, "BLOCK_SIZE must be a multiple of 32");
     int lane = threadIdx.x % 32;
     int warp_id = threadIdx.x / 32;
     
@@ -61,6 +62,7 @@ __device__ __forceinline__ T block_reduce_sum(T val, T* smem) {
 // Block-level reduction for max using shared memory
 template<typename T, int BLOCK_SIZE>
 __device__ __forceinline__ T block_reduce_max(T val, T* smem) {
+    static_assert(BLOCK_SIZE % 32 == 0, "BLOCK_SIZE must be a multiple of 32");
     int lane = threadIdx.x % 32;
     int warp_id = threadIdx.x / 32;
     

@@ -185,7 +185,7 @@ __global__ void flash_attention_forward_kernel(
                 float new_sum = old_sum * old_scale_f + block_sum;
                 
                 // Store rescale factor for Phase 2
-                rescale[m] = (old_sum > 0.0f) ? (old_scale_f * old_sum / new_sum) : 0.0f;
+                rescale[m] = (old_sum > 0.0f && new_sum > 0.0f) ? (old_scale_f * old_sum / new_sum) : 0.0f;
                 
                 row_max[m] = new_max;
                 row_sum[m] = new_sum;

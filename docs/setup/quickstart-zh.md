@@ -1,3 +1,10 @@
+---
+layout: docs
+title: 快速入门指南
+description: 5 分钟内上手 CUDA LLM Kernel Optimization
+lang: zh-CN
+---
+
 # 快速入门指南
 
 5 分钟内上手 CUDA LLM Kernel Optimization。
@@ -221,10 +228,10 @@ pytest tests/ -v
 
 ### 阅读文档
 
-- **[API 参考](api.md)** - 完整 API 文档
-- **[架构指南](architecture.md)** - 实现细节
-- **[性能指南](performance.md)** - 优化建议
-- **[故障排除](troubleshooting.md)** - 常见问题
+- **[API 参考](../api/api-zh.md)** - 完整 API 文档
+- **[架构指南](../architecture/architecture-zh.md)** - 实现细节
+- **[性能指南](../tutorials/performance-zh.md)** - 优化建议
+- **[故障排除](../tutorials/troubleshooting-zh.md)** - 常见问题
 
 ### 尝试不同配置
 
@@ -284,4 +291,4 @@ c = tensor_core_gemm_int8(a_int8, b_int8)  # 返回 INT32
 output = gemm(a_t, b, trans_a=True)  # A^T @ B
 ```
 
-[← 返回文档](../README.md)
+[← 返回文档](../)

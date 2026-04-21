@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Troubleshooting Guide
+description: Solutions to common issues when using CUDA LLM Kernel Optimization
+lang: en
+---
+
 # Troubleshooting Guide
 
 Solutions to common issues when using CUDA LLM Kernel Optimization.
@@ -544,4 +551,4 @@ RuntimeError: CUDA out of memory. Tried to allocate 4.00 GB
 
 ---
 
-[← Back to Documentation](../README.md)
+[← Back to Documentation](../)

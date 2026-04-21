@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Architecture Design
+description: In-depth technical documentation covering architecture, algorithm principles, and optimization strategies
+lang: en
+---
+
 # Architecture Design
 
 In-depth technical documentation covering the architecture, algorithm principles, and optimization strategies of the CUDA LLM Kernel Optimization project.
@@ -619,4 +626,4 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
 4. **cuBLAS**: NVIDIA cuBLAS Library Documentation
 5. **CUDA Programming Guide**: NVIDIA CUDA C++ Programming Guide
 
-[← Back to Documentation](../README.md)
+[← Back to Documentation](../)

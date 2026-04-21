@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Quick Start Guide
+description: Get up and running with CUDA LLM Kernel Optimization in 5 minutes
+lang: en
+---
+
 # Quick Start Guide
 
 Get up and running with CUDA LLM Kernel Optimization in 5 minutes.
@@ -221,10 +228,10 @@ pytest tests/ -v
 
 ### Read the Documentation
 
-- **[API Reference](api.md)** - Complete API documentation
-- **[Architecture Guide](architecture.md)** - Implementation details
-- **[Performance Guide](performance.md)** - Optimization tips
-- **[Troubleshooting](troubleshooting.md)** - Common issues
+- **[API Reference](../api/api-en.md)** - Complete API documentation
+- **[Architecture Guide](../architecture/architecture-en.md)** - Implementation details
+- **[Performance Guide](../tutorials/performance-en.md)** - Optimization tips
+- **[Troubleshooting](../tutorials/troubleshooting-en.md)** - Common issues
 
 ### Try Different Configurations
 
@@ -284,4 +291,4 @@ c = tensor_core_gemm_int8(a_int8, b_int8)  # Returns INT32
 output = gemm(a_t, b, trans_a=True)  # A^T @ B
 ```
 
-[← Back to Documentation](../README.md)
+[← Back to Documentation](../)

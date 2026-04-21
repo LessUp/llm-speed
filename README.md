@@ -486,30 +486,6 @@ pre-commit run --all-files
 
 ---
 
-## 📚 Documentation
-
-### English Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Quick Start](docs/setup/quickstart-en.md) | Get started in 5 minutes |
-| [API Reference](docs/api/api-en.md) | Complete API documentation |
-| [Architecture](docs/architecture/architecture-en.md) | Technical deep dive |
-| [Performance Guide](docs/tutorials/performance-en.md) | Optimization and tuning |
-| [Troubleshooting](docs/tutorials/troubleshooting-en.md) | Common issues and solutions |
-
-### 中文文档
-
-| 文档 | 描述 |
-|------|------|
-| [快速入门](docs/setup/quickstart-zh.md) | 5 分钟快速上手 |
-| [API 参考](docs/api/api-zh.md) | 完整 API 文档 |
-| [架构设计](docs/architecture/architecture-zh.md) | 技术深度解析 |
-| [性能指南](docs/tutorials/performance-zh.md) | 优化与调优 |
-| [故障排除](docs/tutorials/troubleshooting-zh.md) | 常见问题与解决方案 |
-
----
-
 ## 🤝 Contributing
 
 This project follows **Spec-Driven Development (SDD)**. All changes must have corresponding spec updates.

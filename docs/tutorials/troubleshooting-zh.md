@@ -1,3 +1,10 @@
+---
+layout: docs
+title: 故障排除指南
+description: 使用 CUDA LLM Kernel Optimization 时常见问题的解决方案
+lang: zh-CN
+---
+
 # 故障排除指南
 
 使用 CUDA LLM Kernel Optimization 时常见问题的解决方案。
@@ -544,4 +551,4 @@ RuntimeError: CUDA out of memory. Tried to allocate 4.00 GB
 
 ---
 
-[← 返回文档](../README.md)
+[← 返回文档](../)

@@ -1,3 +1,10 @@
+---
+layout: docs
+title: 性能调优指南
+description: CUDA LLM Kernel Optimization 库性能最大化的综合指南
+lang: zh-CN
+---
+
 # 性能调优指南
 
 CUDA LLM Kernel Optimization 库性能最大化的综合指南。
@@ -512,4 +519,4 @@ def safe_flash_attention(q, k, v, fallback_to_torch=True):
 - [Nsight Compute 文档](https://docs.nvidia.com/nsight-compute/)
 - [PyTorch 性能调优](https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html)
 
-[← 返回文档](../README.md)
+[← 返回文档](../)

@@ -1,3 +1,10 @@
+---
+layout: docs
+title: API Reference
+description: Complete API documentation for the CUDA LLM Kernel Optimization library
+lang: en
+---
+
 # API Reference
 
 Complete API documentation for the CUDA LLM Kernel Optimization library.
@@ -558,4 +565,4 @@ print(cuda_llm_ops.__version__)
 - **Issues**: https://github.com/LessUp/llm-speed/issues
 - **Documentation**: https://lessup.github.io/llm-speed/
 
-[← Back to Documentation](../README.md)
+[← Back to Documentation](../)

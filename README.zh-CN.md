@@ -1,11 +1,11 @@
-# CUDA LLM 内核优化
+# ⚡ LLM-Speed
 
 [![CI](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/Docs-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/llm-speed/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/LessUp/llm-speed/releases)
 
-[English](README.md) | 简体中文 | [文档站](https://lessup.github.io/llm-speed/) | [API 参考](docs/zh-CN/api.md)
+[English](README.md) | 简体中文 | [文档站](https://lessup.github.io/llm-speed/)
 
 ![CUDA](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia&logoColor=white)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white)
@@ -124,21 +124,21 @@ c = tensor_core_gemm(a, b)
 
 | 文档 | 描述 |
 |----------|-------------|
-| [Quick Start](docs/en/quickstart.md) | 5 分钟快速上手 |
-| [API Reference](docs/en/api.md) | 完整 API 文档 |
-| [Architecture](docs/en/architecture.md) | 技术深度解析 |
-| [Performance Guide](docs/en/performance.md) | 优化与调优 |
-| [Troubleshooting](docs/en/troubleshooting.md) | 常见问题与解决方案 |
+| [Quick Start](docs/setup/quickstart-en.md) | 5 分钟快速上手 |
+| [API Reference](docs/api/api-en.md) | 完整 API 文档 |
+| [Architecture](docs/architecture/architecture-en.md) | 技术深度解析 |
+| [Performance Guide](docs/tutorials/performance-en.md) | 优化与调优 |
+| [Troubleshooting](docs/tutorials/troubleshooting-en.md) | 常见问题与解决方案 |
 
 ### 中文文档
 
 | 文档 | 描述 |
 |----------|-------------|
-| [快速入门](docs/zh-CN/quickstart.md) | 5 分钟快速上手 |
-| [API 参考](docs/zh-CN/api.md) | 完整 API 文档 |
-| [架构设计](docs/zh-CN/architecture.md) | 技术深度解析 |
-| [性能指南](docs/zh-CN/performance.md) | 优化与调优 |
-| [故障排除](docs/zh-CN/troubleshooting.md) | 常见问题与解决方案 |
+| [快速入门](docs/setup/quickstart-zh.md) | 5 分钟快速上手 |
+| [API 参考](docs/api/api-zh.md) | 完整 API 文档 |
+| [架构设计](docs/architecture/architecture-zh.md) | 技术深度解析 |
+| [性能指南](docs/tutorials/performance-zh.md) | 优化与调优 |
+| [故障排除](docs/tutorials/troubleshooting-zh.md) | 常见问题与解决方案 |
 
 ---
 
@@ -243,6 +243,6 @@ MIT License - 详见 [LICENSE](LICENSE)。
 
 - [文档站点](https://lessup.github.io/llm-speed/)
 - [GitHub 发布](https://github.com/LessUp/llm-speed/releases)
-- [变更日志](changelog/CHANGELOG.zh-CN.md)
+- [变更日志](CHANGELOG.md)
 - [Issues](https://github.com/LessUp/llm-speed/issues)
 - [Discussions](https://github.com/LessUp/llm-speed/discussions)

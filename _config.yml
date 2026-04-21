@@ -140,74 +140,149 @@ defaults:
 # NAVIGATION STRUCTURE
 # ═════════════════════════════════════════════════════════════════════════════
 navigation:
-  - name: Home
-    url: /
-    icon: 🏠
-  - name: Quick Start
-    url: /docs/setup/quickstart-en
-    icon: 🚀
-  - name: Documentation
-    url: /docs/
-    icon: 📚
-    submenu:
-      - name: Setup Guides
-        url: /docs/
-      - name: Tutorials
-        url: /docs/
-      - name: Architecture
-        url: /docs/
-      - name: API Reference
-        url: /docs/
-  - name: Specifications
-    url: /specs/
-    icon: 📋
-    submenu:
-      - name: Product Requirements
-        url: /specs/product/cuda-llm-kernel-optimization.md
-      - name: Core Architecture RFC
-        url: /specs/rfc/0001-core-architecture.md
-      - name: Implementation Tasks RFC
-        url: /specs/rfc/0002-implementation-tasks.md
-  - name: Changelog
-    url: /CHANGELOG.md
-    icon: 📝
-  - name: GitHub
-    url: https://github.com/LessUp/llm-speed
-    icon: 💻
-    external: true
+  en:
+    - name: Home
+      url: /
+      icon: 🏠
+    - name: Quick Start
+      url: /docs/setup/quickstart-en
+      icon: 🚀
+    - name: Documentation
+      url: /docs/
+      icon: 📚
+      submenu:
+        - name: Quick Start
+          url: /docs/setup/quickstart-en
+        - name: API Reference
+          url: /docs/api/api-en
+        - name: Architecture
+          url: /docs/architecture/architecture-en
+        - name: Performance
+          url: /docs/tutorials/performance-en
+        - name: Troubleshooting
+          url: /docs/tutorials/troubleshooting-en
+    - name: Specifications
+      url: /specs/
+      icon: 📋
+      submenu:
+        - name: Product Requirements
+          url: /specs/product/cuda-llm-kernel-optimization
+        - name: Core Architecture RFC
+          url: /specs/rfc/0001-core-architecture
+        - name: Implementation Tasks RFC
+          url: /specs/rfc/0002-implementation-tasks
+    - name: Changelog
+      url: /CHANGELOG
+      icon: 📝
+    - name: GitHub
+      url: https://github.com/LessUp/llm-speed
+      icon: 💻
+      external: true
+  zh-CN:
+    - name: 首页
+      url: /
+      icon: 🏠
+    - name: 快速入门
+      url: /docs/setup/quickstart-zh
+      icon: 🚀
+    - name: 文档
+      url: /docs/
+      icon: 📚
+      submenu:
+        - name: 快速入门
+          url: /docs/setup/quickstart-zh
+        - name: API 参考
+          url: /docs/api/api-zh
+        - name: 架构设计
+          url: /docs/architecture/architecture-zh
+        - name: 性能指南
+          url: /docs/tutorials/performance-zh
+        - name: 故障排除
+          url: /docs/tutorials/troubleshooting-zh
+    - name: 规格
+      url: /specs/
+      icon: 📋
+      submenu:
+        - name: 产品需求
+          url: /specs/product/cuda-llm-kernel-optimization
+        - name: 核心架构 RFC
+          url: /specs/rfc/0001-core-architecture
+        - name: 实现任务 RFC
+          url: /specs/rfc/0002-implementation-tasks
+    - name: 变更日志
+      url: /CHANGELOG
+      icon: 📝
+    - name: GitHub
+      url: https://github.com/LessUp/llm-speed
+      icon: 💻
+      external: true
 
 # ═════════════════════════════════════════════════════════════════════════════
 # DOC SECTIONS FOR SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 doc_sections:
-  - title: Setup Guides
-    items:
-      - name: Quick Start (English)
-        url: /docs/setup/quickstart-en
-      - name: 快速入门 (中文)
-        url: /docs/setup/quickstart-zh
-  - title: Tutorials & Guides
-    items:
-      - name: Performance Guide
-        url: /docs/tutorials/performance-en
-      - name: Troubleshooting
-        url: /docs/tutorials/troubleshooting-en
-  - title: Architecture
-    items:
-      - name: Architecture Deep Dive
-        url: /docs/architecture/architecture-en
-  - title: API Reference
-    items:
-      - name: API Reference
-        url: /docs/api/api-en
-  - title: Specifications
-    items:
-      - name: Product Requirements
-        url: /specs/product/cuda-llm-kernel-optimization.md
-      - name: Core Architecture RFC
-        url: /specs/rfc/0001-core-architecture.md
-      - name: Implementation Tasks RFC
-        url: /specs/rfc/0002-implementation-tasks.md
+  en:
+    - title: Setup Guides
+      items:
+        - name: Quick Start
+          url: /docs/setup/quickstart-en
+    - title: Tutorials & Guides
+      items:
+        - name: Performance Guide
+          url: /docs/tutorials/performance-en
+        - name: Troubleshooting
+          url: /docs/tutorials/troubleshooting-en
+    - title: Architecture
+      items:
+        - name: Architecture Deep Dive
+          url: /docs/architecture/architecture-en
+    - title: API Reference
+      items:
+        - name: API Reference
+          url: /docs/api/api-en
+    - title: Specifications
+      items:
+        - name: Product Requirements
+          url: /specs/product/cuda-llm-kernel-optimization
+        - name: Core Architecture RFC
+          url: /specs/rfc/0001-core-architecture
+        - name: Implementation Tasks RFC
+          url: /specs/rfc/0002-implementation-tasks
+    - title: Changelog
+      items:
+        - name: Changelog
+          url: /docs/changelog/CHANGELOG
+  zh-CN:
+    - title: 安装指南
+      items:
+        - name: 快速入门
+          url: /docs/setup/quickstart-zh
+    - title: 教程与指南
+      items:
+        - name: 性能指南
+          url: /docs/tutorials/performance-zh
+        - name: 故障排除
+          url: /docs/tutorials/troubleshooting-zh
+    - title: 架构
+      items:
+        - name: 架构设计
+          url: /docs/architecture/architecture-zh
+    - title: API 参考
+      items:
+        - name: API 参考
+          url: /docs/api/api-zh
+    - title: 规格文档
+      items:
+        - name: 产品需求
+          url: /specs/product/cuda-llm-kernel-optimization
+        - name: 核心架构 RFC
+          url: /specs/rfc/0001-core-architecture
+        - name: 实现任务 RFC
+          url: /specs/rfc/0002-implementation-tasks
+    - title: 变更日志
+      items:
+        - name: 变更日志
+          url: /docs/changelog/CHANGELOG.zh-CN
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SEARCH CONFIGURATION

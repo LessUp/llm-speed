@@ -67,8 +67,9 @@ __global__ void naive_attention_simple_kernel(
 
     // Compute exp and sum
     float local_sum = 0.0f;
+    float effective_max = (block_max == -FLT_MAX) ? 0.0f : block_max;  // Handle all-masked case
     for (int j = tid; j < seq_len; j += blockDim.x) {
-        scores[j] = expf(scores[j] - block_max);
+        scores[j] = expf(scores[j] - effective_max);
         local_sum += scores[j];
     }
 

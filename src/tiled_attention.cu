@@ -170,7 +170,7 @@ __global__ void tiled_attention_kernel(
             float new_sum = row_sum[m] * old_scale + block_sum;
 
             // Rescale old output and add new contribution
-            float rescale = old_scale * row_sum[m] / fmaxf(new_sum, 1e-6f);
+            float rescale = (row_sum[m] > 0.0f) ? old_scale * row_sum[m] / fmaxf(new_sum, 1e-6f) : 0.0f;
 
             for (int k = 0; k < head_dim; k++) {
                 output[m * head_dim + k] *= rescale;

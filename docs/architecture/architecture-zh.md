@@ -1,3 +1,10 @@
+---
+layout: docs
+title: 架构设计
+description: CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度技术文档
+lang: zh-CN
+---
+
 # 架构设计
 
 CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度技术文档。
@@ -617,4 +624,4 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
 4. **cuBLAS**: NVIDIA cuBLAS Library Documentation
 5. **CUDA Programming Guide**: NVIDIA CUDA C++ Programming Guide
 
-[← 返回文档](../README.md)
+[← 返回文档](../)
