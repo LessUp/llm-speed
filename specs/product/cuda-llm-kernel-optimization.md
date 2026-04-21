@@ -1,3 +1,10 @@
+---
+layout: page
+title: Product Requirements
+description: CUDA LLM Kernel Optimization requirements and acceptance criteria
+lang: en
+---
+
 # Requirements: CUDA LLM Kernel Optimization
 
 ## Overview

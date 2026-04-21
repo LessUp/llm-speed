@@ -1,3 +1,10 @@
+---
+layout: page
+title: Testing Specifications
+description: BDD test case specifications and property-based testing
+lang: en
+---
+
 # Testing Specifications
 
 This directory contains BDD (Behavior-Driven Development) test case specifications.

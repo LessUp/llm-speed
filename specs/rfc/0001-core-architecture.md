@@ -1,3 +1,10 @@
+---
+layout: page
+title: RFC-0001 Core Architecture
+description: Core architecture design for CUDA LLM Kernel Optimization
+lang: en
+---
+
 # RFC-0001: Core Architecture - CUDA LLM Kernel Optimization
 
 ## Status

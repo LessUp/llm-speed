@@ -1,3 +1,10 @@
+---
+layout: page
+title: API Specifications
+description: API interface definitions for CUDA LLM Kernel Optimization
+lang: en
+---
+
 # API Specifications
 
 This directory contains API interface definitions for the CUDA LLM Kernel Optimization library.

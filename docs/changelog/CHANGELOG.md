@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Changelog
+description: All notable changes to LLM-Speed project
+lang: en
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

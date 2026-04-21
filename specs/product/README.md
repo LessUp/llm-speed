@@ -1,3 +1,10 @@
+---
+layout: page
+title: Product Specifications
+description: Product-level requirements and acceptance criteria
+lang: en
+---
+
 # Product Specifications
 
 This directory contains product-level requirements, user stories, and acceptance criteria.

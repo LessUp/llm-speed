@@ -1,3 +1,10 @@
+---
+layout: page
+title: RFC-0002 Implementation Tasks
+description: Implementation plan for CUDA LLM Kernel Optimization
+lang: en
+---
+
 # RFC-0002: Implementation Tasks - CUDA LLM Kernel Optimization
 
 ## Status

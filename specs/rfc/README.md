@@ -1,3 +1,10 @@
+---
+layout: page
+title: RFC Documents
+description: Technical design documents and architecture decisions
+lang: en
+---
+
 # RFC (Request for Comments) Documents
 
 This directory contains technical design documents, architecture decisions, and implementation plans.

@@ -2,6 +2,7 @@
 layout: default
 title: LLM-Speed
 description: High-performance CUDA kernel library for LLM inference — FlashAttention with O(N) memory, Tensor Core GEMM acceleration, and seamless PyTorch integration
+lang: en
 ---
 
 <!-- Hero Section -->

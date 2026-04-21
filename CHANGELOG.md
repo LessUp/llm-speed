@@ -1,3 +1,10 @@
+---
+layout: page
+title: Changelog
+description: All notable changes to LLM-Speed project
+lang: en
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -10,23 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Complete SDD (Spec-Driven Development) documentation structure
-- README.md files for all `/specs` subdirectories (product/, rfc/, api/, db/, testing/)
-- Professional AGENTS.md with AI workflow instructions
-- Updated CONTRIBUTING.md with SDD workflow guidelines
+- GitHub Pages optimization with front matter for all documentation files
+- Sitemap.xml and robots.txt for better SEO
+- Bilingual navigation support (English/Chinese)
+- Jekyll layout optimization for documentation pages
 
 ### Changed
-- Restructured `/specs` directory with proper README files for each subdirectory
-- Updated README.md with English primary and Chinese link
-- Cleaned up project structure, removed `.qwen` directory
-- Unified documentation organization following GitHub best practices
-
-### Removed
-- `.qwen` directory (AI tool configuration, no longer needed)
+- Optimized `_config.yml` navigation structure with language-specific menus
+- Improved documentation sidebar with proper language sections
 
 ---
 
-## [0.3.0] - 2026-04-16
+## [0.3.0] - 2026-04-22
 
 ### Added
 - **Bilingual Documentation**: Complete Chinese and English documentation support

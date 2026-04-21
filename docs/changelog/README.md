@@ -1,3 +1,10 @@
+---
+layout: docs
+title: Changelog
+description: Project change history and version tracking
+lang: en
+---
+
 # Changelog Directory / 变更日志目录
 
 Project change history and version tracking. / 项目变更历史和版本追踪。

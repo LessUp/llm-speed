@@ -1,3 +1,10 @@
+---
+layout: docs
+title: 变更日志
+description: LLM-Speed 项目所有重要的变更记录
+lang: zh-CN
+---
+
 # 变更日志
 
 本项目所有重要的变更都将记录在此文件中。

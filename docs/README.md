@@ -1,3 +1,10 @@
+---
+layout: default
+title: Documentation
+description: Complete documentation for CUDA LLM Kernel Optimization library
+lang: en
+---
+
 # CUDA LLM Kernel Optimization Documentation
 
 Welcome to the documentation for CUDA LLM Kernel Optimization — a high-performance CUDA kernel library for LLM inference.

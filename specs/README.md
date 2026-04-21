@@ -1,3 +1,10 @@
+---
+layout: page
+title: Specifications
+description: Spec-Driven Development documentation for LLM-Speed
+lang: en
+---
+
 # Specifications Directory
 
 This directory contains all specification documents following the **Spec-Driven Development (SDD)** paradigm.
