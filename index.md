@@ -18,10 +18,10 @@ lang: en
       with O(N) memory complexity and Tensor Core GEMM acceleration.
     </p>
     <div class="hero-actions">
-      <a href="{{ site.baseurl }}/docs/setup/quickstart-en" class="btn btn-primary">
+      <a href="{{ site.baseurl }}/docs/setup/quickstart-en/" class="btn btn-primary">
         🚀 Get Started
       </a>
-      <a href="{{ site.baseurl }}/docs/setup/quickstart-zh" class="btn btn-secondary">
+      <a href="{{ site.baseurl }}/docs/setup/quickstart-zh/" class="btn btn-secondary">
         🇨🇳 中文文档
       </a>
       <a href="{{ site.github.repository_url }}" class="btn btn-secondary" target="_blank" rel="noopener">
@@ -262,22 +262,22 @@ print(c.dtype)  # torch.float32</code></pre>
     <p class="section-description">Comprehensive guides in English and Chinese</p>
   </div>
   <div class="feature-grid" style="max-width: 1000px;">
-    <a href="{{ site.baseurl }}/docs/setup/quickstart-en" class="feature-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ site.baseurl }}/docs/setup/quickstart-en/" class="feature-card" style="text-decoration: none; color: inherit;">
       <div class="feature-icon">🚀</div>
       <h3>Quick Start</h3>
       <p>Get up and running in 5 minutes with installation and basic usage examples.</p>
     </a>
-    <a href="{{ site.baseurl }}/docs/api/api-en" class="feature-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ site.baseurl }}/docs/api/api-en/" class="feature-card" style="text-decoration: none; color: inherit;">
       <div class="feature-icon">📚</div>
       <h3>API Reference</h3>
       <p>Complete API documentation with parameters, examples, and error handling.</p>
     </a>
-    <a href="{{ site.baseurl }}/docs/architecture/architecture-en" class="feature-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ site.baseurl }}/docs/architecture/architecture-en/" class="feature-card" style="text-decoration: none; color: inherit;">
       <div class="feature-icon">🏗️</div>
       <h3>Architecture</h3>
       <p>Technical deep dive into CUDA kernels, optimization strategies, and implementation details.</p>
     </a>
-    <a href="{{ site.baseurl }}/docs/tutorials/performance-en" class="feature-card" style="text-decoration: none; color: inherit;">
+    <a href="{{ site.baseurl }}/docs/tutorials/performance-en/" class="feature-card" style="text-decoration: none; color: inherit;">
       <div class="feature-icon">⚡</div>
       <h3>Performance Guide</h3>
       <p>Optimization tips, benchmarking tools, and best practices for maximum performance.</p>

@@ -6,7 +6,7 @@ on:
     paths:
       - '**.md'
       - 'docs/**'
-      - 'changelog/**'
+      - 'specs/**'
       - '_config.yml'
       - '_layouts/**'
       - 'assets/**'
@@ -67,23 +67,29 @@ jobs:
               .strip
           end
 
-          search_index = []
-          baseurl = "/llm-speed"
+          # Read baseurl from _config.yml
+          config = YAML.safe_load(File.read('_config.yml')) rescue {}
+          baseurl = config['baseurl'] || '/llm-speed'
 
-          # Process all markdown files
+          search_index = []
+
+          # Process all markdown files in docs
           Dir.glob('docs/**/*.{md,markdown}').each do |file|
             content = File.read(file)
             front_matter = extract_front_matter(content)
             body = strip_front_matter(content)
             plain_text = strip_markdown(body)
 
-            # Skip files without proper front matter
+            # Skip files without proper front matter (README files)
             next if front_matter['layout'] == nil
+            next if file.include?('/README.md')
 
+            # Generate URL using permalink format
+            # Convert /docs/setup/quickstart-en.md -> /docs/setup/quickstart-en/
             url_path = file
               .sub(/^docs/, '')
-              .sub(/\.md$/, '')
-              .sub(/index$/, '')
+              .sub(/\.md$/i, '')
+              .sub(/\/index$/i, '/')
             
             url = "#{baseurl}#{url_path}"
 
@@ -95,18 +101,25 @@ jobs:
             }
           end
 
-          # Also process root changelog
-          Dir.glob('changelog/*.md').each do |file|
-            next if file.include?('README')
+          # Process specs
+          Dir.glob('specs/**/*.md').each do |file|
+            next if file.include?('/README.md')
             content = File.read(file)
             front_matter = extract_front_matter(content)
             body = strip_front_matter(content)
             plain_text = strip_markdown(body)
 
-            url = "#{baseurl}/changelog/"
+            next if front_matter['layout'] == nil
+
+            url_path = file
+              .sub(/^specs/, '/specs')
+              .sub(/\.md$/i, '')
+              .sub(/\/index$/i, '/')
+            
+            url = "#{baseurl}#{url_path}/"
 
             search_index << {
-              title: front_matter['title'] || 'Changelog',
+              title: front_matter['title'] || File.basename(file, '.md'),
               url: url,
               content: plain_text[0..500],
               excerpt: plain_text[0..200] + '...'
@@ -118,7 +131,7 @@ jobs:
           File.write('assets/js/search-index.js', "window.searchIndexData = #{search_index.to_json};")
           
           puts "Generated search index with #{search_index.length} entries"
-          search_index.each { |item| puts "  - #{item[:title]}" }
+          search_index.each { |item| puts "  - #{item[:title]}: #{item[:url]}" }
           RUBY
 
           ruby build_search_index.rb
