@@ -133,11 +133,26 @@
               </svg>
             </button>
             <div class="lang-menu">
-              <a href="{{ site.baseurl }}{% if page.url contains '/docs/zh-CN/' %}{{ page.url | replace: '/docs/zh-CN/', '/docs/en/' }}{% elsif page.url contains '/docs/en/' %}{{ page.url | replace: '/docs/en/', '/docs/zh-CN/' }}{% else %}/{% endif %}" 
+              {% comment %} Language switcher logic: replace -en with -zh or -zh with -en {% endcomment %}
+              {% assign current_url = page.url %}
+              
+              {% if current_url contains '-zh/' %}
+                {% assign en_url = current_url | replace: '-zh/', '-en/' %}
+                {% assign zh_url = current_url %}
+              {% elsif current_url contains '-en/' %}
+                {% assign en_url = current_url %}
+                {% assign zh_url = current_url | replace: '-en/', '-zh/' %}
+              {% else %}
+                {% comment %} Non-doc pages: go to respective home or quickstart {% endcomment %}
+                {% assign en_url = '/' %}
+                {% assign zh_url = '/docs/setup/quickstart-zh/' %}
+              {% endif %}
+              
+              <a href="{{ site.baseurl }}{{ en_url }}" 
                  class="lang-item{% if page.lang != 'zh-CN' %} active{% endif %}">
                 English
               </a>
-              <a href="{{ site.baseurl }}{% if page.url contains '/docs/en/' %}{{ page.url | replace: '/docs/en/', '/docs/zh-CN/' }}{% elsif page.url contains '/docs/zh-CN/' %}{{ page.url | replace: '/docs/zh-CN/', '/docs/en/' }}{% else %}/docs/zh-CN/quickstart{% endif %}" 
+              <a href="{{ site.baseurl }}{{ zh_url }}" 
                  class="lang-item{% if page.lang == 'zh-CN' %} active{% endif %}">
                 简体中文
               </a>
