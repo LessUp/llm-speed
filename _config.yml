@@ -18,8 +18,8 @@ url: "https://lessup.github.io"
 baseurl: "/llm-speed"
 lang: en
 
-# Enable Pretty URLs (remove .html extension)
-permalink: /:categories/:title/
+# Use pretty URLs (no .html extension)
+permalink: pretty
 
 # Author & Social
 author:
@@ -50,7 +50,8 @@ plugins:
   - jekyll-feed
   - jekyll-last-modified-at
 
-theme: minima
+# Note: This site uses a custom theme via _layouts/ and assets/css/
+# No remote_theme or theme specified - using GitHub Pages' default
 
 # SEO Settings
 seo:

@@ -85,13 +85,13 @@ jobs:
             next if file.include?('/README.md')
 
             # Generate URL using permalink format
-            # Convert /docs/setup/quickstart-en.md -> /docs/setup/quickstart-en/
+            # Jekyll permalink: pretty converts:
+            # /docs/setup/quickstart-en.md -> /docs/setup/quickstart-en/
             url_path = file
-              .sub(/^docs/, '')
               .sub(/\.md$/i, '')
               .sub(/\/index$/i, '/')
             
-            url = "#{baseurl}#{url_path}"
+            url = "#{baseurl}/#{url_path}"
 
             search_index << {
               title: front_matter['title'] || File.basename(file, '.md'),
@@ -112,11 +112,10 @@ jobs:
             next if front_matter['layout'] == nil
 
             url_path = file
-              .sub(/^specs/, '/specs')
               .sub(/\.md$/i, '')
               .sub(/\/index$/i, '/')
             
-            url = "#{baseurl}#{url_path}/"
+            url = "#{baseurl}/#{url_path}/"
 
             search_index << {
               title: front_matter['title'] || File.basename(file, '.md'),
