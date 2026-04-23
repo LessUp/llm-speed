@@ -233,3 +233,26 @@ _config.local.yml
 
 # Don't ignore the logo we created
 !assets/images/logo.svg
+
+# ═════════════════════════════════════════════════════════════════════════════
+# AI TOOLING (track these)
+# ═════════════════════════════════════════════════════════════════════════════
+
+# Claude Code - track configuration
+!.claude/
+!.claude/CLAUDE.md
+!.claude/commands/
+!.claude/skills/
+
+# OpenSpec - track all specs and changes
+!openspec/
+
+# ═════════════════════════════════════════════════════════════════════════════
+# AI TOOLING (ignore these)
+# ═════════════════════════════════════════════════════════════════════════════
+
+# clangd cache
+.clangd/
+
+# pyright cache
+pyrightconfig.json
