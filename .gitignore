@@ -252,6 +252,7 @@ _config.local.yml
 # ═════════════════════════════════════════════════════════════════════════════
 
 # clangd cache
+.clangd
 .clangd/
 
 # pyright cache

@@ -1,34 +1,27 @@
 #pragma once
 
-#include <cuda_runtime.h>
 #include <cuda_fp16.h>
+#include <cuda_runtime.h>
+
+#include <cstdint>
 #include <stdexcept>
 #include <string>
-#include <cstdint>
 
 // CUDA error checking macro
-#define CUDA_CHECK(call) do { \
-    cudaError_t err = call; \
-    if (err != cudaSuccess) { \
-        throw std::runtime_error(std::string("CUDA error: ") + \
-            cudaGetErrorString(err) + " at " + __FILE__ + ":" + std::to_string(__LINE__)); \
-    } \
-} while(0)
+#define CUDA_CHECK(call)                                                                     \
+    do {                                                                                     \
+        cudaError_t err = call;                                                              \
+        if (err != cudaSuccess) {                                                            \
+            throw std::runtime_error(std::string("CUDA error: ") + cudaGetErrorString(err) + \
+                                     " at " + __FILE__ + ":" + std::to_string(__LINE__));    \
+        }                                                                                    \
+    } while (0)
 
 // Matrix layout enumeration
-enum class MatrixLayout {
-    RowMajor,
-    ColMajor,
-    RowMajorPadded
-};
+enum class MatrixLayout { RowMajor, ColMajor, RowMajorPadded };
 
 // Precision enumeration
-enum class Precision {
-    FP32,
-    FP16,
-    BF16,
-    INT8
-};
+enum class Precision { FP32, FP16, BF16, INT8 };
 
 // Kernel error codes
 enum class KernelError {
@@ -52,10 +45,17 @@ struct AttentionConfig {
     int block_m;
     int block_n;
     Precision precision;
-    
-    AttentionConfig() : batch_size(1), num_heads(1), seq_len(128), head_dim(64),
-                        scale(0.0f), is_causal(false), block_m(64), block_n(64),
-                        precision(Precision::FP32) {
+
+    AttentionConfig()
+        : batch_size(1),
+          num_heads(1),
+          seq_len(128),
+          head_dim(64),
+          scale(0.0f),
+          is_causal(false),
+          block_m(64),
+          block_n(64),
+          precision(Precision::FP32) {
         if (scale == 0.0f) {
             scale = 1.0f / sqrtf(static_cast<float>(head_dim));
         }
@@ -72,12 +72,23 @@ struct GemmConfig {
     int warp_m, warp_n;
     int thread_m, thread_n;
     Precision precision;
-    
-    GemmConfig() : M(0), N(0), K(0), alpha(1.0f), beta(0.0f),
-                   layout_a(MatrixLayout::RowMajor), layout_b(MatrixLayout::RowMajor),
-                   block_m(128), block_n(128), block_k(32),
-                   warp_m(64), warp_n(64), thread_m(8), thread_n(8),
-                   precision(Precision::FP16) {}
+
+    GemmConfig()
+        : M(0),
+          N(0),
+          K(0),
+          alpha(1.0f),
+          beta(0.0f),
+          layout_a(MatrixLayout::RowMajor),
+          layout_b(MatrixLayout::RowMajor),
+          block_m(128),
+          block_n(128),
+          block_k(32),
+          warp_m(64),
+          warp_n(64),
+          thread_m(8),
+          thread_n(8),
+          precision(Precision::FP16) {}
 };
 
 // Performance metrics
@@ -87,12 +98,8 @@ struct KernelMetrics {
     float memory_bandwidth_gb;
     float sm_occupancy;
     float l2_hit_rate;
-    
-    enum class Bottleneck {
-        COMPUTE_BOUND,
-        MEMORY_BOUND,
-        LATENCY_BOUND
-    } bottleneck;
+
+    enum class Bottleneck { COMPUTE_BOUND, MEMORY_BOUND, LATENCY_BOUND } bottleneck;
 };
 
 // Utility functions

@@ -49,22 +49,22 @@ target_compile_options(cuda_kernels PRIVATE
 target_link_libraries(cuda_kernels PRIVATE CUDA::cudart CUDA::cublas)
 
 # ---------- Python module ----------
-pybind11_add_module(cuda_llm_ops python/bindings.cpp ${CUDA_SOURCES})
+pybind11_add_module(_cuda_llm_ops cuda_llm_ops/bindings.cpp ${CUDA_SOURCES})
 
-target_include_directories(cuda_llm_ops
+target_include_directories(_cuda_llm_ops
     PRIVATE ${CMAKE_SOURCE_DIR}/include
     PRIVATE ${CUDAToolkit_INCLUDE_DIRS}
 )
 
-target_compile_options(cuda_llm_ops PRIVATE
+target_compile_options(_cuda_llm_ops PRIVATE
     $<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<NOT:$<PLATFORM_ID:Windows>>>:-Xcompiler=-fPIC>
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Release>>:-O3>
     $<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:Debug>>:-G -lineinfo>
 )
 
-target_link_libraries(cuda_llm_ops PRIVATE CUDA::cudart CUDA::cublas)
+target_link_libraries(_cuda_llm_ops PRIVATE CUDA::cudart CUDA::cublas)
 
 # ---------- Install ----------
 install(TARGETS cuda_kernels LIBRARY DESTINATION lib)
-install(TARGETS cuda_llm_ops LIBRARY DESTINATION python)
+install(TARGETS _cuda_llm_ops LIBRARY DESTINATION cuda_llm_ops)

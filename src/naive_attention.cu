@@ -1,28 +1,28 @@
+#include <cfloat>
+#include <cmath>
+
 #include "common.cuh"
 #include "warp_primitives.cuh"
-#include <cmath>
-#include <cfloat>
 
 // Naive attention - each block handles one (batch, head, row)
 template<typename T>
-__global__ void naive_attention_simple_kernel(
-    const T* __restrict__ Q,
-    const T* __restrict__ K,
-    const T* __restrict__ V,
-    T* __restrict__ O,
-    int batch_size,
-    int num_heads,
-    int seq_len,
-    int head_dim,
-    float scale,
-    bool is_causal
-) {
+__global__ void naive_attention_simple_kernel(const T* __restrict__ Q,
+                                              const T* __restrict__ K,
+                                              const T* __restrict__ V,
+                                              T* __restrict__ O,
+                                              int batch_size,
+                                              int num_heads,
+                                              int seq_len,
+                                              int head_dim,
+                                              float scale,
+                                              bool is_causal) {
     int batch_idx = blockIdx.z / num_heads;
     int head_idx = blockIdx.z % num_heads;
     int row_idx = blockIdx.y;
     int tid = threadIdx.x;
 
-    if (batch_idx >= batch_size || row_idx >= seq_len) return;
+    if (batch_idx >= batch_size || row_idx >= seq_len)
+        return;
 
     // Pointer offsets (use int64 to avoid overflow for large tensors)
     int64_t offset = (static_cast<int64_t>(batch_idx) * num_heads + head_idx) * seq_len * head_dim;
@@ -98,11 +98,17 @@ __global__ void naive_attention_simple_kernel(
 }
 
 // Host wrapper functions
-void naive_attention_fp32(
-    const float* Q, const float* K, const float* V, float* O,
-    int batch_size, int num_heads, int seq_len, int head_dim,
-    float scale, bool is_causal, cudaStream_t stream
-) {
+void naive_attention_fp32(const float* Q,
+                          const float* K,
+                          const float* V,
+                          float* O,
+                          int batch_size,
+                          int num_heads,
+                          int seq_len,
+                          int head_dim,
+                          float scale,
+                          bool is_causal,
+                          cudaStream_t stream) {
     dim3 grid(1, seq_len, batch_size * num_heads);
     constexpr int BLOCK_THREADS = 256;
     constexpr int REDUCE_SMEM = BLOCK_THREADS / 32;
@@ -111,30 +117,35 @@ void naive_attention_fp32(
 
     // Validate shared memory requirement against device limit
     int device;
-    CUDA_CHECK(cudaGetDevice(&device));
+    CUDA_CHECK (cudaGetDevice(&device))
+        ;
     int max_smem;
-    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
-        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    CUDA_CHECK (cudaDeviceGetAttribute(&max_smem, cudaDevAttrMaxSharedMemoryPerBlock, device))
+        ;
     if (static_cast<int>(smem_size) > max_smem) {
         throw std::runtime_error(
-            "naive_attention: seq_len=" + std::to_string(seq_len) +
-            " requires " + std::to_string(smem_size) +
-            " bytes shared memory, but device max is " +
-            std::to_string(max_smem) +
-            " bytes. Use tiled or flash attention for long sequences.");
+            "naive_attention: seq_len=" + std::to_string(seq_len) + " requires " +
+            std::to_string(smem_size) + " bytes shared memory, but device max is " +
+            std::to_string(max_smem) + " bytes. Use tiled or flash attention for long sequences.");
     }
 
     naive_attention_simple_kernel<float><<<grid, block, smem_size, stream>>>(
-        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
-    );
-    CUDA_CHECK(cudaGetLastError());
+        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal);
+    CUDA_CHECK (cudaGetLastError())
+        ;
 }
 
-void naive_attention_fp16(
-    const half* Q, const half* K, const half* V, half* O,
-    int batch_size, int num_heads, int seq_len, int head_dim,
-    float scale, bool is_causal, cudaStream_t stream
-) {
+void naive_attention_fp16(const half* Q,
+                          const half* K,
+                          const half* V,
+                          half* O,
+                          int batch_size,
+                          int num_heads,
+                          int seq_len,
+                          int head_dim,
+                          float scale,
+                          bool is_causal,
+                          cudaStream_t stream) {
     dim3 grid(1, seq_len, batch_size * num_heads);
     constexpr int BLOCK_THREADS = 256;
     constexpr int REDUCE_SMEM = BLOCK_THREADS / 32;
@@ -143,21 +154,20 @@ void naive_attention_fp16(
 
     // Validate shared memory requirement against device limit
     int device;
-    CUDA_CHECK(cudaGetDevice(&device));
+    CUDA_CHECK (cudaGetDevice(&device))
+        ;
     int max_smem;
-    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
-        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    CUDA_CHECK (cudaDeviceGetAttribute(&max_smem, cudaDevAttrMaxSharedMemoryPerBlock, device))
+        ;
     if (static_cast<int>(smem_size) > max_smem) {
         throw std::runtime_error(
-            "naive_attention: seq_len=" + std::to_string(seq_len) +
-            " requires " + std::to_string(smem_size) +
-            " bytes shared memory, but device max is " +
-            std::to_string(max_smem) +
-            " bytes. Use tiled or flash attention for long sequences.");
+            "naive_attention: seq_len=" + std::to_string(seq_len) + " requires " +
+            std::to_string(smem_size) + " bytes shared memory, but device max is " +
+            std::to_string(max_smem) + " bytes. Use tiled or flash attention for long sequences.");
     }
 
     naive_attention_simple_kernel<half><<<grid, block, smem_size, stream>>>(
-        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
-    );
-    CUDA_CHECK(cudaGetLastError());
+        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal);
+    CUDA_CHECK (cudaGetLastError())
+        ;
 }

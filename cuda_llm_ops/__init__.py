@@ -1,7 +1,7 @@
-"""
-CUDA LLM Kernel Optimization
-High-performance attention and GEMM kernels for LLM inference.
-"""
+"""High-performance attention and GEMM kernels for LLM inference."""
+
+import re
+from pathlib import Path
 
 try:
     from cuda_llm_ops._cuda_llm_ops import (
@@ -46,9 +46,19 @@ __all__ = [
     "tensor_core_gemm_int8",
 ]
 
+
+def _read_local_version() -> str:
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    if not pyproject.exists():
+        return "0.3.0"
+
+    match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject.read_text(), re.MULTILINE)
+    return match.group(1) if match else "0.3.0"
+
+
 try:
     from importlib.metadata import version as _pkg_version
 
     __version__ = _pkg_version("cuda_llm_ops")
 except Exception:
-    __version__ = "0.1.0"  # fallback for editable / unbundled installs
+    __version__ = _read_local_version()

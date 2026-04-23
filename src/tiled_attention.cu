@@ -1,29 +1,29 @@
+#include <cfloat>
+
 #include "common.cuh"
 #include "shared_memory.cuh"
 #include "warp_primitives.cuh"
-#include <cfloat>
 
 // Tiled attention kernel using shared memory
 template<typename T, int BLOCK_M, int BLOCK_N>
-__global__ void tiled_attention_kernel(
-    const T* __restrict__ Q,
-    const T* __restrict__ K,
-    const T* __restrict__ V,
-    T* __restrict__ O,
-    int batch_size,
-    int num_heads,
-    int seq_len,
-    int head_dim,
-    float scale,
-    bool is_causal
-) {
+__global__ void tiled_attention_kernel(const T* __restrict__ Q,
+                                       const T* __restrict__ K,
+                                       const T* __restrict__ V,
+                                       T* __restrict__ O,
+                                       int batch_size,
+                                       int num_heads,
+                                       int seq_len,
+                                       int head_dim,
+                                       float scale,
+                                       bool is_causal) {
     // Block indices
     int batch_head_idx = blockIdx.z;
     int batch_idx = batch_head_idx / num_heads;
     int head_idx = batch_head_idx % num_heads;
     int block_row = blockIdx.y;
 
-    if (batch_idx >= batch_size) return;
+    if (batch_idx >= batch_size)
+        return;
 
     int tid = threadIdx.x;
     int row_start = block_row * BLOCK_M;
@@ -50,8 +50,8 @@ __global__ void tiled_attention_kernel(
     }
     __syncthreads();
 
-    // Initialize per-row state
-    #pragma unroll
+// Initialize per-row state
+#pragma unroll
     for (int m = 0; m < BLOCK_M; m++) {
         row_max[m] = -FLT_MAX;
         row_sum[m] = 0.0f;
@@ -84,7 +84,8 @@ __global__ void tiled_attention_kernel(
         int col_start = kv_block * BLOCK_N;
 
         // Early exit for causal: skip blocks entirely past the current row block
-        if (is_causal && col_start >= row_start + BLOCK_M) break;
+        if (is_causal && col_start >= row_start + BLOCK_M)
+            break;
 
         // Load K tile
         for (int i = tid; i < BLOCK_N * head_dim; i += blockDim.x) {
@@ -139,7 +140,8 @@ __global__ void tiled_attention_kernel(
         // Online softmax update for each row
         for (int m = tid; m < BLOCK_M; m += blockDim.x) {
             int global_row = row_start + m;
-            if (global_row >= seq_len) continue;
+            if (global_row >= seq_len)
+                continue;
 
             // Find max in this block
             float block_max = -FLT_MAX;
@@ -170,7 +172,8 @@ __global__ void tiled_attention_kernel(
             float new_sum = row_sum[m] * old_scale + block_sum;
 
             // Rescale old output and add new contribution
-            float rescale = (row_sum[m] > 0.0f) ? old_scale * row_sum[m] / fmaxf(new_sum, 1e-6f) : 0.0f;
+            float rescale =
+                (row_sum[m] > 0.0f) ? old_scale * row_sum[m] / fmaxf(new_sum, 1e-6f) : 0.0f;
 
             for (int k = 0; k < head_dim; k++) {
                 output[m * head_dim + k] *= rescale;
@@ -200,11 +203,17 @@ __global__ void tiled_attention_kernel(
 }
 
 // Host wrapper
-void tiled_attention_fp32(
-    const float* Q, const float* K, const float* V, float* O,
-    int batch_size, int num_heads, int seq_len, int head_dim,
-    float scale, bool is_causal, cudaStream_t stream
-) {
+void tiled_attention_fp32(const float* Q,
+                          const float* K,
+                          const float* V,
+                          float* O,
+                          int batch_size,
+                          int num_heads,
+                          int seq_len,
+                          int head_dim,
+                          float scale,
+                          bool is_causal,
+                          cudaStream_t stream) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
 
@@ -213,34 +222,41 @@ void tiled_attention_fp32(
 
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
-    size_t smem_size = (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride
-                       + BLOCK_M * sn_stride + BLOCK_M * head_dim) * sizeof(float);
+    size_t smem_size =
+        (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride + BLOCK_M * sn_stride + BLOCK_M * head_dim) *
+        sizeof(float);
 
     // Validate shared memory requirement against device limit
     int device;
-    CUDA_CHECK(cudaGetDevice(&device));
+    CUDA_CHECK (cudaGetDevice(&device))
+        ;
     int max_smem;
-    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
-        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    CUDA_CHECK (cudaDeviceGetAttribute(&max_smem, cudaDevAttrMaxSharedMemoryPerBlock, device))
+        ;
     if (static_cast<int>(smem_size) > max_smem) {
-        throw std::runtime_error(
-            "tiled_attention: head_dim=" + std::to_string(head_dim) +
-            " requires " + std::to_string(smem_size) +
-            " bytes shared memory, but device max is " +
-            std::to_string(max_smem) + " bytes.");
+        throw std::runtime_error("tiled_attention: head_dim=" + std::to_string(head_dim) +
+                                 " requires " + std::to_string(smem_size) +
+                                 " bytes shared memory, but device max is " +
+                                 std::to_string(max_smem) + " bytes.");
     }
 
     tiled_attention_kernel<float, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
-        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
-    );
-    CUDA_CHECK(cudaGetLastError());
+        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal);
+    CUDA_CHECK (cudaGetLastError())
+        ;
 }
 
-void tiled_attention_fp16(
-    const half* Q, const half* K, const half* V, half* O,
-    int batch_size, int num_heads, int seq_len, int head_dim,
-    float scale, bool is_causal, cudaStream_t stream
-) {
+void tiled_attention_fp16(const half* Q,
+                          const half* K,
+                          const half* V,
+                          half* O,
+                          int batch_size,
+                          int num_heads,
+                          int seq_len,
+                          int head_dim,
+                          float scale,
+                          bool is_causal,
+                          cudaStream_t stream) {
     constexpr int BLOCK_M = 32;
     constexpr int BLOCK_N = 32;
 
@@ -249,25 +265,26 @@ void tiled_attention_fp16(
 
     int hd_stride = head_dim + 1;
     int sn_stride = BLOCK_N + 1;
-    size_t smem_size = (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride
-                       + BLOCK_M * sn_stride + BLOCK_M * head_dim) * sizeof(float);
+    size_t smem_size =
+        (BLOCK_M * hd_stride + 2 * BLOCK_N * hd_stride + BLOCK_M * sn_stride + BLOCK_M * head_dim) *
+        sizeof(float);
 
     // Validate shared memory requirement against device limit
     int device;
-    CUDA_CHECK(cudaGetDevice(&device));
+    CUDA_CHECK (cudaGetDevice(&device))
+        ;
     int max_smem;
-    CUDA_CHECK(cudaDeviceGetAttribute(&max_smem,
-        cudaDevAttrMaxSharedMemoryPerBlock, device));
+    CUDA_CHECK (cudaDeviceGetAttribute(&max_smem, cudaDevAttrMaxSharedMemoryPerBlock, device))
+        ;
     if (static_cast<int>(smem_size) > max_smem) {
-        throw std::runtime_error(
-            "tiled_attention: head_dim=" + std::to_string(head_dim) +
-            " requires " + std::to_string(smem_size) +
-            " bytes shared memory, but device max is " +
-            std::to_string(max_smem) + " bytes.");
+        throw std::runtime_error("tiled_attention: head_dim=" + std::to_string(head_dim) +
+                                 " requires " + std::to_string(smem_size) +
+                                 " bytes shared memory, but device max is " +
+                                 std::to_string(max_smem) + " bytes.");
     }
 
     tiled_attention_kernel<half, BLOCK_M, BLOCK_N><<<grid, block, smem_size, stream>>>(
-        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal
-    );
-    CUDA_CHECK(cudaGetLastError());
+        Q, K, V, O, batch_size, num_heads, seq_len, head_dim, scale, is_causal);
+    CUDA_CHECK (cudaGetLastError())
+        ;
 }
