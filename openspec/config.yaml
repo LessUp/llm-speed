@@ -1,0 +1,91 @@
+schema: spec-driven
+
+# Project context - shown to AI when creating artifacts
+context: |
+  ## Project: CUDA LLM Kernel Optimization Library
+
+  **Module:** cuda_llm_ops
+
+  **Tech Stack:**
+  - CUDA (SM70+ Volta minimum)
+  - Python with pybind11 bindings
+  - PyTorch tensor interface
+
+  **Optimization Roadmap:**
+  Naive → Tiled → FlashAttention → Tensor Core
+
+  **Core Components:**
+  - Attention kernels (naive, tiled, flash)
+  - GEMM kernels (standard, tensor core)
+  - Python bindings via pybind11
+  - Profiler utilities
+
+  **Target GPUs:**
+  - Volta (SM70)
+  - Turing (SM72) - INT8 Tensor Core
+  - Ampere (SM80) - BF16 native
+  - Hopper (SM90)
+
+  **Performance Targets:**
+  - GEMM: ≥90% cuBLAS for M,N,K ≥1024
+  - FlashAttention: O(N) memory complexity
+  - Pipeline: ≥20% speedup
+
+# Per-artifact rules
+rules:
+  specs:
+    - "Requirements MUST include SHALL or MUST"
+    - "Each requirement MUST have at least one scenario"
+    - "Scenarios MUST use exactly 4 hashtags (####)"
+    - "Scenarios MUST use WHEN/THEN format"
+  proposal:
+    - "Include clear motivation and scope"
+    - "Specify success criteria"
+  design:
+    - "Document key technical decisions"
+    - "Include code examples where helpful"
+  tasks:
+    - "Use checkbox format: - [ ] pending, - [x] complete"
+    - "Break tasks into atomic, actionable items"
+    - "Group related tasks under numbered sections"
+
+# Testing configuration
+testing:
+  framework: pytest
+  markers:
+    - cuda: Tests requiring GPU
+    - property: Hypothesis property-based tests
+    - slow: Long-running tests
+  commands:
+    all: "pytest tests/ -v"
+    property: "pytest tests/ -v -m property"
+    cpu_only: "pytest tests/ -v -m 'not cuda'"
+
+# Correctness properties (from product spec)
+correctness_properties:
+  - id: P1
+    description: "Attention correctness vs PyTorch reference"
+  - id: P2
+    description: "Softmax invariants: (0,1) range, sum=1, monotonicity"
+  - id: P3
+    description: "FlashAttention equivalence with standard attention"
+  - id: P4
+    description: "Causal mask: output[i] depends only on input[j≤i]"
+  - id: P5
+    description: "FP16 GEMM correctness"
+  - id: P6
+    description: "INT8 GEMM exact match with INT32 reference"
+  - id: P7
+    description: "Matrix layout equivalence (NN, NT, TN, TT)"
+  - id: P8
+    description: "Dimension alignment handling"
+  - id: P9
+    description: "Pipeline output matches non-pipelined"
+  - id: P10
+    description: "Python interface PyTorch compatibility"
+  - id: P11
+    description: "Batch and multi-head support"
+  - id: P12
+    description: "Arbitrary shape support"
+  - id: P13
+    description: "Invalid input error handling"
