@@ -190,7 +190,7 @@ output = flash_attention(q, k, v, is_causal=True)</code></pre>
 from cuda_llm_ops import tensor_core_gemm
 
 # Matrix multiplication
-a = torch.randn(1024, 512, device='cuda', 
+a = torch.randn(1024, 512, device='cuda',
                 dtype=torch.float16)
 b = torch.randn(512, 1024, device='cuda',
                 dtype=torch.float16)

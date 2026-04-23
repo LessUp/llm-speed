@@ -29,9 +29,9 @@
 
     applyTheme() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isDark = this.currentTheme === 'dark' || 
+      const isDark = this.currentTheme === 'dark' ||
                      (this.currentTheme === 'auto' && prefersDark);
-      
+
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     },
 
@@ -47,12 +47,12 @@
     updateToggleIcon() {
       const toggle = document.getElementById('theme-toggle');
       if (!toggle) return;
-      
+
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isDark = this.currentTheme === 'dark' || 
+      const isDark = this.currentTheme === 'dark' ||
                      (this.currentTheme === 'auto' && prefersDark);
-      
-      toggle.setAttribute('aria-label', 
+
+      toggle.setAttribute('aria-label',
         isDark ? 'Switch to light theme' : 'Switch to dark theme'
       );
     },
@@ -138,7 +138,7 @@
     init() {
       this.progressBar = document.getElementById('reading-progress');
       if (!this.progressBar) return;
-      
+
       this.bindEvents();
     },
 
@@ -151,7 +151,7 @@
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = (scrollTop / docHeight) * 100;
-      
+
       this.progressBar.style.width = Math.min(progress, 100) + '%';
     }
   };
@@ -173,34 +173,34 @@
     generateTOC() {
       const content = document.getElementById('page-content');
       const toc = document.getElementById('toc');
-      
+
       if (!content || !toc) return;
 
       // Find all h2 and h3 headings
       this.headings = Array.from(content.querySelectorAll('h2[id], h3[id]'));
-      
+
       if (this.headings.length === 0) {
         document.getElementById('toc-wrapper')?.classList.add('hidden');
         return;
       }
 
       const ul = document.createElement('ul');
-      
+
       this.headings.forEach(heading => {
         const li = document.createElement('li');
         const a = document.createElement('a');
-        
+
         a.href = '#' + heading.id;
         a.textContent = heading.textContent.replace('#', '').trim();
         a.dataset.target = heading.id;
-        
+
         if (heading.tagName === 'H3') {
           li.style.paddingLeft = '1rem';
         }
-        
+
         li.appendChild(a);
         ul.appendChild(li);
-        
+
         this.tocLinks.push({ link: a, heading: heading });
       });
 
@@ -259,13 +259,13 @@
     init() {
       this.button = document.getElementById('back-to-top');
       if (!this.button) return;
-      
+
       this.bindEvents();
     },
 
     bindEvents() {
       window.addEventListener('scroll', () => this.toggle(), { passive: true });
-      
+
       this.button.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
@@ -293,7 +293,7 @@
       document.querySelectorAll('pre code').forEach(block => {
         const pre = block.parentElement;
         const lang = this.detectLanguage(block);
-        
+
         if (lang) {
           pre.setAttribute('data-language', lang);
         }
@@ -411,7 +411,7 @@
         return;
       }
 
-      const baseUrl = document.querySelector('meta[property="og:url"]')?.content 
+      const baseUrl = document.querySelector('meta[property="og:url"]')?.content
         ? new URL(document.querySelector('meta[property="og:url"]').content).pathname
         : '';
 
@@ -430,7 +430,7 @@
     highlightMatch(text) {
       const query = this.searchInput?.value?.trim();
       if (!query) return text;
-      
+
       const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
       return text.replace(regex, '<span class="search-result-highlight">$1</span>');
     },

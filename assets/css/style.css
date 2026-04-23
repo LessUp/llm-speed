@@ -11,7 +11,7 @@
   --color-primary-light: #8fd600;
   --color-accent: #0969da;
   --color-accent-dark: #0550ae;
-  
+
   /* Background */
   --bg-body: #ffffff;
   --bg-surface: #f6f8fa;
@@ -21,29 +21,29 @@
   --bg-header: rgba(255, 255, 255, 0.9);
   --bg-sidebar: #f6f8fa;
   --bg-overlay: rgba(0, 0, 0, 0.5);
-  
+
   /* Text */
   --text-primary: #24292f;
   --text-secondary: #57606a;
   --text-tertiary: #8c959f;
   --text-link: var(--color-accent);
   --text-code: #24292f;
-  
+
   /* Border */
   --border-color: #d0d7de;
   --border-light: #e5e7eb;
   --border-focus: var(--color-accent);
-  
+
   /* Shadow */
   --shadow-sm: 0 1px 2px 0 rgba(31, 35, 40, 0.04);
   --shadow-md: 0 3px 6px 0 rgba(31, 35, 40, 0.08);
   --shadow-lg: 0 8px 24px 0 rgba(31, 35, 40, 0.12);
   --shadow-xl: 0 12px 48px 0 rgba(31, 35, 40, 0.18);
-  
+
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  
+
   /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -55,25 +55,25 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
   --space-16: 4rem;
-  
+
   /* Layout */
   --header-height: 64px;
   --sidebar-width: 280px;
   --toc-width: 240px;
   --max-content-width: 900px;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
-  
+
   /* Z-index */
   --z-dropdown: 100;
   --z-sticky: 200;
   --z-header: 300;
   --z-overlay: 400;
   --z-modal: 500;
-  
+
   /* Border radius */
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -92,17 +92,17 @@
   --bg-header: rgba(13, 17, 23, 0.9);
   --bg-sidebar: #0d1117;
   --bg-overlay: rgba(0, 0, 0, 0.7);
-  
+
   --text-primary: #e6edf3;
   --text-secondary: #8b949e;
   --text-tertiary: #6e7681;
   --text-link: #58a6ff;
   --text-code: #e6edf3;
-  
+
   --border-color: #30363d;
   --border-light: #21262d;
   --border-focus: #58a6ff;
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 3px 6px 0 rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.5);
@@ -1216,7 +1216,7 @@ a:hover {
   left: -50%;
   right: -50%;
   bottom: -50%;
-  background: 
+  background:
     radial-gradient(circle at 20% 50%, rgba(118, 185, 0, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(9, 105, 218, 0.05) 0%, transparent 50%);
   animation: rotate 60s linear infinite;
@@ -1563,24 +1563,24 @@ a:hover {
   .main-content.with-sidebar {
     margin-left: 0;
   }
-  
+
   .sidebar {
     transform: translateX(-100%);
     transition: transform var(--transition-normal);
   }
-  
+
   .sidebar.active {
     transform: translateX(0);
   }
-  
+
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   .code-preview-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1590,15 +1590,15 @@ a:hover {
   :root {
     --header-height: 56px;
   }
-  
+
   .header-container {
     padding: 0 var(--space-3);
   }
-  
+
   .main-nav {
     display: none;
   }
-  
+
   .search-container {
     display: none;
     position: absolute;
@@ -1610,80 +1610,80 @@ a:hover {
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border-color);
   }
-  
+
   .search-container.active {
     display: block;
   }
-  
+
   .search-toggle {
     display: flex;
   }
-  
+
   .menu-toggle {
     display: flex;
   }
-  
+
   .mobile-nav {
     display: block;
   }
-  
+
   .mobile-nav.active {
     transform: translateY(0);
     opacity: 1;
   }
-  
+
   .theme-toggle {
     width: 32px;
     height: 32px;
     font-size: 1rem;
   }
-  
+
   .page-title {
     font-size: 1.75rem;
   }
-  
+
   .footer-nav {
     flex-direction: column;
   }
-  
+
   .footer-grid {
     grid-template-columns: 1fr;
     gap: var(--space-6);
   }
-  
+
   .site-footer {
     margin-left: 0 !important;
   }
-  
+
   .hero {
     padding: var(--space-10) 0;
   }
-  
+
   .hero-title {
     font-size: 2rem;
   }
-  
+
   .hero-description {
     font-size: 1rem;
   }
-  
+
   .hero-actions {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .feature-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .page-content pre {
     margin-left: calc(-1 * var(--space-4));
     margin-right: calc(-1 * var(--space-4));
@@ -1695,15 +1695,15 @@ a:hover {
   .page-content h1 {
     font-size: 1.5rem;
   }
-  
+
   .page-content h2 {
     font-size: 1.25rem;
   }
-  
+
   .page-content h3 {
     font-size: 1.1rem;
   }
-  
+
   .page-content table {
     display: block;
     overflow-x: auto;
@@ -1800,7 +1800,7 @@ html {
   .site-footer {
     display: none;
   }
-  
+
   .main-content {
     margin-left: 0;
     padding: 0;
