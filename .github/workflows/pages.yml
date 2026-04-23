@@ -4,9 +4,10 @@ on:
   push:
     branches: [master, main]
     paths:
-      - '**.md'
+      - 'index.md'
+      - 'README.md'
+      - 'README.zh-CN.md'
       - 'docs/**'
-      - 'specs/**'
       - '_config.yml'
       - '_layouts/**'
       - 'assets/**'
@@ -23,139 +24,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Job 1: Build search index
-  build-search-index:
-    name: Build Search Index
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.1'
-          bundler-cache: true
-
-      - name: Generate Search Index
-        run: |
-          # Create search index script
-          cat > build_search_index.rb << 'RUBY'
-          require 'json'
-          require 'yaml'
-          require 'fileutils'
-
-          def extract_front_matter(content)
-            if content =~ /\A---\s*\n(.*?)\n---\s*\n/m
-              YAML.safe_load($1) rescue {}
-            else
-              {}
-            end
-          end
-
-          def strip_front_matter(content)
-            content.sub(/\A---\s*\n.*?\n---\s*\n/m, '')
-          end
-
-          def strip_markdown(content)
-            content
-              .gsub(/!\[.*?\]\(.*?\)/, '') # Images
-              .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1') # Links
-              .gsub(/`{1,3}[^`]*`{1,3}/, '') # Code
-              .gsub(/[#*_~|>-]/, '') # Markdown syntax
-              .gsub(/\s+/, ' ')
-              .strip
-          end
-
-          # Read baseurl from _config.yml
-          config = YAML.safe_load(File.read('_config.yml')) rescue {}
-          baseurl = config['baseurl'] || '/llm-speed'
-
-          search_index = []
-
-          # Process all markdown files in docs
-          Dir.glob('docs/**/*.{md,markdown}').each do |file|
-            content = File.read(file)
-            front_matter = extract_front_matter(content)
-            body = strip_front_matter(content)
-            plain_text = strip_markdown(body)
-
-            # Skip files without proper front matter (README files)
-            next if front_matter['layout'] == nil
-            next if file.include?('/README.md')
-
-            # Generate URL using permalink format
-            # Jekyll permalink: pretty converts:
-            # /docs/setup/quickstart-en.md -> /docs/setup/quickstart-en/
-            url_path = file
-              .sub(/\.md$/i, '')
-              .sub(/\/index$/i, '/')
-            
-            url = "#{baseurl}/#{url_path}"
-
-            search_index << {
-              title: front_matter['title'] || File.basename(file, '.md'),
-              url: url,
-              content: plain_text[0..500],
-              excerpt: plain_text[0..200] + '...'
-            }
-          end
-
-          # Process specs
-          Dir.glob('specs/**/*.md').each do |file|
-            next if file.include?('/README.md')
-            content = File.read(file)
-            front_matter = extract_front_matter(content)
-            body = strip_front_matter(content)
-            plain_text = strip_markdown(body)
-
-            next if front_matter['layout'] == nil
-
-            url_path = file
-              .sub(/\.md$/i, '')
-              .sub(/\/index$/i, '/')
-            
-            url = "#{baseurl}/#{url_path}/"
-
-            search_index << {
-              title: front_matter['title'] || File.basename(file, '.md'),
-              url: url,
-              content: plain_text[0..500],
-              excerpt: plain_text[0..200] + '...'
-            }
-          end
-
-          # Write search index
-          FileUtils.mkdir_p('assets/js')
-          File.write('assets/js/search-index.js', "window.searchIndexData = #{search_index.to_json};")
-          
-          puts "Generated search index with #{search_index.length} entries"
-          search_index.each { |item| puts "  - #{item[:title]}: #{item[:url]}" }
-          RUBY
-
-          ruby build_search_index.rb
-
-      - name: Upload Search Index
-        uses: actions/upload-artifact@v4
-        with:
-          name: search-index
-          path: assets/js/search-index.js
-          retention-days: 1
-
-  # Job 2: Build Jekyll site
   build:
-    name: Build Jekyll Site
+    name: Build Jekyll site
     runs-on: ubuntu-latest
-    needs: build-search-index
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Download Search Index
-        uses: actions/download-artifact@v4
-        with:
-          name: search-index
-          path: assets/js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -166,18 +40,17 @@ jobs:
           source: ./
           destination: ./_site
 
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
 
-  # Job 3: Deploy
   deploy:
-    name: Deploy to GitHub Pages
+    name: Deploy Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
