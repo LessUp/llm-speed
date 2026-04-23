@@ -23,6 +23,24 @@ Solutions to common issues when using CUDA LLM Kernel Optimization.
 
 ## Installation Issues
 
+### Baseline environment not prepared
+
+**Symptom:**
+```
+ImportError / ModuleNotFoundError during test collection
+```
+
+**Reason:**
+Validation started before the documented local Python environment was prepared.
+
+**Fix:**
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -U pip setuptools wheel
+pip install -r requirements.txt pytest hypothesis ruff pre-commit
+```
+
 ### CUDA Not Found
 
 **Error:**
@@ -163,7 +181,7 @@ q = q.half()
 
 **Error:**
 ```
-RuntimeError: naive_attention: seq_len=4096 requires 16404 bytes shared memory, 
+RuntimeError: naive_attention: seq_len=4096 requires 16404 bytes shared memory,
 but device max is 49152 bytes.
 ```
 
@@ -443,8 +461,8 @@ scaler.scale(loss).backward()
 1. **Check tolerances:**
 ```python
 torch.testing.assert_close(
-    output_custom, 
-    output_torch, 
+    output_custom,
+    output_torch,
     rtol=1e-3,  # Relative tolerance
     atol=1e-3   # Absolute tolerance
 )

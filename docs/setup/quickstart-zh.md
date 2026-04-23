@@ -37,8 +37,13 @@ lang: zh-CN
 git clone https://github.com/LessUp/llm-speed.git
 cd llm-speed
 
-# 安装依赖
-pip install -r requirements.txt
+# 创建隔离环境
+python3 -m venv .venv
+. .venv/bin/activate
+
+# 安装依赖和本地校验工具
+pip install -U pip setuptools wheel
+pip install -r requirements.txt pytest hypothesis ruff pre-commit
 
 # 构建并安装 CUDA 扩展
 pip install -e .
@@ -96,7 +101,7 @@ seq_len = 512      # 序列长度
 head_dim = 64      # 每个头的维度
 
 # 在 GPU 上使用 FP16 精度创建张量
-q = torch.randn(batch, heads, seq_len, head_dim, 
+q = torch.randn(batch, heads, seq_len, head_dim,
                 device='cuda', dtype=torch.float16)
 k = torch.randn_like(q)
 v = torch.randn_like(q)
@@ -133,10 +138,10 @@ def measure_memory(func, *args):
     """测量函数的峰值显存使用。"""
     torch.cuda.reset_peak_memory_stats()
     torch.cuda.empty_cache()
-    
+
     result = func(*args)
     torch.cuda.synchronize()
-    
+
     peak_memory = torch.cuda.max_memory_allocated() / 1024**2  # MB
     return result, peak_memory
 
@@ -241,17 +246,17 @@ for seq_len in [256, 512, 1024, 2048, 4096]:
     q = torch.randn(2, 8, seq_len, 64, device='cuda', dtype=torch.float16)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    
+
     # 计时
     torch.cuda.synchronize()
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
-    
+
     start.record()
     _ = flash_attention(q, k, v)
     end.record()
     torch.cuda.synchronize()
-    
+
     elapsed_ms = start.elapsed_time(end)
     print(f"序列长度 {seq_len:4d}: {elapsed_ms:.3f} ms")
 ```

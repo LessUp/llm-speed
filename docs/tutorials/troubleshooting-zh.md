@@ -23,6 +23,24 @@ lang: zh-CN
 
 ## 安装问题
 
+### 本地基线环境未准备完成
+
+**现象：**
+```
+ImportError / ModuleNotFoundError 出现在测试收集阶段
+```
+
+**原因：**
+在准备好文档要求的本地 Python 环境之前就开始执行验证。
+
+**修复方法：**
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -U pip setuptools wheel
+pip install -r requirements.txt pytest hypothesis ruff pre-commit
+```
+
 ### CUDA 未找到
 
 **错误：**
@@ -443,8 +461,8 @@ scaler.scale(loss).backward()
 1. **检查容差：**
 ```python
 torch.testing.assert_close(
-    output_custom, 
-    output_torch, 
+    output_custom,
+    output_torch,
     rtol=1e-3,  # 相对容差
     atol=1e-3   # 绝对容差
 )

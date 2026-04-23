@@ -44,6 +44,8 @@ CUDA LLM Kernel Optimization 库性能最大化的综合指南。
 | **Ada Lovelace** (RTX 4090) | 8.9 | + FP8 | 增强的 FP8 支持 |
 | **Hopper** (H100) | 9.0 | + FP8 | 线程块簇, DPX 指令 |
 
+这些条目描述的是 **硬件能力**，并不等于本仓库当前已经全部暴露出的精度接口。
+
 ### 显存规划
 
 运行前计算显存需求：
@@ -52,17 +54,17 @@ CUDA LLM Kernel Optimization 库性能最大化的综合指南。
 def estimate_attention_memory(batch, heads, seq_len, head_dim, dtype=torch.float16):
     """估算 FlashAttention 显存使用（MB）。"""
     bytes_per_elem = 2 if dtype == torch.float16 else 4
-    
+
     # 输入张量（Q, K, V）
     input_mem = 3 * batch * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # 输出张量
     output_mem = batch * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # FlashAttention 工作显存（开销）
     # ~O(seq_len) 而非 O(seq_len²)
     working_mem = batch * heads * seq_len * head_dim * bytes_per_elem * 0.1
-    
+
     total_mb = (input_mem + output_mem + working_mem) / (1024 * 1024)
     return total_mb
 
@@ -115,7 +117,7 @@ print(f"所需显存: {estimate_attention_memory(2, 16, 8192, 64):.1f} MB")
 def optimal_attention(q, k, v, is_causal=False):
     """选择最优的 Attention 实现。"""
     seq_len = q.size(2)
-    
+
     if seq_len >= 2048:
         # 超长序列必须使用 FlashAttention
         return flash_attention(q, k, v, is_causal=is_causal)
@@ -156,14 +158,14 @@ c = tensor_core_gemm(a_fp16, b_fp16)  # 返回 FP32
 def pad_to_alignment(tensor, alignment=16):
     """将张量维度对齐到 alignment 以获得最佳 Tensor Core 性能。"""
     shape = list(tensor.shape)
-    
+
     # 填充最后两个维度
     if len(shape) >= 2:
         for i in [-2, -1]:
             if shape[i] % alignment != 0:
                 padding = alignment - (shape[i] % alignment)
                 shape[i] += padding
-    
+
     if shape != list(tensor.shape):
         padded = torch.zeros(shape, dtype=tensor.dtype, device=tensor.device)
         # 复制原始数据
@@ -185,13 +187,13 @@ def find_optimal_batch_size(heads, seq_len, head_dim, max_memory_gb=16):
     """在给定显存约束下找到最优批次大小。"""
     max_memory_bytes = max_memory_gb * 1024**3
     bytes_per_elem = 2  # FP16
-    
+
     # 每个样本显存: Q + K + V + O
     per_sample = 4 * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # 考虑 ~20% 开销
     max_batch = int(max_memory_bytes / per_sample / 1.2)
-    
+
     # 向下取整到 2 的幂以获得更好的 GPU 利用率
     optimal_batch = 2 ** (max_batch.bit_length() - 1)
     return max(optimal_batch, 1)
@@ -206,14 +208,14 @@ print(f"最优批次大小: {batch_size}")  # 例如, 8
 ```python
 class AttentionMemoryPool:
     """为重复操作预分配和重用显存。"""
-    
+
     def __init__(self, max_batch, heads, max_seq_len, head_dim):
-        self.q = torch.empty(max_batch, heads, max_seq_len, head_dim, 
+        self.q = torch.empty(max_batch, heads, max_seq_len, head_dim,
                             device='cuda', dtype=torch.float16)
         self.k = torch.empty_like(self.q)
         self.v = torch.empty_like(self.q)
         self.output = torch.empty_like(self.q)
-    
+
     def get_tensors(self, batch_size, seq_len):
         """获取适当大小的视图。"""
         return (
@@ -299,32 +301,32 @@ from cuda_llm_ops.profiler import CUDAProfiler
 
 def benchmark_flash_attention(batch, heads, seq_len, head_dim, iterations=100):
     """自定义 FlashAttention 性能测试。"""
-    q = torch.randn(batch, heads, seq_len, head_dim, 
+    q = torch.randn(batch, heads, seq_len, head_dim,
                     device='cuda', dtype=torch.float16)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    
+
     # Warmup
     for _ in range(10):
         _ = flash_attention(q, k, v)
     torch.cuda.synchronize()
-    
+
     # 性能测试
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
-    
+
     start.record()
     for _ in range(iterations):
         _ = flash_attention(q, k, v)
     end.record()
     torch.cuda.synchronize()
-    
+
     elapsed_ms = start.elapsed_time(end) / iterations
-    
+
     # 计算指标
     flops = batch * heads * (4 * seq_len * seq_len * head_dim)  # 简化版
     tflops = flops / (elapsed_ms * 1e-3) / 1e12
-    
+
     return {
         'latency_ms': elapsed_ms,
         'throughput_tflops': tflops,

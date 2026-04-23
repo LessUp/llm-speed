@@ -37,8 +37,13 @@ Get up and running with CUDA LLM Kernel Optimization in 5 minutes.
 git clone https://github.com/LessUp/llm-speed.git
 cd llm-speed
 
-# Install dependencies
-pip install -r requirements.txt
+# Create an isolated environment
+python3 -m venv .venv
+. .venv/bin/activate
+
+# Install dependencies and local validation tools
+pip install -U pip setuptools wheel
+pip install -r requirements.txt pytest hypothesis ruff pre-commit
 
 # Build and install CUDA extension
 pip install -e .
@@ -96,7 +101,7 @@ seq_len = 512      # Sequence length
 head_dim = 64      # Dimension per head
 
 # Create tensors on GPU with FP16 precision
-q = torch.randn(batch, heads, seq_len, head_dim, 
+q = torch.randn(batch, heads, seq_len, head_dim,
                 device='cuda', dtype=torch.float16)
 k = torch.randn_like(q)
 v = torch.randn_like(q)
@@ -133,10 +138,10 @@ def measure_memory(func, *args):
     """Measure peak memory usage of a function."""
     torch.cuda.reset_peak_memory_stats()
     torch.cuda.empty_cache()
-    
+
     result = func(*args)
     torch.cuda.synchronize()
-    
+
     peak_memory = torch.cuda.max_memory_allocated() / 1024**2  # MB
     return result, peak_memory
 
@@ -241,17 +246,17 @@ for seq_len in [256, 512, 1024, 2048, 4096]:
     q = torch.randn(2, 8, seq_len, 64, device='cuda', dtype=torch.float16)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    
+
     # Time it
     torch.cuda.synchronize()
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
-    
+
     start.record()
     _ = flash_attention(q, k, v)
     end.record()
     torch.cuda.synchronize()
-    
+
     elapsed_ms = start.elapsed_time(end)
     print(f"Seq len {seq_len:4d}: {elapsed_ms:.3f} ms")
 ```

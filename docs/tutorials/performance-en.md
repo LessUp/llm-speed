@@ -44,6 +44,8 @@ Comprehensive guide for maximizing performance with the CUDA LLM Kernel Optimiza
 | **Ada Lovelace** (RTX 4090) | 8.9 | + FP8 | Enhanced FP8 support |
 | **Hopper** (H100) | 9.0 | + FP8 | Thread block clusters, DPX instructions |
 
+These rows describe **hardware capabilities**, not the full set of precisions currently exposed by this repository.
+
 ### Memory Planning
 
 Calculate memory requirements before running:
@@ -52,17 +54,17 @@ Calculate memory requirements before running:
 def estimate_attention_memory(batch, heads, seq_len, head_dim, dtype=torch.float16):
     """Estimate FlashAttention memory usage in MB."""
     bytes_per_elem = 2 if dtype == torch.float16 else 4
-    
+
     # Input tensors (Q, K, V)
     input_mem = 3 * batch * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # Output tensor
     output_mem = batch * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # FlashAttention working memory (overhead)
     # ~O(seq_len) rather than O(seq_len²)
     working_mem = batch * heads * seq_len * head_dim * bytes_per_elem * 0.1
-    
+
     total_mb = (input_mem + output_mem + working_mem) / (1024 * 1024)
     return total_mb
 
@@ -115,7 +117,7 @@ Choose the right kernel for your workload:
 def optimal_attention(q, k, v, is_causal=False):
     """Select optimal attention implementation."""
     seq_len = q.size(2)
-    
+
     if seq_len >= 2048:
         # FlashAttention essential for very long sequences
         return flash_attention(q, k, v, is_causal=is_causal)
@@ -156,14 +158,14 @@ Optimal dimensions should be multiples of 16:
 def pad_to_alignment(tensor, alignment=16):
     """Pad tensor dimensions to alignment for optimal Tensor Core performance."""
     shape = list(tensor.shape)
-    
+
     # Pad last two dimensions
     if len(shape) >= 2:
         for i in [-2, -1]:
             if shape[i] % alignment != 0:
                 padding = alignment - (shape[i] % alignment)
                 shape[i] += padding
-    
+
     if shape != list(tensor.shape):
         padded = torch.zeros(shape, dtype=tensor.dtype, device=tensor.device)
         # Copy original data
@@ -185,13 +187,13 @@ def find_optimal_batch_size(heads, seq_len, head_dim, max_memory_gb=16):
     """Find optimal batch size given memory constraints."""
     max_memory_bytes = max_memory_gb * 1024**3
     bytes_per_elem = 2  # FP16
-    
+
     # Memory per sample: Q + K + V + O
     per_sample = 4 * heads * seq_len * head_dim * bytes_per_elem
-    
+
     # Account for ~20% overhead
     max_batch = int(max_memory_bytes / per_sample / 1.2)
-    
+
     # Round down to power of 2 for better GPU utilization
     optimal_batch = 2 ** (max_batch.bit_length() - 1)
     return max(optimal_batch, 1)
@@ -206,14 +208,14 @@ print(f"Optimal batch size: {batch_size}")  # e.g., 8
 ```python
 class AttentionMemoryPool:
     """Pre-allocate and reuse memory for repeated operations."""
-    
+
     def __init__(self, max_batch, heads, max_seq_len, head_dim):
-        self.q = torch.empty(max_batch, heads, max_seq_len, head_dim, 
+        self.q = torch.empty(max_batch, heads, max_seq_len, head_dim,
                             device='cuda', dtype=torch.float16)
         self.k = torch.empty_like(self.q)
         self.v = torch.empty_like(self.q)
         self.output = torch.empty_like(self.q)
-    
+
     def get_tensors(self, batch_size, seq_len):
         """Get appropriately sized views."""
         return (
@@ -299,32 +301,32 @@ from cuda_llm_ops.profiler import CUDAProfiler
 
 def benchmark_flash_attention(batch, heads, seq_len, head_dim, iterations=100):
     """Custom FlashAttention benchmark."""
-    q = torch.randn(batch, heads, seq_len, head_dim, 
+    q = torch.randn(batch, heads, seq_len, head_dim,
                     device='cuda', dtype=torch.float16)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    
+
     # Warmup
     for _ in range(10):
         _ = flash_attention(q, k, v)
     torch.cuda.synchronize()
-    
+
     # Benchmark
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
-    
+
     start.record()
     for _ in range(iterations):
         _ = flash_attention(q, k, v)
     end.record()
     torch.cuda.synchronize()
-    
+
     elapsed_ms = start.elapsed_time(end) / iterations
-    
+
     # Calculate metrics
     flops = batch * heads * (4 * seq_len * seq_len * head_dim)  # Simplified
     tflops = flops / (elapsed_ms * 1e-3) / 1e12
-    
+
     return {
         'latency_ms': elapsed_ms,
         'throughput_tflops': tflops,

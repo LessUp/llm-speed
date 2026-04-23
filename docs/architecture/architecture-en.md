@@ -39,7 +39,7 @@ Naive → Tiled → FlashAttention → Tensor Core
 | GEMM Performance | ≥90% of cuBLAS |
 | FlashAttention Memory | O(N) complexity |
 | Pipeline Improvement | ≥20% performance gain |
-| Precision Support | FP32/FP16/BF16/INT8 |
+| Precision Support | FP32/FP16/INT8 |
 
 ### Optimization Philosophy
 
@@ -143,7 +143,7 @@ __global__ void naive_attention_simple_kernel(
     // Shared memory for attention scores
     extern __shared__ float shared_mem[];
     float* scores = shared_mem;
-    
+
     // Warp reduction for softmax
     float reduced_max = block_reduce_max<float, 256>(local_max, reduce_smem);
     float reduced_sum = block_reduce_sum<float, 256>(local_sum, reduce_smem);
@@ -204,11 +204,11 @@ Note: +1 padding eliminates bank conflict
 For each tile t:
     S_t = Q_tile @ K_tile^T * scale
     m_t = max(m_{t-1}, row_max(S_t))
-    
+
     // Rescaling
     scale_factor = exp(m_{t-1} - m_t)
     l_t = l_{t-1} * scale_factor + sum(exp(S_t - m_t))
-    
+
     // Output update
     O_t = O_{t-1} * scale_factor + exp(S_t - m_t) @ V_tile
 
@@ -338,7 +338,7 @@ for (int k = 0; k < BLOCK_K; k++) {
         reg_A[m] = smem_A[warp_row + thread_row + m][k];
     for (int n = 0; n < THREAD_N; n++)
         reg_B[n] = smem_B[k][warp_col + thread_col + n];
-    
+
     // Register-level matrix multiplication
     for (int m = 0; m < THREAD_M; m++)
         for (int n = 0; n < THREAD_N; n++)
@@ -355,13 +355,13 @@ __shared__ float smem_B[2][BLOCK_K][BLOCK_N + 1];
 for (int tile = 0; tile < num_k_tiles; tile++) {
     int cur_buf = tile % 2;
     int next_buf = 1 - cur_buf;
-    
+
     // Prefetch next tile
     if (tile + 1 < num_k_tiles) {
         LOAD_TILE_A(next_buf, next_k_tile);
         LOAD_TILE_B(next_buf, next_k_tile);
     }
-    
+
     // Compute current tile
     COMPUTE_TILE(cur_buf);
     __syncthreads();
@@ -441,14 +441,14 @@ template<typename T, int BLOCK_SIZE>
 __device__ T block_reduce_sum(T val, T* smem) {
     int lane = threadIdx.x % 32;
     int warp_id = threadIdx.x / 32;
-    
+
     // Warp-level reduction
     val = warp_reduce_sum(val);
-    
+
     // Write to shared memory
     if (lane == 0) smem[warp_id] = val;
     __syncthreads();
-    
+
     // First warp does final reduction
     constexpr int num_warps = BLOCK_SIZE / 32;
     if (warp_id == 0) {
@@ -477,7 +477,7 @@ __device__ void online_softmax_update(
     float new_max = fmaxf(state.max_val, new_val);
     float old_scale = expf(state.max_val - new_max);
     float new_scale = expf(new_val - new_max);
-    
+
     state.sum_exp = state.sum_exp * old_scale + new_scale;
     state.max_val = new_max;
 }
@@ -490,36 +490,36 @@ __device__ void online_softmax_update(
 ### Interface Design
 
 ```cpp
-// python/bindings.cpp
+// cuda_llm_ops/bindings.cpp
 PYBIND11_MODULE(cuda_llm_ops, m) {
     m.doc() = "CUDA LLM Kernel Optimization";
-    
+
     // Attention functions
     m.def("naive_attention", &naive_attention,
           py::arg("q"), py::arg("k"), py::arg("v"), py::arg("scale") = 0.0f,
           "Naive attention (baseline)");
-    
+
     m.def("tiled_attention", &tiled_attention,
           py::arg("q"), py::arg("k"), py::arg("v"), py::arg("scale") = 0.0f,
           "Tiled attention with shared memory");
-    
+
     m.def("flash_attention", &flash_attention,
           py::arg("q"), py::arg("k"), py::arg("v"),
           py::arg("scale") = 0.0f, py::arg("is_causal") = false,
           "FlashAttention with online softmax");
-    
+
     // GEMM functions
     m.def("gemm", &gemm,
           py::arg("a"), py::arg("b"),
           py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
           py::arg("trans_a") = false, py::arg("trans_b") = false,
           "High-performance GEMM");
-    
+
     m.def("tensor_core_gemm", &tensor_core_gemm,
           py::arg("a"), py::arg("b"),
           py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
           "Tensor Core GEMM (FP16 in, FP32 out)");
-    
+
     m.def("tensor_core_gemm_int8", &tensor_core_gemm_int8_wrapper,
           py::arg("a"), py::arg("b"),
           "INT8 Tensor Core GEMM (SM>=7.2 required)");
@@ -599,10 +599,10 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
     q = torch.randn(batch, heads, seq_len, head_dim, device=device)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    
+
     output = flash_attention(q, k, v)
     reference = torch.nn.functional.scaled_dot_product_attention(q, k, v)
-    
+
     assert_close(output, reference, rtol=1e-3, atol=1e-3)
 ```
 
