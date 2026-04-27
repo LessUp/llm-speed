@@ -257,3 +257,6 @@ _config.local.yml
 
 # pyright cache
 pyrightconfig.json
+
+# OMC session data
+.omc/
