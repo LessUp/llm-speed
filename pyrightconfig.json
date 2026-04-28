@@ -1,0 +1,35 @@
+{
+  "include": [
+    "cuda_llm_ops",
+    "tests",
+    "benchmarks"
+  ],
+  "exclude": [
+    ".venv",
+    "build",
+    "build-*",
+    "**/__pycache__"
+  ],
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": "warning",
+  "reportPrivateImportUsage": "none",
+  "reportMissingModuleSource": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportMissingTypeArgument": "none",
+  "reportUnusedImport": "warning",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "."
+      ]
+    }
+  ]
+}

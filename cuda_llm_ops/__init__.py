@@ -2,6 +2,10 @@
 
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 try:
     from cuda_llm_ops._cuda_llm_ops import (
@@ -18,22 +22,22 @@ except ImportError:
 
     warnings.warn("CUDA kernels not built. Run 'pip install -e .' to build.")
 
-    def naive_attention(*args, **kwargs):
+    def naive_attention(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
-    def tiled_attention(*args, **kwargs):
+    def tiled_attention(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
-    def flash_attention(*args, **kwargs):
+    def flash_attention(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
-    def gemm(*args, **kwargs):
+    def gemm(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
-    def tensor_core_gemm(*args, **kwargs):
+    def tensor_core_gemm(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
-    def tensor_core_gemm_int8(*args, **kwargs):
+    def tensor_core_gemm_int8(*args, **kwargs) -> "Tensor":
         raise NotImplementedError("CUDA kernels not built")
 
 
