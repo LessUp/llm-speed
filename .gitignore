@@ -4,6 +4,7 @@
 
 # C/C++/CUDA build
 build/
+.worktrees/
 cmake-build-*/
 *.o
 *.so
