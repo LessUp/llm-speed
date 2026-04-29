@@ -1,8 +1,9 @@
-# Core dependencies
-# For full installation with all optional dependencies, use:
-#   pip install -e ".[dev]"
-#   or
-#   pip install -e ".[test,benchmark,dev]"
+# Development and testing dependencies
+# All project metadata and dependencies are defined in pyproject.toml
+# Use one of the following to install:
+#   pip install -e .              # Install base package only
+#   pip install -e ".[test]"      # Install with test dependencies
+#   pip install -e ".[dev]"       # Install with dev tools (recommended for contributors)
+#   pip install -e ".[benchmark]" # Install with benchmark tools
+#   pip install -e ".[test,dev]"  # Install with multiple extras
 
-torch>=2.0.0
-numpy>=1.20.0

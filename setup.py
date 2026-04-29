@@ -1,101 +1,69 @@
 """
-Setup script for CUDA LLM Kernel Optimization package.
-Version is read from pyproject.toml (single source of truth).
+Setup script for CUDA extension compilation only.
+
+Package metadata, dependencies, and optional-dependencies are defined exclusively
+in pyproject.toml. Setuptools will automatically read them from there.
+This script handles only CUDA extension compilation configuration.
 """
 
 import os
 import platform
-import re
-from pathlib import Path
-from setuptools import setup, find_packages
+
+from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 
-def _read_version() -> str:
-    """Read version from pyproject.toml."""
-    text = Path(__file__).with_name("pyproject.toml").read_text()
-    # Match version = "X.Y.Z" in [project] section
-    match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
-    if not match:
-        raise RuntimeError("Cannot find version in pyproject.toml")
-    return match.group(1)
+def _build_cuda_extensions():
+    """Build CUDA extensions with configurable architecture support.
 
-# CUDA architectures to compile for
-CUDA_ARCHS = os.environ.get('CUDA_ARCHS', '70;75;80;86;89;90')
+    Returns empty list if CUDA_HOME is not set (for pip install without CUDA).
+    Set CUDA_HOME to enable CUDA extension compilation.
+    """
+    if not os.environ.get('CUDA_HOME'):
+        return []
 
-# Source files
-cuda_sources = [
-    'src/naive_attention.cu',
-    'src/tiled_attention.cu',
-    'src/flash_attention.cu',
-    'src/tensor_core_gemm.cu',
-    'src/hgemm_kernel.cu',
-    'cuda_llm_ops/bindings.cpp',
-]
+    cuda_archs = os.environ.get('CUDA_ARCHS', '70;75;80;86;89;90')
 
-# Include directories
-include_dirs = [
-    'include',
-]
+    cuda_sources = [
+        'src/naive_attention.cu',
+        'src/tiled_attention.cu',
+        'src/flash_attention.cu',
+        'src/tensor_core_gemm.cu',
+        'src/hgemm_kernel.cu',
+        'cuda_llm_ops/bindings.cpp',
+    ]
 
-# Compiler flags (platform-aware)
-if platform.system() == 'Windows':
-    extra_compile_args = {
-        'cxx': ['/O2', '/std:c++17'],
-        'nvcc': [
-            '-O3',
-            '--use_fast_math',
-            '-std=c++17',
-        ]
-    }
-else:
-    extra_compile_args = {
-        'cxx': ['-O3', '-std=c++17'],
-        'nvcc': [
-            '-O3',
-            '--use_fast_math',
-            '-std=c++17',
-            '-Xcompiler', '-fPIC',
-        ]
-    }
+    include_dirs = ['include']
 
-# Add architecture flags
-for arch in CUDA_ARCHS.split(';'):
-    extra_compile_args['nvcc'].extend([
-        f'-gencode=arch=compute_{arch},code=sm_{arch}',
-    ])
+    # Platform-aware compiler flags
+    if platform.system() == 'Windows':
+        extra_compile_args = {
+            'cxx': ['/O2', '/std:c++17'],
+            'nvcc': ['-O3', '--use_fast_math', '-std=c++17']
+        }
+    else:
+        extra_compile_args = {
+            'cxx': ['-O3', '-std=c++17'],
+            'nvcc': ['-O3', '--use_fast_math', '-std=c++17', '-Xcompiler', '-fPIC']
+        }
 
-setup(
-    name='cuda_llm_ops',
-    version=_read_version(),
-    description='High-performance CUDA kernels for LLM inference',
-    author='CUDA LLM Kernel Optimization',
-    packages=['cuda_llm_ops'],
-    package_dir={'cuda_llm_ops': 'cuda_llm_ops'},
-    ext_modules=[
+    # Add compute capability flags
+    for arch in cuda_archs.split(';'):
+        extra_compile_args['nvcc'].extend([
+            f'-gencode=arch=compute_{arch},code=sm_{arch}',
+        ])
+
+    return [
         CUDAExtension(
             name='cuda_llm_ops._cuda_llm_ops',
             sources=cuda_sources,
             include_dirs=include_dirs,
             extra_compile_args=extra_compile_args,
         )
-    ],
-    cmdclass={
-        'build_ext': BuildExtension
-    },
-    install_requires=[
-        'torch>=2.0.0',
-        'numpy>=1.20.0',
-    ],
-    extras_require={
-        'test': [
-            'pytest',
-            'hypothesis',
-        ],
-        'benchmark': [
-            'matplotlib',
-            'pandas',
-        ],
-    },
-    python_requires='>=3.8',
+    ]
+
+
+setup(
+    ext_modules=_build_cuda_extensions(),
+    cmdclass={'build_ext': BuildExtension},
 )
