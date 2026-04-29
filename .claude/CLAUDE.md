@@ -6,6 +6,6 @@ Keep this file because some Claude setups load `.claude/CLAUDE.md` first, but do
 
 ## Local reminders
 
-- Current governing change: `project-closeout`
+- Current governing change: `openspec/changes/archive/2026-04-23-project-closeout/`
 - Deferred backlog: `bf16-support`, `flashattention-backward`
 - Shared workflow contract: [`../AGENTS.md`](../AGENTS.md)
