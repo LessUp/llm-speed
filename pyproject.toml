@@ -59,9 +59,6 @@ benchmark = [
 ]
 dev = [
     "ruff==0.15.10",
-    "pytest>=7.0.0",
-    "hypothesis>=6.0.0",
-    "pytest-cov>=4.0.0",
     "pre-commit>=4.0.0",
     "pybind11>=2.10.0",
 ]
