@@ -6,4 +6,3 @@
 #   pip install -e ".[dev]"       # Install with dev tools (recommended for contributors)
 #   pip install -e ".[benchmark]" # Install with benchmark tools
 #   pip install -e ".[test,dev]"  # Install with multiple extras
-
