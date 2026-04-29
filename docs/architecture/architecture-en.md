@@ -1,7 +1,7 @@
 ---
 layout: docs
 title: Architecture Design
-description: In-depth technical documentation covering architecture, algorithm principles, and optimization strategies
+description: In-depth technical documentation covering architecture, algorithm principles, and optimization strategies of LLM-Speed
 lang: en
 ---
 
