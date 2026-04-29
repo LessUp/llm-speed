@@ -12,7 +12,7 @@
   ],
   "venvPath": ".",
   "venv": ".venv",
-  "pythonVersion": "3.11",
+  "pythonVersion": "3.8",
   "typeCheckingMode": "strict",
   "reportMissingImports": "warning",
   "reportPrivateImportUsage": "none",
