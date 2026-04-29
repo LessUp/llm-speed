@@ -7,7 +7,7 @@ lang: en
 
 # Architecture Design
 
-In-depth technical documentation covering the architecture, algorithm principles, and optimization strategies of the CUDA LLM Kernel Optimization project.
+In-depth technical documentation covering the architecture, algorithm principles, and optimization strategies of LLM-Speed.
 
 ---
 
@@ -26,7 +26,7 @@ In-depth technical documentation covering the architecture, algorithm principles
 
 ## Project Overview
 
-The CUDA LLM Kernel Optimization project is a high-performance CUDA operator library specifically designed for LLM inference. It employs a progressive optimization strategy:
+LLM-Speed is a high-performance CUDA operator library specifically designed for LLM inference. It employs a progressive optimization strategy:
 
 ```
 Naive → Tiled → FlashAttention → Tensor Core
@@ -492,7 +492,7 @@ __device__ void online_softmax_update(
 ```cpp
 // cuda_llm_ops/bindings.cpp
 PYBIND11_MODULE(cuda_llm_ops, m) {
-    m.doc() = "CUDA LLM Kernel Optimization";
+    m.doc() = "LLM-Speed";
 
     // Attention functions
     m.def("naive_attention", &naive_attention,

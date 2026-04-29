@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: Performance Tuning Guide
-description: Comprehensive guide for maximizing performance with CUDA LLM Kernel Optimization
+description: Comprehensive guide for maximizing performance with LLM-Speed
 lang: en
 ---
 
 # Performance Tuning Guide
 
-Comprehensive guide for maximizing performance with the CUDA LLM Kernel Optimization library.
+Comprehensive guide for maximizing performance with LLM-Speed.
 
 ---
 

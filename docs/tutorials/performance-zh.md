@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: 性能调优指南
-description: CUDA LLM Kernel Optimization 库性能最大化的综合指南
+description: LLM-Speed 性能最大化的综合指南
 lang: zh-CN
 ---
 
 # 性能调优指南
 
-CUDA LLM Kernel Optimization 库性能最大化的综合指南。
+LLM-Speed 性能最大化的综合指南。
 
 ---
 

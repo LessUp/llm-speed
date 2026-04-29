@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: API 参考
-description: CUDA LLM Kernel Optimization 库的完整 API 文档
+description: LLM-Speed 的完整 API 文档
 lang: zh-CN
 ---
 
 # API 参考
 
-CUDA LLM Kernel Optimization 库的完整 API 文档。
+LLM-Speed 的完整 API 文档。
 
 ---
 

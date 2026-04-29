@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: API Reference
-description: Complete API documentation for the CUDA LLM Kernel Optimization library
+description: Complete API documentation for LLM-Speed
 lang: en
 ---
 
 # API Reference
 
-Complete API documentation for the CUDA LLM Kernel Optimization library.
+Complete API documentation for LLM-Speed.
 
 ---
 

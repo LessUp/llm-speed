@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: Quick Start Guide
-description: Get up and running with CUDA LLM Kernel Optimization in 5 minutes
+description: Get up and running with LLM-Speed in 5 minutes
 lang: en
 ---
 
 # Quick Start Guide
 
-Get up and running with CUDA LLM Kernel Optimization in 5 minutes.
+Get up and running with LLM-Speed in 5 minutes.
 
 ---
 
@@ -79,7 +79,7 @@ capability = torch.cuda.get_device_capability()
 print(f"Compute capability: {capability[0]}.{capability[1]}")
 
 if capability[0] >= 7:
-    print("✓ GPU supports CUDA LLM Kernel Optimization")
+    print("✓ GPU supports LLM-Speed")
 else:
     print("✗ GPU too old (need Volta or newer)")
 ```

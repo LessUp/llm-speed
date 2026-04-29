@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: 快速入门指南
-description: 5 分钟内上手 CUDA LLM Kernel Optimization
+description: 5 分钟内上手 LLM-Speed
 lang: zh-CN
 ---
 
 # 快速入门指南
 
-5 分钟内上手 CUDA LLM Kernel Optimization。
+5 分钟内上手 LLM-Speed。
 
 ---
 
@@ -79,7 +79,7 @@ capability = torch.cuda.get_device_capability()
 print(f"计算能力: {capability[0]}.{capability[1]}")
 
 if capability[0] >= 7:
-    print("✓ GPU 支持 CUDA LLM Kernel Optimization")
+    print("✓ GPU 支持 LLM-Speed")
 else:
     print("✗ GPU 太旧（需要 Volta 或更新）")
 ```

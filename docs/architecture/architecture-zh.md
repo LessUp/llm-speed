@@ -1,13 +1,13 @@
 ---
 layout: docs
 title: 架构设计
-description: CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度技术文档
+description: LLM-Speed 的深度技术文档
 lang: zh-CN
 ---
 
 # 架构设计
 
-CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度技术文档。
+LLM-Speed 的深度技术文档。
 
 ---
 
@@ -26,7 +26,7 @@ CUDA LLM Kernel Optimization 项目架构、算法原理和优化策略的深度
 
 ## 项目概述
 
-CUDA LLM Kernel Optimization 项目是专为 LLM 推理优化的高性能 CUDA 算子库。采用渐进式优化策略：
+LLM-Speed 是专为 LLM 推理优化的高性能 CUDA 算子库。采用渐进式优化策略：
 
 ```
 Naive → Tiled → FlashAttention → Tensor Core
@@ -490,7 +490,7 @@ __device__ void online_softmax_update(
 ```cpp
 // cuda_llm_ops/bindings.cpp
 PYBIND11_MODULE(cuda_llm_ops, m) {
-    m.doc() = "CUDA LLM Kernel Optimization";
+    m.doc() = "LLM-Speed";
 
     // Attention 函数
     m.def("naive_attention", &naive_attention,
