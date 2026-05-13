@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#161b22;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Brand gradient -->
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#76b900;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00A0E0;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Grid pattern -->
+  <g stroke="#30363d" stroke-width="0.5" opacity="0.5">
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="500" x2="1200" y2="500"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- Logo circle -->
+  <circle cx="150" cy="315" r="80" fill="#76b900" filter="url(#glow)"/>
+  <circle cx="150" cy="315" r="75" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
+
+  <!-- Lightning bolt in logo -->
+  <path d="M115 335 L145 295 L145 310 L175 310 L145 350 L145 335 Z" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="270" y="290"
+        font-family="'SF Pro Display', -apple-system, 'Segoe UI', Arial, sans-serif"
+        font-size="72"
+        font-weight="700"
+        fill="url(#brandGrad)">LLM-Speed</text>
+
+  <!-- Subtitle -->
+  <text x="270" y="350"
+        font-family="'SF Pro Display', -apple-system, 'Segoe UI', Arial, sans-serif"
+        font-size="28"
+        font-weight="400"
+        fill="#8b949e">CUDA Kernels for LLM Inference</text>
+
+  <!-- Features -->
+  <g font-family="'SF Pro Display', -apple-system, 'Segoe UI', Arial, sans-serif" font-size="18" fill="#e6edf3">
+    <text x="270" y="420">⚡ FlashAttention — O(N) Memory</text>
+    <text x="270" y="455">🔢 Tensor Core GEMM — Hardware Accelerated</text>
+    <text x="270" y="490">🐍 PyTorch Integration — Native CUDA Tensors</text>
+  </g>
+
+  <!-- Performance badge -->
+  <rect x="900" y="260" width="200" height="110" rx="10" fill="#21262d" stroke="#30363d"/>
+  <text x="1000" y="295" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#8b949e">Memory Savings</text>
+  <text x="1000" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#76b900">128×</text>
+  <text x="1000" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#8b949e">@ 8K sequence</text>
+
+  <!-- URL -->
+  <text x="600" y="590"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="18"
+        fill="#6e7681">github.com/LessUp/llm-speed</text>
+</svg>

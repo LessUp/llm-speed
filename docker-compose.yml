@@ -1,0 +1,86 @@
+# =============================================================================
+# LLM-Speed Development Environment
+# Docker Compose for GPU-enabled development
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # Development environment with full CUDA toolkit
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: devel
+    image: llm-speed:dev
+    container_name: llm-speed-dev
+
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute, utility]
+
+    # Volume mounts for development
+    volumes:
+      - .:/app:rw
+      - ~/.cache/torch:/root/.cache/torch:rw
+
+    # Environment
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONUNBUFFERED=1
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+    working_dir: /app
+    command: /bin/bash
+
+  # Runtime environment (minimal)
+  runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llm-speed:runtime
+    container_name: llm-speed-runtime
+
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute, utility]
+
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+
+    command: python -c "import cuda_llm_ops; print(f'LLM-Speed v{cuda_llm_ops.__version__}')"
+
+  # Test runner
+  test:
+    extends:
+      service: dev
+    container_name: llm-speed-test
+    command: pytest -v --cov=cuda_llm_ops --cov-report=term-missing
+
+  # Benchmark runner
+  benchmark:
+    extends:
+      service: dev
+    container_name: llm-speed-benchmark
+    command: python benchmarks/benchmark_attention.py
+
+# Named volumes for caching
+volumes:
+  torch-cache:
+    driver: local
+  pip-cache:
+    driver: local

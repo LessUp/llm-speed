@@ -76,6 +76,11 @@ markers = [
     "property: mark test as property-based test",
 ]
 testpaths = ["tests"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
 
 [tool.ruff]
 line-length = 100
@@ -99,10 +104,24 @@ ignore-names = ["M", "N", "K"]
 [tool.coverage.run]
 source = ["cuda_llm_ops"]
 branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
+    "if __name__ == .__main__.:",
 ]
+fail_under = 70
+show_missing = true
+skip_covered = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"

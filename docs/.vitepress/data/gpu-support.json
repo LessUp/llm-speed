@@ -1,0 +1,96 @@
+{
+  "architectures": [
+    {
+      "name": "Ampere",
+      "computeCapability": "8.0",
+      "examples": ["A100", "A10", "RTX 3090", "RTX 4090"],
+      "tensorCore": {
+        "fp16": true,
+        "bf16": true,
+        "tf32": true,
+        "int8": true,
+        "fp8": false
+      },
+      "status": "primary",
+      "notes": "Primary development and testing target"
+    },
+    {
+      "name": "Hopper",
+      "computeCapability": "9.0",
+      "examples": ["H100", "H200"],
+      "tensorCore": {
+        "fp16": true,
+        "bf16": true,
+        "tf32": true,
+        "int8": true,
+        "fp8": true
+      },
+      "status": "supported",
+      "notes": "Full support with FP8 capabilities"
+    },
+    {
+      "name": "Volta",
+      "computeCapability": "7.0",
+      "examples": ["V100"],
+      "tensorCore": {
+        "fp16": true,
+        "bf16": false,
+        "tf32": false,
+        "int8": false,
+        "fp8": false
+      },
+      "status": "limited",
+      "notes": "FP16 Tensor Core only, no async copy"
+    },
+    {
+      "name": "Turing",
+      "computeCapability": "7.5",
+      "examples": ["T4", "RTX 2080", "RTX 2080 Ti"],
+      "tensorCore": {
+        "fp16": true,
+        "bf16": false,
+        "tf32": false,
+        "int8": true,
+        "fp8": false
+      },
+      "status": "limited",
+      "notes": "FP16 and INT8 Tensor Core, no async copy"
+    }
+  ],
+  "precisionSupport": [
+    {
+      "precision": "FP32",
+      "description": "32-bit floating point",
+      "allArchs": true,
+      "tensorCore": false
+    },
+    {
+      "precision": "FP16",
+      "description": "16-bit floating point (half)",
+      "allArchs": false,
+      "tensorCore": true,
+      "minComputeCapability": "7.0"
+    },
+    {
+      "precision": "BF16",
+      "description": "Brain floating point 16",
+      "allArchs": false,
+      "tensorCore": true,
+      "minComputeCapability": "8.0"
+    },
+    {
+      "precision": "INT8",
+      "description": "8-bit integer (quantized)",
+      "allArchs": false,
+      "tensorCore": true,
+      "minComputeCapability": "7.5"
+    },
+    {
+      "precision": "FP8",
+      "description": "8-bit floating point (Hopper)",
+      "allArchs": false,
+      "tensorCore": true,
+      "minComputeCapability": "9.0"
+    }
+  ]
+}

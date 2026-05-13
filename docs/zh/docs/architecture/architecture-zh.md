@@ -54,48 +54,60 @@ Naive → Tiled → FlashAttention → Tensor Core
 
 ### 三层架构
 
-```mermaid
-graph TB
-    subgraph Python["Python 接口层"]
-        FA["flash_attention"]
-        GEMM["gemm_kernel"]
-        PROF["profiler"]
-    end
-    
-    subgraph CUDA["CUDA Kernel 层"]
-        ATT["Attention Kernels"]
-        GKK["GEMM Kernels"]
-        WARP["Warp Primitives"]
-    end
-    
-    subgraph OPT["优化组件"]
-        TILING["Tiling Manager"]
-        TC["Tensor Core Accelerator"]
-        PIPE["Pipeline Scheduler"]
-    end
-    
-    subgraph Runtime["CUDA Runtime"]
-        MEM["Memory Hierarchy"]
-        TC_HW["Tensor Core Hardware"]
-    end
-    
-    Python --> CUDA
-    CUDA --> OPT
-    OPT --> Runtime
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Python 接口层                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ flash_attention │  │   gemm_kernel   │  │    profiler     │  │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
+└───────────┼─────────────────────┼─────────────────────┼──────────┘
+            │                     │                     │
+┌───────────┼─────────────────────┼─────────────────────┼──────────┐
+│           ▼                     ▼                     ▼          │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                    CUDA Kernel 层                           │ │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │ │
+│  │  │ Attention     │  │ GEMM          │  │ Warp          │   │ │
+│  │  │ Kernels       │  │ Kernels       │  │ Primitives    │   │ │
+│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │ │
+│  └──────────┼──────────────────┼──────────────────┼───────────┘ │
+│             │                  │                  │              │
+│  ┌──────────┼──────────────────┼──────────────────┼───────────┐ │
+│  │          ▼                  ▼                  ▼            │ │
+│  │  ┌─────────────────────────────────────────────────────┐   │ │
+│  │  │              优化组件                                 │   │ │
+│  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │   │ │
+│  │  │  │ Tiling      │ │ Tensor Core │ │ Pipeline    │    │   │ │
+│  │  │  │ Manager     │ │ Accelerator │ │ Scheduler   │    │   │ │
+│  │  │  └─────────────┘ └─────────────┘ └─────────────┘    │   │ │
+│  │  └─────────────────────────────────────────────────────┘   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                        CUDA Runtime                              │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 优化路线图
 
-```mermaid
-flowchart TD
-    A["Naive Kernel<br/>O(N²) 显存"] -->|共享内存分块| B["Tiled Kernel<br/>减少全局访存"]
-    B -->|在线 Softmax| C["FlashAttention<br/>O(N) 显存"]
-    C -->|双缓冲流水线| D["Optimized Flash<br/>计算/访存重叠"]
-    
-    style A fill:#ff9500,color:#000
-    style B fill:#ffbd2e,color:#000
-    style C fill:#76b900,color:#000
-    style D fill:#00A0E0,color:#000
+```
+                    ┌─────────────────┐
+                    │  Naive Kernel   │
+                    │  O(N²) 显存      │
+                    └────────┬────────┘
+                             │ 共享内存分块
+                    ┌────────▼────────┐
+                    │  Tiled Kernel   │
+                    │  减少全局访存    │
+                    └────────┬────────┘
+                             │ 在线 Softmax
+                    ┌────────▼────────┐
+                    │ FlashAttention  │
+                    │   O(N) 显存     │
+                    └────────┬────────┘
+                             │ 双缓冲流水线
+                    ┌────────▼────────┐
+                    │ Optimized Flash │
+                    │ 计算/访存重叠    │
+                    └─────────────────┘
 ```
 
 ---

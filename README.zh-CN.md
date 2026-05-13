@@ -1,12 +1,13 @@
 # ⚡ LLM-Speed
 
 [![CI](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml)
-[![Pages](https://img.shields.io/badge/Docs-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/llm-speed/)
+[![Docs](https://img.shields.io/badge/Docs-VitePress-76B900?logo=vitepress)](https://lessup.github.io/llm-speed/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-3776AB?logo=python)](https://python.org)
 [![CUDA 11.0+](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://hub.docker.com/)
 
-[English](README.md) | 简体中文 | [文档站](https://lessup.github.io/llm-speed/)
+[English](README.md) | 简体中文 | [文档站](https://lessup.github.io/llm-speed/) | [Colab 演示](https://colab.research.google.com/github/LessUp/llm-speed/blob/main/notebooks/llm-speed-demo.ipynb)
 
 LLM-Speed 是一个聚焦于 **LLM 推理核心算子** 的 CUDA 内核仓库：提供 FlashAttention 前向实现、Tensor Core GEMM、高性能 GEMM 分块优化，以及一层轻量的 PyTorch 绑定。它不是一个庞大的框架，而是一个适合阅读、验证和做实验的内核实现集合。
 
@@ -53,6 +54,21 @@ pip install -r requirements.txt pytest hypothesis ruff pre-commit
 
 # 有 CUDA 环境时编译扩展
 pip install -e .
+```
+
+### Docker（备选方案）
+
+使用 Docker 获得可复现的开发环境：
+
+```bash
+# 构建并运行（含 GPU 支持）
+docker compose up dev
+
+# 在容器中运行测试
+docker compose run --rm test
+
+# 运行基准测试
+docker compose run --rm benchmark
 ```
 
 快速检查包是否可见：

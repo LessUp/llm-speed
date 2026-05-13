@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
-    branches: [master]
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
@@ -37,6 +37,26 @@ jobs:
       - name: Ruff format check
         run: ruff format --check cuda_llm_ops/ tests/ benchmarks/
 
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install pyright torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run Pyright
+        run: pyright cuda_llm_ops/ || true  # Non-blocking for now
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -59,7 +79,7 @@ jobs:
   test-cpu:
     name: CPU Tests
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint]
     steps:
       - name: Checkout
         uses: actions/checkout@v4

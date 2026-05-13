@@ -1,0 +1,563 @@
+/**
+ * LLM-Speed Docs - VitePress Custom Styles
+ * "CUDA Green + Dark Metal" Design System
+ *
+ * Design Philosophy:
+ * - NVIDIA CUDA Green (#76b900) as primary brand color
+ * - GPU control panel / performance monitor aesthetic
+ * - Metal texture backgrounds
+ * - High contrast for technical content
+ */
+
+/* === CSS Variables === */
+:root {
+  /* Brand Colors - NVIDIA CUDA Green */
+  --vp-c-brand-1: #76b900;
+  --vp-c-brand-2: #5a8f00;
+  --vp-c-brand-3: #8fd600;
+  --vp-c-brand-soft: rgba(118, 185, 0, 0.14);
+
+  /* CUDA Blue Accent (contrast color) */
+  --cuda-accent: #00A0E0;
+  --cuda-accent-soft: rgba(0, 160, 224, 0.14);
+
+  /* Performance Indicator Colors */
+  --perf-excellent: #27c93f;
+  --perf-good: #ffbd2e;
+  --perf-warning: #ff9500;
+  --perf-critical: #ff5f57;
+
+  /* Background Colors - Dark Metal Theme */
+  --vp-c-bg: #0d1117;
+  --vp-c-bg-alt: #161b22;
+  --vp-c-bg-elv: #21262d;
+  --vp-c-bg-soft: #21262d;
+
+  /* Surface Colors for Cards */
+  --surface-primary: #161b22;
+  --surface-secondary: #21262d;
+  --surface-tertiary: #30363d;
+
+  /* Text Colors */
+  --vp-c-text-1: #e6edf3;
+  --vp-c-text-2: #8b949e;
+  --vp-c-text-3: #6e7681;
+
+  /* Border Colors */
+  --vp-c-border: #30363d;
+  --vp-c-divider: #30363d;
+  --vp-c-gutter: #30363d;
+
+  /* Hero Section - Gradient Background */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #76b900 0%, #00A0E0 100%);
+  --vp-home-hero-image-background-image: none;
+  --vp-home-hero-image-filter: none;
+
+  /* Custom Colors */
+  --tag-bg: #76b90020;
+  --tag-text: #8fd600;
+  --code-bg: #0d1117;
+  --code-header-bg: #161b22;
+
+  /* Custom Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+
+  /* Custom Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Custom Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(118, 185, 0, 0.2);
+}
+
+/* === Light Mode Override (for users who prefer light) === */
+html:not(.dark) {
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f6f8fa;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f6f8fa;
+
+  --surface-primary: #f6f8fa;
+  --surface-secondary: #ffffff;
+  --surface-tertiary: #d0d7de;
+
+  --vp-c-text-1: #24292f;
+  --vp-c-text-2: #57606a;
+  --vp-c-text-3: #8b949e;
+
+  --vp-c-border: #d0d7de;
+  --vp-c-divider: #d0d7de;
+  --vp-c-gutter: #d0d7de;
+
+  --tag-bg: #76b90015;
+  --code-bg: #f6f8fa;
+  --code-header-bg: #eaeef2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --shadow-glow: 0 0 20px rgba(118, 185, 0, 0.1);
+}
+
+/* === Global Layout === */
+.VPDoc {
+  padding-bottom: 4rem;
+}
+
+/* === Hero Section Styling === */
+.VPHero {
+  padding: calc(var(--vp-nav-height) + 64px) var(--spacing-lg) 64px;
+  background: linear-gradient(180deg, var(--vp-c-bg) 0%, var(--vp-c-bg-alt) 100%);
+}
+
+.VPHero .name {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  background: var(--vp-home-hero-name-background);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.VPHero .text {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+  margin-top: var(--spacing-md);
+}
+
+.VPHero .tagline {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--vp-c-text-3);
+  margin-top: var(--spacing-lg);
+  max-width: 640px;
+}
+
+.VPHero .image {
+  display: none;
+}
+
+/* === Buttons Styling === */
+.VPHero .actions {
+  margin-top: var(--spacing-2xl);
+  gap: var(--spacing-sm);
+}
+
+.VPHero .VPButton {
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.VPHero .VPButton.medium.brand {
+  background: var(--vp-c-brand-1);
+  border: none;
+  color: #000000;
+  box-shadow: var(--shadow-glow);
+}
+
+.VPHero .VPButton.medium.brand:hover {
+  background: var(--vp-c-brand-3);
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(118, 185, 0, 0.4);
+}
+
+.VPHero .VPButton.medium.alt {
+  border: 1px solid var(--vp-c-border);
+  background: var(--surface-primary);
+  color: var(--vp-c-text-1);
+}
+
+.VPHero .VPButton.medium.alt:hover {
+  border-color: var(--vp-c-brand-1);
+  background: var(--surface-secondary);
+}
+
+/* === Navigation Styling === */
+.VPNav {
+  background: var(--vp-c-bg);
+  border-bottom: 1px solid var(--vp-c-border);
+}
+
+.VPNavBar {
+  padding: 0 var(--spacing-lg);
+}
+
+.VPNavBarTitle .title {
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+}
+
+/* === Sidebar Styling === */
+.VPSidebar {
+  background: var(--vp-c-bg-alt);
+  border-right: 1px solid var(--vp-c-border);
+}
+
+.VPSidebarItem .text {
+  font-size: 14px;
+}
+
+.VPSidebarItem.is-active .text {
+  color: var(--vp-c-brand-1);
+  font-weight: 500;
+}
+
+/* === Content Styling === */
+.vp-doc h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-top: 0;
+}
+
+.vp-doc h2 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 2rem;
+}
+
+.vp-doc p {
+  line-height: 1.7;
+}
+
+/* === Code Blocks Styling === */
+.vp-doc [class*='language-'] {
+  border-radius: var(--radius-lg);
+  background: var(--code-bg);
+  border: 1px solid var(--vp-c-border);
+}
+
+.vp-doc [class*='language-'] pre {
+  padding: var(--spacing-lg);
+}
+
+.vp-doc [class*='language-'] code {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Inline code */
+.vp-doc :not(pre) > code {
+  background: var(--tag-bg);
+  color: var(--vp-c-brand-1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+}
+
+/* === Tables Styling === */
+.vp-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--vp-c-border);
+}
+
+.vp-doc th {
+  background: var(--surface-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--vp-c-border);
+}
+
+.vp-doc td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc tr:last-child td {
+  border-bottom: none;
+}
+
+.vp-doc tr:hover td {
+  background: var(--surface-secondary);
+}
+
+/* === Callouts/Custom Blocks === */
+.custom-block {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: 1rem 0;
+}
+
+.custom-block.tip {
+  background: rgba(118, 185, 0, 0.1);
+  border-left: 4px solid var(--vp-c-brand-1);
+}
+
+.custom-block.warning {
+  background: rgba(255, 189, 46, 0.1);
+  border-left: 4px solid var(--perf-good);
+}
+
+.custom-block.danger {
+  background: rgba(255, 95, 87, 0.1);
+  border-left: 4px solid var(--perf-critical);
+}
+
+.custom-block.info {
+  background: rgba(0, 160, 224, 0.1);
+  border-left: 4px solid var(--cuda-accent);
+}
+
+/* === Badges === */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+/* === Footer === */
+.VPDocFooter {
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: var(--spacing-lg);
+  margin-top: var(--spacing-2xl);
+}
+
+/* === Scrollbar Styling === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--vp-c-bg-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-text-3);
+}
+
+/* === Selection Styling === */
+::selection {
+  background: rgba(118, 185, 0, 0.3);
+  color: var(--vp-c-text-1);
+}
+
+/* === Responsive Design === */
+@media (max-width: 960px) {
+  .VPHero .name {
+    font-size: 36px;
+  }
+
+  .VPHero .text {
+    font-size: 16px;
+  }
+
+  .VPHero .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .VPHero .name {
+    font-size: 28px;
+  }
+
+  .VPHero .text {
+    font-size: 14px;
+  }
+}
+
+/* === Custom Component Styles === */
+
+/* Kernel Card */
+.kernel-card {
+  background: var(--surface-primary);
+  border: 1px solid var(--vp-c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-normal);
+}
+
+.kernel-card:hover {
+  border-color: var(--vp-c-brand-1);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.kernel-card .icon {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.kernel-card .title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  margin-bottom: var(--spacing-xs);
+}
+
+.kernel-card .description {
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+}
+
+/* Code Demo Block */
+.code-demo {
+  background: var(--surface-primary);
+  border: 1px solid var(--vp-c-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.code-demo-header {
+  background: var(--surface-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  border-bottom: 1px solid var(--vp-c-border);
+}
+
+.code-demo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.code-demo-dot.red { background: var(--perf-critical); }
+.code-demo-dot.yellow { background: var(--perf-good); }
+.code-demo-dot.green { background: var(--perf-excellent); }
+
+/* GPU Support Table */
+.gpu-support-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gpu-support-table .status-primary {
+  color: var(--perf-excellent);
+}
+
+.gpu-support-table .status-supported {
+  color: var(--perf-good);
+}
+
+.gpu-support-table .status-limited {
+  color: var(--perf-warning);
+}
+
+/* Performance Chart Container */
+.perf-chart-container {
+  background: var(--surface-primary);
+  border: 1px solid var(--vp-c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+/* Memory Compare Visualization */
+.memory-compare {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.memory-bar {
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-tertiary);
+  overflow: hidden;
+  position: relative;
+}
+
+.memory-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  transition: width var(--transition-slow);
+}
+
+.memory-bar-fill.flash {
+  background: linear-gradient(90deg, var(--vp-c-brand-1), var(--vp-c-brand-3));
+}
+
+.memory-bar-fill.standard {
+  background: linear-gradient(90deg, var(--perf-warning), var(--perf-critical));
+}
+
+/* Feature Grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+}
+
+/* Quick Start Section */
+.quick-start {
+  background: var(--surface-primary);
+  border: 1px solid var(--vp-c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin: var(--spacing-2xl) 0;
+}
+
+.quick-start-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Colab Badge */
+.colab-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #f9ab00, #e67c00);
+  color: #000;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.colab-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 171, 0, 0.3);
+}

@@ -1,12 +1,13 @@
 # ⚡ LLM-Speed
 
 [![CI](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/llm-speed/actions/workflows/ci.yml)
-[![Pages](https://img.shields.io/badge/Docs-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/llm-speed/)
+[![Docs](https://img.shields.io/badge/Docs-VitePress-76B900?logo=vitepress)](https://lessup.github.io/llm-speed/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-3776AB?logo=python)](https://python.org)
 [![CUDA 11.0+](https://img.shields.io/badge/CUDA-11.0+-76B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://hub.docker.com/)
 
-English | [简体中文](README.zh-CN.md) | [Docs](https://lessup.github.io/llm-speed/)
+English | [简体中文](README.zh-CN.md) | [Docs](https://lessup.github.io/llm-speed/) | [Colab Demo](https://colab.research.google.com/github/LessUp/llm-speed/blob/main/notebooks/llm-speed-demo.ipynb)
 
 LLM-Speed is a compact CUDA kernel playground for **LLM inference primitives**: FlashAttention forward kernels, Tensor Core GEMM, high-performance GEMM tiling, and a thin PyTorch binding layer. The goal is not to be a giant framework; it is to be a focused, inspectable implementation that is easy to benchmark, study, and extend.
 
@@ -53,6 +54,21 @@ pip install -r requirements.txt pytest hypothesis ruff pre-commit
 
 # Build the extension when CUDA is available
 pip install -e .
+```
+
+### Docker (Alternative)
+
+Use Docker for a reproducible development environment:
+
+```bash
+# Build and run with GPU support
+docker compose up dev
+
+# Run tests in container
+docker compose run --rm test
+
+# Run benchmarks
+docker compose run --rm benchmark
 ```
 
 Smoke-test the user-facing package surface:

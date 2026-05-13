@@ -1,0 +1,53 @@
+# Markdownlint configuration
+# https://github.com/DavidAnson/markdownlint-cli2
+
+# Default rules
+default: true
+
+# Rule modifications
+MD001: true  # Heading levels should only increment by one level at a time
+MD003: false # Heading style - allow ATX and Setext
+MD004: false # Unordered list style - allow any
+MD005: true  # Inconsistent indentation for list items at the same level
+MD007:
+  indent: 2  # Unordered list indentation
+MD009: false # Trailing spaces - allow for line breaks
+MD010: true  # Hard tabs
+MD012: true  # Multiple consecutive blank lines
+MD013: false # Line length - allow long lines for code/tables
+MD014: false # Dollar signs used before commands without showing output
+MD018: true  # No space after hash on atx style heading
+MD019: true  # Multiple spaces after hash on atx style heading
+MD022: true  # Headings should be surrounded by blank lines
+MD023: true  # Headings must start at the beginning of the line
+MD024: false # Multiple headings with the same content - allow in different sections
+MD025: true  # Multiple top-level headings in the same document
+MD026: false # Trailing punctuation in heading - allow
+MD027: false # Multiple spaces after blockquote symbol
+MD028: true  # Blank line inside blockquote
+MD029: false # Ordered list item prefix - allow any style
+MD030: true  # Spaces after list markers
+MD031: true  # Fenced code blocks should be surrounded by blank lines
+MD032: true  # Lists should be surrounded by blank lines
+MD033: false # Inline HTML - allow for custom components
+MD034: false # Bare URL used - allow for links
+MD035: true  # Horizontal rule style
+MD036: true  # Emphasis used instead of a heading
+MD037: true  # Spaces inside emphasis markers
+MD038: false # Spaces inside code span elements
+MD039: true  # Spaces inside link text
+MD040: false # Fenced code blocks should have a language specified
+MD041: false # First line in a file should be a top-level heading
+MD042: true  # No empty links
+MD045: true  # Images should have alternate text
+MD046: false # Code block style - allow any
+MD047: true  # Files should end with a single newline character
+MD048: false # Code fence style - allow any
+MD049: false # Emphasis style - allow any
+MD050: false # Strong style - allow any
+MD051: true  # Link fragments should be valid
+MD052: true  # Reference links and images should use a label that is defined
+MD053: false # Link and image reference definitions should be needed
+MD054: false # Link and image style - allow any
+MD055: false # Table pipe style
+MD056: false # Table column count

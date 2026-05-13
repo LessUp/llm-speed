@@ -1,8 +1,6 @@
 ---
-layout: docs
 title: API Reference
 description: Complete API documentation for LLM-Speed
-lang: en
 ---
 
 # API Reference

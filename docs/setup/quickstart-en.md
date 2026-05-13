@@ -1,8 +1,6 @@
 ---
-layout: docs
 title: Quick Start Guide
 description: Get up and running with LLM-Speed in 5 minutes
-lang: en
 ---
 
 # Quick Start Guide

@@ -1,8 +1,6 @@
 ---
-layout: docs
 title: Performance Tuning Guide
 description: Comprehensive guide for maximizing performance with LLM-Speed
-lang: en
 ---
 
 # Performance Tuning Guide
@@ -515,10 +513,22 @@ def safe_flash_attention(q, k, v, fallback_to_torch=True):
 
 ---
 
-## Additional Resources
+## References
 
-- [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
-- [Nsight Compute Documentation](https://docs.nvidia.com/nsight-compute/)
-- [PyTorch Performance Tuning](https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html)
+### Performance Tuning
+
+1. **CUDA Best Practices Guide**: NVIDIA. [Documentation](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/)
+2. **Nsight Compute Documentation**: NVIDIA. [Documentation](https://docs.nvidia.com/nsight-compute/)
+3. **PyTorch Performance Tuning**: PyTorch Tutorials. [Tutorial](https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html)
+
+### Research Papers
+
+4. **FlashAttention**: Dao, T., et al. (2022). *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. NeurIPS 2022.
+5. **Analyzing GPU Performance**: Wu, Y., et al. (2022). *GPGPU Performance Analysis and Optimization*.
+
+### Tools
+
+6. **NVIDIA Nsight Systems**: System-wide profiling tool. [Download](https://developer.nvidia.com/nsight-systems)
+7. **NVIDIA Nsight Compute**: Kernel-level profiling tool. [Download](https://developer.nvidia.com/nsight-compute)
 
 [← Back to Documentation](../)

@@ -1,8 +1,6 @@
 ---
-layout: docs
 title: Troubleshooting Guide
 description: Solutions to common issues when using LLM-Speed
-lang: en
 ---
 
 # Troubleshooting Guide

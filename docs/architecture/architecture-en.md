@@ -1,8 +1,6 @@
 ---
-layout: docs
 title: Architecture Design
 description: In-depth technical documentation covering architecture, algorithm principles, and optimization strategies of LLM-Speed
-lang: en
 ---
 
 # Architecture Design
@@ -56,62 +54,48 @@ We follow the principle of correct first, then fast:
 
 ### Three-Layer Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Python Interface Layer                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │ flash_attention │  │   gemm_kernel   │  │    profiler     │  │
-│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
-└───────────┼─────────────────────┼─────────────────────┼──────────┘
-            │                     │                     │
-┌───────────┼─────────────────────┼─────────────────────┼──────────┐
-│           ▼                     ▼                     ▼          │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │                    CUDA Kernel Layer                        │ │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │ │
-│  │  │ Attention     │  │ GEMM          │  │ Warp          │   │ │
-│  │  │ Kernels       │  │ Kernels       │  │ Primitives    │   │ │
-│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │ │
-│  └──────────┼──────────────────┼──────────────────┼───────────┘ │
-│             │                  │                  │              │
-│  ┌──────────┼──────────────────┼──────────────────┼───────────┐ │
-│  │          ▼                  ▼                  ▼            │ │
-│  │  ┌─────────────────────────────────────────────────────┐   │ │
-│  │  │              Optimization Components                 │   │ │
-│  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │   │ │
-│  │  │  │ Tiling      │ │ Tensor Core │ │ Pipeline    │    │   │ │
-│  │  │  │ Manager     │ │ Accelerator │ │ Scheduler   │    │   │ │
-│  │  │  └─────────────┘ └─────────────┘ └─────────────┘    │   │ │
-│  │  └─────────────────────────────────────────────────────┘   │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                        CUDA Runtime                              │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Python["Python Interface Layer"]
+        FA["flash_attention"]
+        GEMM["gemm_kernel"]
+        PROF["profiler"]
+    end
+    
+    subgraph CUDA["CUDA Kernel Layer"]
+        ATT["Attention Kernels"]
+        GKK["GEMM Kernels"]
+        WARP["Warp Primitives"]
+    end
+    
+    subgraph OPT["Optimization Components"]
+        TILING["Tiling Manager"]
+        TC["Tensor Core Accelerator"]
+        PIPE["Pipeline Scheduler"]
+    end
+    
+    subgraph Runtime["CUDA Runtime"]
+        MEM["Memory Hierarchy"]
+        TC_HW["Tensor Core Hardware"]
+    end
+    
+    Python --> CUDA
+    CUDA --> OPT
+    OPT --> Runtime
 ```
 
 ### Optimization Roadmap
 
-```
-                    ┌─────────────────┐
-                    │  Naive Kernel   │
-                    │  O(N²) memory   │
-                    └────────┬────────┘
-                             │ Shared memory tiling
-                    ┌────────▼────────┐
-                    │  Tiled Kernel   │
-                    │  Reduced global │
-                    │  memory access  │
-                    └────────┬────────┘
-                             │ Online softmax
-                    ┌────────▼────────┐
-                    │ FlashAttention  │
-                    │   O(N) memory   │
-                    └────────┬────────┘
-                             │ Double buffering
-                    ┌────────▼────────┐
-                    │ Optimized Flash │
-                    │ Compute/memory  │
-                    │ overlap         │
-                    └─────────────────┘
+```mermaid
+flowchart TD
+    A["Naive Kernel<br/>O(N²) memory"] -->|Shared memory tiling| B["Tiled Kernel<br/>Reduced global memory access"]
+    B -->|Online softmax| C["FlashAttention<br/>O(N) memory"]
+    C -->|Double buffering| D["Optimized Flash<br/>Compute/memory overlap"]
+    
+    style A fill:#ff9500,color:#000
+    style B fill:#ffbd2e,color:#000
+    style C fill:#76b900,color:#000
+    style D fill:#00A0E0,color:#000
 ```
 
 ---
@@ -198,6 +182,38 @@ Note: +1 padding eliminates bank conflict
 ### 3. FlashAttention
 
 **Core Innovation:** Avoid storing the N×N attention matrix, achieving O(N) memory complexity.
+
+**Algorithm Flow:**
+
+```mermaid
+flowchart LR
+    subgraph Input["Input"]
+        Q["Q: [seq_len, head_dim]"]
+        K["K: [seq_len, head_dim]"]
+        V["V: [seq_len, head_dim]"]
+    end
+    
+    subgraph Tiling["Tile Processing Loop"]
+        direction TB
+        LOAD["Load Q_tile, K_tile, V_tile"]
+        SCORES["S = Q_tile @ K_tile^T * scale"]
+        UPDATE["Online Softmax Update<br/>m_new = max(m_old, rowmax(S))<br/>l_new = l_old * exp(m_old - m_new) + sum(exp(S - m_new))"]
+        OUT["O_new = O_old * scale + exp(S - m_new) @ V_tile"]
+    end
+    
+    subgraph Output["Output"]
+        RESULT["O: [seq_len, head_dim]<br/>O(N) memory"]
+    end
+    
+    Q --> LOAD
+    K --> LOAD
+    V --> LOAD
+    LOAD --> SCORES
+    SCORES --> UPDATE
+    UPDATE --> OUT
+    OUT --> RESULT
+    OUT -.->|next tile| LOAD
+```
 
 **Online Softmax Formula:**
 ```
@@ -620,10 +636,21 @@ def test_flash_attention_correctness(batch, heads, seq_len, head_dim, device):
 
 ## References
 
-1. **FlashAttention**: Dao et al., "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness", NeurIPS 2022
-2. **FlashAttention-2**: Dao, "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning", 2023
-3. **CUTLASS**: NVIDIA CUTLASS - CUDA Templates for Linear Algebra Subroutines
-4. **cuBLAS**: NVIDIA cuBLAS Library Documentation
-5. **CUDA Programming Guide**: NVIDIA CUDA C++ Programming Guide
+### Core Papers
+
+1. **FlashAttention**: Dao, T., et al. (2022). *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*. NeurIPS 2022. [arXiv:2205.14135](https://arxiv.org/abs/2205.14135)
+2. **FlashAttention-2**: Dao, T. (2023). *FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning*. [arXiv:2307.08691](https://arxiv.org/abs/2307.08691)
+3. **PagedAttention**: Kwon, W., et al. (2023). *Efficient Memory Management for Large Language Model Serving with PagedAttention*. SOSP 2023. [arXiv:2309.06180](https://arxiv.org/abs/2309.06180)
+
+### NVIDIA Documentation
+
+4. **CUTLASS**: NVIDIA CUTLASS - CUDA Templates for Linear Algebra Subroutines. [GitHub](https://github.com/NVIDIA/cutlass)
+5. **cuBLAS**: NVIDIA cuBLAS Library Documentation. [Docs](https://docs.nvidia.com/cuda/cublas/)
+6. **CUDA Programming Guide**: NVIDIA CUDA C++ Programming Guide. [Docs](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
+
+### Related Projects
+
+7. **vLLM**: Easy, Fast, and Cheap LLM Serving. [GitHub](https://github.com/vllm-project/vllm)
+8. **PyTorch**: An Imperative Style, High-Performance Deep Learning Library. [pytorch.org](https://pytorch.org/)
 
 [← Back to Documentation](../)

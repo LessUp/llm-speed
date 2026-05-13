@@ -1,0 +1,58 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install pytest pytest-cov hypothesis ruff
+
+      - name: Run CPU-safe tests with coverage
+        run: |
+          pytest tests/ \
+            -v \
+            --ignore=tests/test_attention.py \
+            --ignore=tests/test_gemm.py \
+            --ignore=tests/test_profiler.py \
+            --cov=cuda_llm_ops \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -m "not cuda" || true
+
+      - name: Generate coverage summary
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            coverage report --skip-covered --skip-empty || true
+          else
+            echo "Coverage report not generated (CUDA tests skipped)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: hashFiles('coverage.xml') != ''
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true

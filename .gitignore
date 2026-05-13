@@ -93,21 +93,25 @@ dmypy.json
 .pyre/
 
 # ═════════════════════════════════════════════════════════════════════════════
-# JEKYLL / GITHUB PAGES
+# VITEPRESS / GITHUB PAGES
 # ═════════════════════════════════════════════════════════════════════════════
 
-# Jekyll build output
+# VitePress build output
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Jekyll build output (legacy)
 _site/
 .sass-cache/
 .jekyll-cache/
 .jekyll-metadata
 
-# Ruby / Bundler
+# Ruby / Bundler (legacy)
 Gemfile.lock
 .bundle/
 vendor/
 
-# Node (for potential npm packages)
+# Node (for VitePress)
 node_modules/
 npm-debug.log*
 yarn-debug.log*

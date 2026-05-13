@@ -1,0 +1,45 @@
+# Docker build context
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info
+dist
+build
+build-*
+cmake-build-*
+.clangd
+.ruff_cache
+.pytest_cache
+.hypothesis
+.coverage
+htmlcov
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+docs/.vitepress/dist
+docs/.vitepress/cache
+docs/node_modules
+_site
+
+# Large files
+*.cubin
+*.fatbin
+*.ptx
+*.nsys-rep
+*.ncu-rep
+
+# Test output
+test-results/
+coverage/
