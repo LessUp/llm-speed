@@ -2,6 +2,15 @@
  * Sync CHANGELOG.md from root to docs release notes page.
  * Transforms Keep a Changelog format for VitePress display.
  *
+ * Translation Policy:
+ * - Section headers are translated (Added → 新增, Fixed → 修复, etc.)
+ * - Content remains in English (technical changes are language-agnostic)
+ *
+ * Rationale:
+ * - Changelogs are reference documents, not user-facing content
+ * - Technical terms and commit references lose clarity when translated
+ * - Maintains single source of truth without translation sync burden
+ *
  * Usage: node scripts/sync-changelog.mjs
  */
 
@@ -29,7 +38,7 @@ function transformChangelog(content, locale = 'en') {
   // Transform version headers: ## [1.0.0] - 2026-04-30 → ## 1.0.0 (2026-04-30)
   let transformed = content
     .replace(/^## \[([\d.]+)\]\s*-\s*(\d{4}-\d{2}-\d{2})/gm, '## $1 ($2)')
-    // Remove subsection headers (### Added, ### Changed, etc.) - flatten to bold labels
+    // Translate section headers only (content stays in English)
     .replace(/^### (Added|Changed|Fixed|Removed|Deprecated|Security|Technical Details|Archived Changes|Deferred Features)$/gm, (match, section) => {
       const sectionLabels = {
         en: {
@@ -56,7 +65,7 @@ function transformChangelog(content, locale = 'en') {
         },
       }
       const labels = locale === 'zh' ? sectionLabels.zh : sectionLabels.en
-      return `**${labels[section] || section}}**`
+      return `**${labels[section] || section}**`
     })
     // Strip HTML comments
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -84,7 +93,7 @@ function main() {
   writeFileSync(targetEnPath, enContent, 'utf-8')
   console.log(`✓ Synced English changelog to ${targetEnPath}`)
 
-  // Generate Chinese version
+  // Generate Chinese version (translated headers, English content)
   const zhContent = transformChangelog(content, 'zh')
   ensureDir(resolve(targetZhPath, '..'))
   writeFileSync(targetZhPath, zhContent, 'utf-8')

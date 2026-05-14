@@ -1,16 +1,7 @@
 <script setup lang="ts">
-interface MemoryData {
-  seqLength: number
-  standard: string
-  flash: string
-  savings: string
-}
+import { useFlashAttentionMemory } from '../composables/useData'
 
-const memoryData: MemoryData[] = [
-  { seqLength: 1024, standard: '4 MB', flash: '0.25 MB', savings: '16×' },
-  { seqLength: 4096, standard: '64 MB', flash: '1 MB', savings: '64×' },
-  { seqLength: 8192, standard: '256 MB', flash: '2 MB', savings: '128×' },
-]
+const { tableData, notes } = useFlashAttentionMemory()
 </script>
 
 <template>
@@ -25,7 +16,7 @@ const memoryData: MemoryData[] = [
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in memoryData" :key="row.seqLength">
+        <tr v-for="row in tableData" :key="row.seqLength">
           <td><strong>{{ row.seqLength }}</strong></td>
           <td class="standard-col">{{ row.standard }}</td>
           <td class="flash-col">{{ row.flash }}</td>
@@ -35,7 +26,7 @@ const memoryData: MemoryData[] = [
     </table>
 
     <div class="memory-bars">
-      <div v-for="row in memoryData" :key="row.seqLength" class="bar-row">
+      <div v-for="row in tableData" :key="row.seqLength" class="bar-row">
         <span class="bar-label">Seq {{ row.seqLength }}</span>
         <div class="bar-container">
           <div class="bar standard" :style="{ width: '100%' }">
@@ -52,8 +43,7 @@ const memoryData: MemoryData[] = [
     </div>
 
     <p class="footnote">
-      Assumes 8 attention heads, FP32 accumulation, batch size 1.
-      Exact savings depend on hardware and kernel implementation.
+      {{ notes }}
     </p>
   </div>
 </template>

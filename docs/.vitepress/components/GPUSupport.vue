@@ -1,37 +1,7 @@
 <script setup lang="ts">
-interface GPU {
-  architecture: string
-  examples: string
-  tensorCore: string
-  status: 'primary' | 'supported' | 'limited'
-}
+import { useGpuSupport, type GPUArchitecture } from '../composables/useData'
 
-const gpus: GPU[] = [
-  {
-    architecture: 'Ampere',
-    examples: 'A100, RTX 30/40',
-    tensorCore: 'FP16, BF16, TF32',
-    status: 'primary',
-  },
-  {
-    architecture: 'Hopper',
-    examples: 'H100',
-    tensorCore: 'FP16, BF16, FP8',
-    status: 'supported',
-  },
-  {
-    architecture: 'Volta',
-    examples: 'V100',
-    tensorCore: 'FP16',
-    status: 'limited',
-  },
-  {
-    architecture: 'Turing',
-    examples: 'T4, RTX 20',
-    tensorCore: 'FP16, INT8',
-    status: 'limited',
-  },
-]
+const { architectures } = useGpuSupport()
 
 const statusLabels: Record<string, string> = {
   primary: '✅ Primary target',
@@ -43,6 +13,20 @@ const statusClasses: Record<string, string> = {
   primary: 'status-primary',
   supported: 'status-supported',
   limited: 'status-limited',
+}
+
+function formatExamples(gpu: GPUArchitecture): string {
+  return gpu.examples.join(', ')
+}
+
+function formatTensorCore(gpu: GPUArchitecture): string {
+  const types: string[] = []
+  if (gpu.tensorCore.fp16) types.push('FP16')
+  if (gpu.tensorCore.bf16) types.push('BF16')
+  if (gpu.tensorCore.tf32) types.push('TF32')
+  if (gpu.tensorCore.int8) types.push('INT8')
+  if (gpu.tensorCore.fp8) types.push('FP8')
+  return types.join(', ')
 }
 </script>
 
@@ -58,10 +42,10 @@ const statusClasses: Record<string, string> = {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="gpu in gpus" :key="gpu.architecture">
-          <td><strong>{{ gpu.architecture }}</strong></td>
-          <td>{{ gpu.examples }}</td>
-          <td>{{ gpu.tensorCore }}</td>
+        <tr v-for="gpu in architectures" :key="gpu.name">
+          <td><strong>{{ gpu.name }}</strong></td>
+          <td>{{ formatExamples(gpu) }}</td>
+          <td>{{ formatTensorCore(gpu) }}</td>
           <td :class="statusClasses[gpu.status]">
             {{ statusLabels[gpu.status] }}
           </td>
