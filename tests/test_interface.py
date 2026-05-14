@@ -94,19 +94,167 @@ class TestPythonInterface:
             assert output.dtype == a.dtype
 
 
-class TestErrorHandling:
-    """Tests for error handling."""
+class TestInputValidation:
+    """Direct tests for the validation seam.
+
+    All attention kernels share validate_attention_inputs; all GEMM kernels
+    share validate_gemm_inputs. Testing the seam directly is sufficient;
+    per-kernel tests are reduced to wiring smoke tests in TestErrorHandling.
+    """
 
     @pytest.mark.cuda
-    def test_dimension_mismatch_error(self, device):
-        """
-        Feature: cuda-llm-kernel-optimization
-        Property 13: 无效输入错误处理
-        Validates: Requirements 8.3
+    def test_attention_wrong_dimensions(self, device):
+        """validate_attention_inputs rejects 3D tensors."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
 
-        For invalid inputs (dimension mismatch), kernel should raise
-        clear error message instead of undefined behavior.
-        """
+        q = torch.randn(64, 32, device=device)
+        k = torch.randn(64, 32, device=device)
+        v = torch.randn(64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be 4D"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_attention_cpu_tensor(self):
+        """validate_attention_inputs rejects CPU tensors."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32)
+        k = torch.randn(2, 4, 64, 32)
+        v = torch.randn(2, 4, 64, 32)
+
+        with pytest.raises(RuntimeError, match="must be on CUDA"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_attention_non_contiguous(self, device):
+        """validate_attention_inputs rejects non-contiguous tensors."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device).transpose(1, 2)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 64, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="must be contiguous"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_attention_qk_shape_mismatch(self, device):
+        """validate_attention_inputs rejects Q/K shape mismatch."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device)
+        k = torch.randn(2, 4, 128, 32, device=device)
+        v = torch.randn(2, 4, 128, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="same shape"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_attention_kv_shape_mismatch(self, device):
+        """validate_attention_inputs rejects K/V shape mismatch."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randn(2, 4, 64, 32, device=device)
+        k = torch.randn(2, 4, 64, 32, device=device)
+        v = torch.randn(2, 4, 128, 32, device=device)
+
+        with pytest.raises(RuntimeError, match="same shape"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_attention_unsupported_dtype(self, device):
+        """validate_attention_inputs rejects unsupported dtypes."""
+        try:
+            from cuda_llm_ops import validate_attention_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        q = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
+        k = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
+        v = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
+
+        with pytest.raises(RuntimeError, match="Only float32 and float16"):
+            validate_attention_inputs(q, k, v)
+
+    @pytest.mark.cuda
+    def test_gemm_dimension_mismatch(self, device):
+        """validate_gemm_inputs rejects inner-dimension mismatch."""
+        try:
+            from cuda_llm_ops import validate_gemm_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, device=device)
+        b = torch.randn(64, 64, device=device)
+
+        with pytest.raises(RuntimeError, match="Inner dimensions"):
+            validate_gemm_inputs(a, b)
+
+    @pytest.mark.cuda
+    def test_gemm_cpu_tensor(self):
+        """validate_gemm_inputs rejects CPU tensors."""
+        try:
+            from cuda_llm_ops import validate_gemm_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32)
+        b = torch.randn(32, 64)
+
+        with pytest.raises(RuntimeError, match="must be on CUDA"):
+            validate_gemm_inputs(a, b)
+
+    @pytest.mark.cuda
+    def test_gemm_non_contiguous(self, device):
+        """validate_gemm_inputs rejects non-contiguous tensors."""
+        try:
+            from cuda_llm_ops import validate_gemm_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(64, 32, device=device).t()
+        b = torch.randn(32, 64, device=device)
+
+        with pytest.raises(RuntimeError, match="must be contiguous"):
+            validate_gemm_inputs(a, b)
+
+    @pytest.mark.cuda
+    def test_gemm_wrong_dimensions(self, device):
+        """validate_gemm_inputs rejects non-2D tensors."""
+        try:
+            from cuda_llm_ops import validate_gemm_inputs
+        except ImportError:
+            pytest.skip("CUDA kernels not built")
+
+        a = torch.randn(8, 64, 32, device=device)
+        b = torch.randn(32, 64, device=device)
+
+        with pytest.raises(RuntimeError, match="must be 2D"):
+            validate_gemm_inputs(a, b)
+
+
+class TestErrorHandling:
+    """Smoke tests ensuring validation is wired into kernel entry points."""
+
+    @pytest.mark.cuda
+    def test_attention_validation_wired(self, device):
+        """FlashAttention should raise when validation fails."""
         try:
             from cuda_llm_ops import flash_attention
         except ImportError:
@@ -114,83 +262,24 @@ class TestErrorHandling:
 
         q = torch.randn(2, 4, 64, 32, device=device)
         k = torch.randn(2, 4, 64, 32, device=device)
-        v = torch.randn(2, 4, 128, 32, device=device)  # Wrong seq_len
+        v = torch.randn(2, 4, 128, 32, device=device)
 
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(RuntimeError):
             flash_attention(q, k, v)
 
-        # Should have meaningful error message
-        assert "shape" in str(excinfo.value).lower() or "match" in str(excinfo.value).lower()
-
     @pytest.mark.cuda
-    def test_wrong_tensor_dim_error(self, device):
-        """Test error for wrong tensor dimensions."""
-        try:
-            from cuda_llm_ops import flash_attention
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        # 3D tensor instead of 4D
-        q = torch.randn(4, 64, 32, device=device)
-        k = torch.randn(4, 64, 32, device=device)
-        v = torch.randn(4, 64, 32, device=device)
-
-        with pytest.raises(Exception) as excinfo:
-            flash_attention(q, k, v)
-
-        assert "4D" in str(excinfo.value) or "dim" in str(excinfo.value).lower()
-
-    @pytest.mark.cuda
-    def test_cpu_tensor_error(self):
-        """Test error for CPU tensors."""
-        try:
-            from cuda_llm_ops import flash_attention
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        # CPU tensors
-        q = torch.randn(2, 4, 64, 32)
-        k = torch.randn(2, 4, 64, 32)
-        v = torch.randn(2, 4, 64, 32)
-
-        with pytest.raises(Exception) as excinfo:
-            flash_attention(q, k, v)
-
-        assert "cuda" in str(excinfo.value).lower() or "device" in str(excinfo.value).lower()
-
-    @pytest.mark.cuda
-    def test_unsupported_dtype_error(self, device):
-        """Test error for unsupported dtype."""
-        try:
-            from cuda_llm_ops import flash_attention
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        # INT32 tensors (not supported)
-        q = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
-        k = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
-        v = torch.randint(0, 100, (2, 4, 64, 32), device=device, dtype=torch.int32)
-
-        with pytest.raises(Exception) as excinfo:
-            flash_attention(q, k, v)
-
-        assert "dtype" in str(excinfo.value).lower() or "type" in str(excinfo.value).lower()
-
-    @pytest.mark.cuda
-    def test_gemm_dimension_mismatch(self, device):
-        """Test GEMM dimension mismatch error."""
+    def test_gemm_validation_wired(self, device):
+        """GEMM should raise when validation fails."""
         try:
             from cuda_llm_ops import gemm
         except ImportError:
             pytest.skip("CUDA kernels not built")
 
         a = torch.randn(64, 32, device=device)
-        b = torch.randn(64, 64, device=device)  # K dimension mismatch
+        b = torch.randn(64, 64, device=device)
 
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(RuntimeError):
             gemm(a, b)
-
-        assert "dimension" in str(excinfo.value).lower() or "match" in str(excinfo.value).lower()
 
     @pytest.mark.cuda
     @pytest.mark.property

@@ -14,34 +14,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-
-def benchmark_kernel(
-    func,
-    a: torch.Tensor,
-    b: torch.Tensor,
-    warmup: int = 10,
-    iterations: int = 100,
-    **kwargs,
-) -> float:
-    """Benchmark a kernel and return average time in ms."""
-    # Warmup
-    for _ in range(warmup):
-        func(a, b, **kwargs)
-
-    torch.cuda.synchronize()
-
-    # Measure
-    start = torch.cuda.Event(enable_timing=True)
-    end = torch.cuda.Event(enable_timing=True)
-
-    start.record()
-    for _ in range(iterations):
-        func(a, b, **kwargs)
-    end.record()
-
-    torch.cuda.synchronize()
-
-    return start.elapsed_time(end) / iterations
+from cuda_llm_ops.profiler import CUDAProfiler
 
 
 def compute_gemm_flops(M: int, N: int, K: int) -> int:
@@ -92,7 +65,9 @@ def benchmark_gemm(
         def cublas_gemm(a, b):
             return torch.matmul(a, b)
 
-        cublas_time = benchmark_kernel(cublas_gemm, a, b, warmup, iterations)
+        cublas_time = CUDAProfiler().measure_time(
+            cublas_gemm, a, b, warmup=warmup, iterations=iterations
+        )
         result["cublas_ms"] = cublas_time
 
         flops = compute_gemm_flops(M, N, K)
@@ -101,7 +76,9 @@ def benchmark_gemm(
         if has_custom:
             # Custom GEMM
             try:
-                custom_time = benchmark_kernel(gemm, a, b, warmup, iterations)
+                custom_time = CUDAProfiler().measure_time(
+                    gemm, a, b, warmup=warmup, iterations=iterations
+                )
                 result["custom_ms"] = custom_time
                 result["custom_tflops"] = (flops / 1e12) / (custom_time / 1000)
                 result["custom_relative"] = result["custom_tflops"] / result["cublas_tflops"]
@@ -113,7 +90,9 @@ def benchmark_gemm(
             # Tensor Core GEMM (FP16 only)
             if dtype == torch.float16:
                 try:
-                    tc_time = benchmark_kernel(tensor_core_gemm, a, b, warmup, iterations)
+                    tc_time = CUDAProfiler().measure_time(
+                        tensor_core_gemm, a, b, warmup=warmup, iterations=iterations
+                    )
                     result["tensor_core_ms"] = tc_time
                     result["tensor_core_tflops"] = (flops / 1e12) / (tc_time / 1000)
                     result["tensor_core_relative"] = (

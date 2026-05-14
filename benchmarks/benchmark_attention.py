@@ -14,35 +14,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-
-def benchmark_kernel(
-    func,
-    q: torch.Tensor,
-    k: torch.Tensor,
-    v: torch.Tensor,
-    warmup: int = 10,
-    iterations: int = 100,
-    **kwargs,
-) -> float:
-    """Benchmark a kernel and return average time in ms."""
-    # Warmup
-    for _ in range(warmup):
-        func(q, k, v, **kwargs)
-
-    torch.cuda.synchronize()
-
-    # Measure
-    start = torch.cuda.Event(enable_timing=True)
-    end = torch.cuda.Event(enable_timing=True)
-
-    start.record()
-    for _ in range(iterations):
-        func(q, k, v, **kwargs)
-    end.record()
-
-    torch.cuda.synchronize()
-
-    return start.elapsed_time(end) / iterations
+from cuda_llm_ops.profiler import CUDAProfiler
 
 
 def compute_attention_flops(batch: int, heads: int, seq_len: int, head_dim: int) -> int:
@@ -97,7 +69,9 @@ def benchmark_attention(
         def pytorch_attention(q, k, v):
             return torch.nn.functional.scaled_dot_product_attention(q, k, v)
 
-        pytorch_time = benchmark_kernel(pytorch_attention, q, k, v, warmup, iterations)
+        pytorch_time = CUDAProfiler().measure_time(
+            pytorch_attention, q, k, v, warmup=warmup, iterations=iterations
+        )
         result["pytorch_ms"] = pytorch_time
 
         flops = compute_attention_flops(batch_size, num_heads, seq_len, head_dim)
@@ -106,7 +80,9 @@ def benchmark_attention(
         if has_custom:
             # Naive attention
             try:
-                naive_time = benchmark_kernel(naive_attention, q, k, v, warmup, iterations)
+                naive_time = CUDAProfiler().measure_time(
+                    naive_attention, q, k, v, warmup=warmup, iterations=iterations
+                )
                 result["naive_ms"] = naive_time
                 result["naive_tflops"] = (flops / 1e12) / (naive_time / 1000)
                 result["naive_speedup"] = pytorch_time / naive_time
@@ -116,7 +92,9 @@ def benchmark_attention(
 
             # Tiled attention
             try:
-                tiled_time = benchmark_kernel(tiled_attention, q, k, v, warmup, iterations)
+                tiled_time = CUDAProfiler().measure_time(
+                    tiled_attention, q, k, v, warmup=warmup, iterations=iterations
+                )
                 result["tiled_ms"] = tiled_time
                 result["tiled_tflops"] = (flops / 1e12) / (tiled_time / 1000)
                 result["tiled_speedup"] = pytorch_time / tiled_time
@@ -126,7 +104,9 @@ def benchmark_attention(
 
             # Flash attention
             try:
-                flash_time = benchmark_kernel(flash_attention, q, k, v, warmup, iterations)
+                flash_time = CUDAProfiler().measure_time(
+                    flash_attention, q, k, v, warmup=warmup, iterations=iterations
+                )
                 result["flash_ms"] = flash_time
                 result["flash_tflops"] = (flops / 1e12) / (flash_time / 1000)
                 result["flash_speedup"] = pytorch_time / flash_time

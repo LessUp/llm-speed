@@ -141,70 +141,9 @@ class TestTensorCoreGEMM:
             output, reference, rtol=1e-2, atol=1e-2, msg="Tensor Core GEMM alpha scaling failed"
         )
 
-
-class TestTensorCoreGEMMErrorHandling:
-    """Error handling tests for tensor_core_gemm."""
-
     @pytest.mark.cuda
-    def test_tensor_core_gemm_wrong_dimensions(self, device):
-        """Test tensor_core_gemm with wrong dimensions."""
-        try:
-            from cuda_llm_ops import tensor_core_gemm
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        # 3D instead of 2D
-        a = torch.randn(8, 64, 32, device=device, dtype=torch.float16)
-        b = torch.randn(8, 32, 64, device=device, dtype=torch.float16)
-
-        with pytest.raises(RuntimeError, match="must be 2D"):
-            tensor_core_gemm(a, b)
-
-    @pytest.mark.cuda
-    def test_tensor_core_gemm_cpu_tensor(self):
-        """Test tensor_core_gemm with CPU tensor."""
-        try:
-            from cuda_llm_ops import tensor_core_gemm
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        a = torch.randn(64, 32, dtype=torch.float16)  # CPU tensor
-        b = torch.randn(32, 64, dtype=torch.float16)
-
-        with pytest.raises(RuntimeError, match="must be on CUDA"):
-            tensor_core_gemm(a, b)
-
-    @pytest.mark.cuda
-    def test_tensor_core_gemm_non_contiguous(self, device):
-        """Test tensor_core_gemm with non-contiguous tensor."""
-        try:
-            from cuda_llm_ops import tensor_core_gemm
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        a = torch.randn(64, 32, device=device, dtype=torch.float16).t()
-        b = torch.randn(32, 64, device=device, dtype=torch.float16)
-
-        with pytest.raises(RuntimeError, match="must be contiguous"):
-            tensor_core_gemm(a, b)
-
-    @pytest.mark.cuda
-    def test_tensor_core_gemm_dimension_mismatch(self, device):
-        """Test tensor_core_gemm with dimension mismatch."""
-        try:
-            from cuda_llm_ops import tensor_core_gemm
-        except ImportError:
-            pytest.skip("CUDA kernels not built")
-
-        a = torch.randn(64, 32, device=device, dtype=torch.float16)
-        b = torch.randn(64, 64, device=device, dtype=torch.float16)  # Wrong K dimension
-
-        with pytest.raises(RuntimeError, match="Inner dimensions"):
-            tensor_core_gemm(a, b)
-
-    @pytest.mark.cuda
-    def test_tensor_core_gemm_wrong_dtype_fp32(self, device):
-        """Test tensor_core_gemm with FP32 dtype (should work via gemm)."""
+    def test_tensor_core_gemm_rejects_fp32(self, device):
+        """Test tensor_core_gemm rejects FP32 input."""
         try:
             from cuda_llm_ops import tensor_core_gemm
         except ImportError:
@@ -213,13 +152,12 @@ class TestTensorCoreGEMMErrorHandling:
         a = torch.randn(64, 32, device=device, dtype=torch.float32)
         b = torch.randn(32, 64, device=device, dtype=torch.float32)
 
-        # tensor_core_gemm requires FP16, this should raise an error
         with pytest.raises(RuntimeError, match="float16"):
             tensor_core_gemm(a, b)
 
     @pytest.mark.cuda
-    def test_tensor_core_gemm_wrong_dtype_int8(self, device):
-        """Test tensor_core_gemm with INT8 dtype."""
+    def test_tensor_core_gemm_rejects_int8(self, device):
+        """Test tensor_core_gemm rejects INT8 input."""
         try:
             from cuda_llm_ops import tensor_core_gemm
         except ImportError:

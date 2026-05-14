@@ -14,8 +14,6 @@ from cuda_llm_ops.profiler import (
     Bottleneck,
     CUDAProfiler,
     KernelMetrics,
-    benchmark_attention,
-    benchmark_gemm,
     print_benchmark_results,
 )
 
@@ -242,84 +240,6 @@ class TestCUDAProfiler:
         assert "custom_ms" in result
         assert "reference_ms" in result
         assert result["custom_ms"] > 0
-
-
-class TestBenchmarkAttention:
-    """Tests for benchmark_attention function."""
-
-    @pytest.mark.cuda
-    @pytest.mark.slow
-    def test_benchmark_attention_basic(self):
-        """Test basic benchmark_attention functionality."""
-        results = benchmark_attention(
-            seq_lengths=[32, 64],
-            batch_size=1,
-            num_heads=2,
-            head_dim=16,
-            dtype=torch.float16,
-        )
-
-        assert len(results) == 2
-        for result in results:
-            assert "seq_len" in result
-            assert "custom_ms" in result
-            assert "custom_tflops" in result
-            assert "reference_ms" in result
-            assert "reference_tflops" in result
-            assert "speedup" in result
-            assert "bottleneck" in result
-            assert result["custom_ms"] > 0
-
-    @pytest.mark.cuda
-    @pytest.mark.slow
-    def test_benchmark_attention_fp32(self):
-        """Test benchmark_attention with FP32."""
-        results = benchmark_attention(
-            seq_lengths=[32],
-            batch_size=1,
-            num_heads=2,
-            head_dim=16,
-            dtype=torch.float32,
-        )
-
-        assert len(results) == 1
-        assert results[0]["seq_len"] == 32
-
-
-class TestBenchmarkGemm:
-    """Tests for benchmark_gemm function."""
-
-    @pytest.mark.cuda
-    @pytest.mark.slow
-    def test_benchmark_gemm_basic(self):
-        """Test basic benchmark_gemm functionality."""
-        results = benchmark_gemm(
-            sizes=[(64, 64, 64), (128, 128, 128)],
-            dtype=torch.float16,
-        )
-
-        assert len(results) == 2
-        for result in results:
-            assert "M" in result
-            assert "N" in result
-            assert "K" in result
-            assert "custom_ms" in result
-            assert "custom_tflops" in result
-            assert "reference_ms" in result
-            assert "reference_tflops" in result
-            assert "relative_perf" in result
-            assert "bottleneck" in result
-
-    @pytest.mark.cuda
-    @pytest.mark.slow
-    def test_benchmark_gemm_fp32(self):
-        """Test benchmark_gemm with FP32."""
-        results = benchmark_gemm(
-            sizes=[(64, 64, 64)],
-            dtype=torch.float32,
-        )
-
-        assert len(results) == 1
 
 
 class TestPrintBenchmarkResults:

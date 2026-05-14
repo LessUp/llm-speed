@@ -127,12 +127,29 @@ void validate_gemm_inputs(const torch::Tensor& a,
     TORCH_CHECK(b.size(0) > 0 && b.size(1) > 0, "B tensor dimensions must be positive (non-zero)");
 }
 
-// Naive attention wrapper
-torch::Tensor naive_attention(const torch::Tensor& q,
-                              const torch::Tensor& k,
-                              const torch::Tensor& v,
-                              float scale = 0.0f,
-                              bool is_causal = false) {
+// Dispatch helpers ---------------------------------------------------------
+
+using AttentionKernelFP32 = void (*)(const float*,
+                                     const float*,
+                                     const float*,
+                                     float*,
+                                     int,
+                                     int,
+                                     int,
+                                     int,
+                                     float,
+                                     bool,
+                                     cudaStream_t);
+using AttentionKernelFP16 = void (*)(
+    const half*, const half*, const half*, half*, int, int, int, int, float, bool, cudaStream_t);
+
+torch::Tensor dispatch_attention(AttentionKernelFP32 fp32_kernel,
+                                 AttentionKernelFP16 fp16_kernel,
+                                 const torch::Tensor& q,
+                                 const torch::Tensor& k,
+                                 const torch::Tensor& v,
+                                 float scale,
+                                 bool is_causal) {
     validate_attention_inputs(q, k, v);
 
     int batch_size = q.size(0);
@@ -148,139 +165,65 @@ torch::Tensor naive_attention(const torch::Tensor& q,
     cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
     if (q.scalar_type() == torch::kFloat32) {
-        naive_attention_fp32(q.data_ptr<float>(),
-                             k.data_ptr<float>(),
-                             v.data_ptr<float>(),
-                             output.data_ptr<float>(),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
+        fp32_kernel(q.data_ptr<float>(),
+                    k.data_ptr<float>(),
+                    v.data_ptr<float>(),
+                    output.data_ptr<float>(),
+                    batch_size,
+                    num_heads,
+                    seq_len,
+                    head_dim,
+                    scale,
+                    is_causal,
+                    stream);
     } else {
-        naive_attention_fp16(reinterpret_cast<const half*>(q.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(k.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
-                             reinterpret_cast<half*>(output.data_ptr<at::Half>()),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
+        fp16_kernel(reinterpret_cast<const half*>(q.data_ptr<at::Half>()),
+                    reinterpret_cast<const half*>(k.data_ptr<at::Half>()),
+                    reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
+                    reinterpret_cast<half*>(output.data_ptr<at::Half>()),
+                    batch_size,
+                    num_heads,
+                    seq_len,
+                    head_dim,
+                    scale,
+                    is_causal,
+                    stream);
     }
 
     return output;
 }
 
-// Tiled attention wrapper
-torch::Tensor tiled_attention(const torch::Tensor& q,
-                              const torch::Tensor& k,
-                              const torch::Tensor& v,
-                              float scale = 0.0f,
-                              bool is_causal = false) {
-    validate_attention_inputs(q, k, v);
+using GemmKernelFP32 = void (*)(const float*,
+                                const float*,
+                                float*,
+                                int,
+                                int,
+                                int,
+                                float,
+                                float,
+                                MatrixLayout,
+                                MatrixLayout,
+                                cudaStream_t);
+using GemmKernelFP16 = void (*)(const half*,
+                                const half*,
+                                half*,
+                                int,
+                                int,
+                                int,
+                                float,
+                                float,
+                                MatrixLayout,
+                                MatrixLayout,
+                                cudaStream_t);
 
-    int batch_size = q.size(0);
-    int num_heads = q.size(1);
-    int seq_len = q.size(2);
-    int head_dim = q.size(3);
-
-    if (scale == 0.0f) {
-        scale = 1.0f / sqrtf(static_cast<float>(head_dim));
-    }
-
-    auto output = torch::empty_like(q);
-    cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-
-    if (q.scalar_type() == torch::kFloat32) {
-        tiled_attention_fp32(q.data_ptr<float>(),
-                             k.data_ptr<float>(),
-                             v.data_ptr<float>(),
-                             output.data_ptr<float>(),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
-    } else {
-        tiled_attention_fp16(reinterpret_cast<const half*>(q.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(k.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
-                             reinterpret_cast<half*>(output.data_ptr<at::Half>()),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
-    }
-
-    return output;
-}
-
-// Flash attention wrapper
-torch::Tensor flash_attention(const torch::Tensor& q,
-                              const torch::Tensor& k,
-                              const torch::Tensor& v,
-                              float scale = 0.0f,
-                              bool is_causal = false) {
-    validate_attention_inputs(q, k, v);
-
-    int batch_size = q.size(0);
-    int num_heads = q.size(1);
-    int seq_len = q.size(2);
-    int head_dim = q.size(3);
-
-    if (scale == 0.0f) {
-        scale = 1.0f / sqrtf(static_cast<float>(head_dim));
-    }
-
-    auto output = torch::empty_like(q);
-    cudaStream_t stream = at::cuda::getCurrentCUDAStream();
-
-    if (q.scalar_type() == torch::kFloat32) {
-        flash_attention_fp32(q.data_ptr<float>(),
-                             k.data_ptr<float>(),
-                             v.data_ptr<float>(),
-                             output.data_ptr<float>(),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
-    } else {
-        flash_attention_fp16(reinterpret_cast<const half*>(q.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(k.data_ptr<at::Half>()),
-                             reinterpret_cast<const half*>(v.data_ptr<at::Half>()),
-                             reinterpret_cast<half*>(output.data_ptr<at::Half>()),
-                             batch_size,
-                             num_heads,
-                             seq_len,
-                             head_dim,
-                             scale,
-                             is_causal,
-                             stream);
-    }
-
-    return output;
-}
-
-// GEMM wrapper
-torch::Tensor gemm(const torch::Tensor& a,
-                   const torch::Tensor& b,
-                   float alpha = 1.0f,
-                   float beta = 0.0f,
-                   bool trans_a = false,
-                   bool trans_b = false) {
+torch::Tensor dispatch_gemm(GemmKernelFP32 fp32_kernel,
+                            GemmKernelFP16 fp16_kernel,
+                            const torch::Tensor& a,
+                            const torch::Tensor& b,
+                            float alpha,
+                            float beta,
+                            bool trans_a,
+                            bool trans_b) {
     validate_gemm_inputs(a, b, trans_a, trans_b);
 
     int M = trans_a ? a.size(1) : a.size(0);
@@ -294,34 +237,74 @@ torch::Tensor gemm(const torch::Tensor& a,
     MatrixLayout layout_b = trans_b ? MatrixLayout::ColMajor : MatrixLayout::RowMajor;
 
     if (a.scalar_type() == torch::kFloat32) {
-        hgemm_fp32(a.data_ptr<float>(),
-                   b.data_ptr<float>(),
-                   output.data_ptr<float>(),
-                   M,
-                   N,
-                   K,
-                   alpha,
-                   beta,
-                   layout_a,
-                   layout_b,
-                   stream);
+        fp32_kernel(a.data_ptr<float>(),
+                    b.data_ptr<float>(),
+                    output.data_ptr<float>(),
+                    M,
+                    N,
+                    K,
+                    alpha,
+                    beta,
+                    layout_a,
+                    layout_b,
+                    stream);
     } else if (a.scalar_type() == torch::kFloat16) {
-        hgemm_fp16(reinterpret_cast<const half*>(a.data_ptr<at::Half>()),
-                   reinterpret_cast<const half*>(b.data_ptr<at::Half>()),
-                   reinterpret_cast<half*>(output.data_ptr<at::Half>()),
-                   M,
-                   N,
-                   K,
-                   alpha,
-                   beta,
-                   layout_a,
-                   layout_b,
-                   stream);
+        fp16_kernel(reinterpret_cast<const half*>(a.data_ptr<at::Half>()),
+                    reinterpret_cast<const half*>(b.data_ptr<at::Half>()),
+                    reinterpret_cast<half*>(output.data_ptr<at::Half>()),
+                    M,
+                    N,
+                    K,
+                    alpha,
+                    beta,
+                    layout_a,
+                    layout_b,
+                    stream);
     } else {
         TORCH_CHECK(false, "Unsupported dtype for GEMM");
     }
 
     return output;
+}
+
+// Naive attention wrapper
+torch::Tensor naive_attention(const torch::Tensor& q,
+                              const torch::Tensor& k,
+                              const torch::Tensor& v,
+                              float scale = 0.0f,
+                              bool is_causal = false) {
+    return dispatch_attention(
+        naive_attention_fp32, naive_attention_fp16, q, k, v, scale, is_causal);
+}
+
+// Tiled attention wrapper
+torch::Tensor tiled_attention(const torch::Tensor& q,
+                              const torch::Tensor& k,
+                              const torch::Tensor& v,
+                              float scale = 0.0f,
+                              bool is_causal = false) {
+    return dispatch_attention(
+        tiled_attention_fp32, tiled_attention_fp16, q, k, v, scale, is_causal);
+}
+
+// Flash attention wrapper
+torch::Tensor flash_attention(const torch::Tensor& q,
+                              const torch::Tensor& k,
+                              const torch::Tensor& v,
+                              float scale = 0.0f,
+                              bool is_causal = false) {
+    return dispatch_attention(
+        flash_attention_fp32, flash_attention_fp16, q, k, v, scale, is_causal);
+}
+
+// GEMM wrapper
+torch::Tensor gemm(const torch::Tensor& a,
+                   const torch::Tensor& b,
+                   float alpha = 1.0f,
+                   float beta = 0.0f,
+                   bool trans_a = false,
+                   bool trans_b = false) {
+    return dispatch_gemm(hgemm_fp32, hgemm_fp16, a, b, alpha, beta, trans_a, trans_b);
 }
 
 // Tensor Core GEMM wrapper (FP16 input, FP32 output)
@@ -438,4 +421,20 @@ PYBIND11_MODULE(cuda_llm_ops, m) {
           py::arg("a"),
           py::arg("b"),
           "Tensor Core GEMM (INT8 input, INT32 output, requires Turing+ SM>=7.2)");
+
+    // Validation helpers (exposed for direct testing of the validation seam)
+    m.def("validate_attention_inputs",
+          &validate_attention_inputs,
+          py::arg("q"),
+          py::arg("k"),
+          py::arg("v"),
+          "Validate attention input tensors (shape, device, dtype, contiguous)");
+
+    m.def("validate_gemm_inputs",
+          &validate_gemm_inputs,
+          py::arg("a"),
+          py::arg("b"),
+          py::arg("trans_a") = false,
+          py::arg("trans_b") = false,
+          "Validate GEMM input tensors (shape, device, dtype, contiguous)");
 }
