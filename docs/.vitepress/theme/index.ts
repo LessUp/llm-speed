@@ -21,6 +21,9 @@ import CodeDemo from '../components/CodeDemo.vue'
 import GPUSupport from '../components/GPUSupport.vue'
 import MemoryCompare from '../components/MemoryCompare.vue'
 import PerfChart from '../components/PerfChart.vue'
+import AlgorithmCard from '../components/AlgorithmCard.vue'
+import CodeDiff from '../components/CodeDiff.vue'
+import RoadmapTimeline from '../components/RoadmapTimeline.vue'
 
 export default {
   extends: DefaultTheme,
@@ -52,5 +55,8 @@ export default {
     app.component('GPUSupport', GPUSupport)
     app.component('MemoryCompare', MemoryCompare)
     app.component('PerfChart', PerfChart)
+    app.component('AlgorithmCard', AlgorithmCard)
+    app.component('CodeDiff', CodeDiff)
+    app.component('RoadmapTimeline', RoadmapTimeline)
   },
 }

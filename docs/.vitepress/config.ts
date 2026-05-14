@@ -15,8 +15,10 @@ export default withMermaid(defineConfig({
   title: 'LLM-Speed',
   description: 'CUDA kernels for LLM inference: FlashAttention, Tensor Core GEMM, and PyTorch bindings',
 
-  // Ignore dead links during migration
-  ignoreDeadLinks: true,
+  // Sitemap configuration
+  sitemap: {
+    hostname: 'https://lessup.github.io/llm-speed/'
+  },
 
   // Head elements for SEO and branding
   head: [
@@ -33,53 +35,65 @@ export default withMermaid(defineConfig({
     ['meta', { name: 'keywords', content: 'CUDA, LLM, FlashAttention, Tensor Core, GEMM, GPU, Deep Learning, Inference' }],
   ],
 
-  // Internationalization: Chinese and English
+  // Internationalization: English and Chinese (kimi-cli pattern)
   locales: {
     root: {
       label: 'English',
       lang: 'en-US',
+      link: '/en/',
       title: 'LLM-Speed',
       description: 'CUDA kernels for LLM inference: FlashAttention, Tensor Core GEMM, and PyTorch bindings',
       themeConfig: {
         nav: [
-          { text: 'Home', link: '/' },
-          { text: 'Quick Start', link: '/docs/setup/quickstart-en/', activeMatch: '/docs/setup/' },
-          { text: 'API', link: '/docs/api/api-en/', activeMatch: '/docs/api/' },
-          { text: 'Architecture', link: '/docs/architecture/architecture-en/', activeMatch: '/docs/architecture/' },
-          { text: 'Performance', link: '/docs/tutorials/performance-en/', activeMatch: '/docs/tutorials/' },
+          { text: 'Home', link: '/en/' },
+          { text: 'Quick Start', link: '/en/setup/', activeMatch: '/en/setup/' },
+          { text: 'API', link: '/en/api/', activeMatch: '/en/api/' },
+          { text: 'Architecture', link: '/en/architecture/', activeMatch: '/en/architecture/' },
+          { text: 'Tutorials', link: '/en/tutorials/performance/', activeMatch: '/en/tutorials/' },
+          { text: 'Release Notes', link: '/en/release-notes/changelog/', activeMatch: '/en/release-notes/' },
           { text: 'GitHub', link: 'https://github.com/LessUp/llm-speed' },
         ],
         sidebar: {
-          '/docs/setup/': [
+          '/en/setup/': [
             {
               text: 'Getting Started',
               items: [
-                { text: 'Quick Start', link: '/docs/setup/quickstart-en/' },
+                { text: 'Quick Start', link: '/en/setup/' },
               ],
             },
           ],
-          '/docs/api/': [
+          '/en/api/': [
             {
               text: 'API Reference',
               items: [
-                { text: 'API Reference', link: '/docs/api/api-en/' },
+                { text: 'API Reference', link: '/en/api/' },
               ],
             },
           ],
-          '/docs/architecture/': [
+          '/en/architecture/': [
             {
               text: 'Architecture',
               items: [
-                { text: 'Architecture Overview', link: '/docs/architecture/architecture-en/' },
+                { text: 'Architecture Overview', link: '/en/architecture/' },
+                { text: 'FlashAttention Deep Dive', link: '/en/architecture/flash-attention' },
+                { text: 'Tensor Core GEMM Deep Dive', link: '/en/architecture/tensor-core-gemm' },
               ],
             },
           ],
-          '/docs/tutorials/': [
+          '/en/tutorials/': [
             {
               text: 'Tutorials',
               items: [
-                { text: 'Performance Guide', link: '/docs/tutorials/performance-en/' },
-                { text: 'Troubleshooting', link: '/docs/tutorials/troubleshooting-en/' },
+                { text: 'Performance Guide', link: '/en/tutorials/performance' },
+                { text: 'Troubleshooting', link: '/en/tutorials/troubleshooting' },
+              ],
+            },
+          ],
+          '/en/release-notes/': [
+            {
+              text: 'Release Notes',
+              items: [
+                { text: 'Changelog', link: '/en/release-notes/changelog' },
               ],
             },
           ],
@@ -95,43 +109,54 @@ export default withMermaid(defineConfig({
       themeConfig: {
         nav: [
           { text: '首页', link: '/zh/' },
-          { text: '快速开始', link: '/zh/docs/setup/quickstart-zh/', activeMatch: '/zh/docs/setup/' },
-          { text: 'API', link: '/zh/docs/api/api-zh/', activeMatch: '/zh/docs/api/' },
-          { text: '架构', link: '/zh/docs/architecture/architecture-zh/', activeMatch: '/zh/docs/architecture/' },
-          { text: '性能', link: '/zh/docs/tutorials/performance-zh/', activeMatch: '/zh/docs/tutorials/' },
+          { text: '快速开始', link: '/zh/setup/', activeMatch: '/zh/setup/' },
+          { text: 'API', link: '/zh/api/', activeMatch: '/zh/api/' },
+          { text: '架构', link: '/zh/architecture/', activeMatch: '/zh/architecture/' },
+          { text: '教程', link: '/zh/tutorials/performance/', activeMatch: '/zh/tutorials/' },
+          { text: '更新日志', link: '/zh/release-notes/changelog/', activeMatch: '/zh/release-notes/' },
           { text: 'GitHub', link: 'https://github.com/LessUp/llm-speed' },
         ],
         sidebar: {
-          '/zh/docs/setup/': [
+          '/zh/setup/': [
             {
               text: '开始使用',
               items: [
-                { text: '快速开始', link: '/zh/docs/setup/quickstart-zh/' },
+                { text: '快速开始', link: '/zh/setup/' },
               ],
             },
           ],
-          '/zh/docs/api/': [
+          '/zh/api/': [
             {
               text: 'API 参考',
               items: [
-                { text: 'API 参考', link: '/zh/docs/api/api-zh/' },
+                { text: 'API 参考', link: '/zh/api/' },
               ],
             },
           ],
-          '/zh/docs/architecture/': [
+          '/zh/architecture/': [
             {
               text: '架构设计',
               items: [
-                { text: '架构概述', link: '/zh/docs/architecture/architecture-zh/' },
+                { text: '架构概述', link: '/zh/architecture/' },
+                { text: 'FlashAttention 深度解析', link: '/zh/architecture/flash-attention' },
+                { text: 'Tensor Core GEMM 深度解析', link: '/zh/architecture/tensor-core-gemm' },
               ],
             },
           ],
-          '/zh/docs/tutorials/': [
+          '/zh/tutorials/': [
             {
               text: '教程',
               items: [
-                { text: '性能指南', link: '/zh/docs/tutorials/performance-zh/' },
-                { text: '故障排除', link: '/zh/docs/tutorials/troubleshooting-zh/' },
+                { text: '性能指南', link: '/zh/tutorials/performance' },
+                { text: '故障排除', link: '/zh/tutorials/troubleshooting' },
+              ],
+            },
+          ],
+          '/zh/release-notes/': [
+            {
+              text: '更新日志',
+              items: [
+                { text: 'Changelog', link: '/zh/release-notes/changelog' },
               ],
             },
           ],

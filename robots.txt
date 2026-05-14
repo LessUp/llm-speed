@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://lessup.github.io/llm-speed/sitemap.xml

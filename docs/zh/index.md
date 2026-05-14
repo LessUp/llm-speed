@@ -13,13 +13,13 @@ hero:
   actions:
     - theme: brand
       text: 🚀 快速开始
-      link: /zh/docs/setup/quickstart-zh/
+      link: /zh/setup/
     - theme: alt
       text: 📖 架构设计
-      link: /zh/docs/architecture/architecture-zh/
+      link: /zh/architecture/
     - theme: alt
       text: 📊 性能指南
-      link: /zh/docs/tutorials/performance-zh/
+      link: /zh/tutorials/performance
 
 features:
   - icon: ⚡
@@ -128,22 +128,22 @@ print(c.dtype)  # torch.float32
 ### 🚀 快速开始
 5分钟内完成安装并运行基本示例。
 
-[快速开始 →](/zh/docs/setup/quickstart-zh/)
+[快速开始 →](/zh/setup/)
 
 ### 📚 API参考
 完整的API文档，包含参数、示例和错误处理。
 
-[API参考 →](/zh/docs/api/api-zh/)
+[API参考 →](/zh/api/)
 
 ### 🏗️ 架构设计
 深入探讨CUDA内核、优化策略和实现细节。
 
-[架构设计 →](/zh/docs/architecture/architecture-zh/)
+[架构设计 →](/zh/architecture/)
 
 ### ⚡ 性能指南
 优化技巧、基准测试工具和最佳实践。
 
-[性能指南 →](/zh/docs/tutorials/performance-zh/)
+[性能指南 →](/zh/tutorials/performance)
 
 </div>
 
@@ -159,7 +159,7 @@ print(c.dtype)  # torch.float32
 
 <div class="cta-buttons">
   <a href="https://github.com/LessUp/llm-speed" class="btn btn-secondary">💻 浏览源码</a>
-  <a href="/zh/docs/api/api-zh/" class="btn btn-secondary">📚 API参考</a>
+  <a href="/zh/api/" class="btn btn-secondary">📚 API参考</a>
 </div>
 
 <style>

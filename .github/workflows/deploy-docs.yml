@@ -2,7 +2,7 @@ name: Deploy VitePress site to Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'LessUp/llm-speed'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: docs
-        run: npm ci --no-frozen-lockfile
+        run: npm ci
 
       - name: Build with VitePress
         working-directory: docs

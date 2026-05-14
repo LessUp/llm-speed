@@ -231,10 +231,10 @@ pytest tests/ -v
 
 ### Read the Documentation
 
-- **[API Reference](../api/api-en.md)** - Complete API documentation
-- **[Architecture Guide](../architecture/architecture-en.md)** - Implementation details
-- **[Performance Guide](../tutorials/performance-en.md)** - Optimization tips
-- **[Troubleshooting](../tutorials/troubleshooting-en.md)** - Common issues
+- **[API Reference](/en/api/)** - Complete API documentation
+- **[Architecture Guide](/en/architecture/)** - Implementation details
+- **[Performance Guide](/en/tutorials/performance)** - Optimization tips
+- **[Troubleshooting](/en/tutorials/troubleshooting)** - Common issues
 
 ### Try Different Configurations
 
@@ -294,4 +294,4 @@ c = tensor_core_gemm_int8(a_int8, b_int8)  # Returns INT32
 output = gemm(a_t, b, trans_a=True)  # A^T @ B
 ```
 
-[← Back to Documentation](../)
+[← Back to Documentation](/en/)
